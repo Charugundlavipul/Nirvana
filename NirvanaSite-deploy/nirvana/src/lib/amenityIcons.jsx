@@ -94,6 +94,7 @@ export const PREDEFINED_AMENITIES = {
     'High-Speed Wifi': 'FaWifi',
     'Dedicated Workspace': 'FaLaptop',
 
+
     // Family Features
     'Crib': 'FaBaby',
     'Cot': 'FaBaby',
