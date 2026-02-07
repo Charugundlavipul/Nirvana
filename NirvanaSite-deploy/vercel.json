@@ -1,0 +1,12 @@
+{
+    "buildCommand": "cd nirvana && npm install && npm run build",
+    "outputDirectory": "nirvana/dist",
+    "installCommand": "cd nirvana && npm install",
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
