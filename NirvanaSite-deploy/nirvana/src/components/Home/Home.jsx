@@ -3,6 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { fetchProperties, fetchReviews } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft } from 'react-icons/fa';
 
+const oasisImages = [
+  "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp",
+];
+
 const Home = () => {
   const navigate = useNavigate();
   const heroRef = useRef(null);
