@@ -21,17 +21,91 @@ const filterAndPaginate = (options, searchText, page, getter) => {
     };
 };
 
+const SearchablePagedDropdown = ({
+    options,
+    value,
+    onChange,
+    getLabel,
+    getValue,
+    placeholder,
+    width = "100%",
+}) => {
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        const selected = options.find((opt) => getValue(opt) === value);
+        if (selected) setSearch(getLabel(selected));
+        if (!value) setSearch("");
+    }, [value, options, getLabel, getValue]);
+
+    const paged = useMemo(
+        () => filterAndPaginate(options, search, page, (opt) => `${getLabel(opt)} ${getValue(opt)}`),
+        [options, search, page, getLabel, getValue]
+    );
+
+    return (
+        <div style={{ position: "relative", width }}>
+            <input
+                value={search}
+                placeholder={placeholder}
+                onFocus={() => setOpen(true)}
+                onBlur={() => setTimeout(() => setOpen(false), 120)}
+                onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                    setOpen(true);
+                }}
+                style={{ width: "100%", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
+            />
+            {open && (
+                <div style={{ position: "absolute", zIndex: 40, top: "100%", left: 0, right: 0, marginTop: "6px", border: "1px solid #ddd", borderRadius: "6px", background: "#fff", boxShadow: "0 8px 16px rgba(0,0,0,0.08)" }}>
+                    <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                        {paged.pageItems.length === 0 && (
+                            <div style={{ padding: "8px 10px", fontSize: "12px", color: "#666" }}>No results</div>
+                        )}
+                        {paged.pageItems.map((opt) => (
+                            <button
+                                key={getValue(opt)}
+                                type="button"
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    onChange(getValue(opt), opt);
+                                    setSearch(getLabel(opt));
+                                    setOpen(false);
+                                }}
+                                style={{
+                                    width: "100%",
+                                    textAlign: "left",
+                                    padding: "8px 10px",
+                                    border: "none",
+                                    background: value === getValue(opt) ? "#ecfdf5" : "#fff",
+                                    cursor: "pointer",
+                                    fontSize: "13px"
+                                }}
+                            >
+                                {getLabel(opt)}
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", borderTop: "1px solid #eee", fontSize: "11px", color: "#666" }}>
+                        <button type="button" onMouseDown={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }} disabled={paged.page <= 1}>Prev</button>
+                        <span>{paged.page}/{paged.totalPages} • {paged.filtered.length}</span>
+                        <button type="button" onMouseDown={(e) => { e.preventDefault(); setPage((p) => Math.min(paged.totalPages, p + 1)); }} disabled={paged.page >= paged.totalPages}>Next</button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AmenitiesManager = ({ propertyId }) => {
     const [amenities, setAmenities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newAmenity, setNewAmenity] = useState({ title: "", description: "", icon_key: "" });
     const [isAdding, setIsAdding] = useState(false);
     const [mode, setMode] = useState("BANK"); // "BANK" or "CUSTOM"
-    const [bankSearch, setBankSearch] = useState("");
-    const [bankPage, setBankPage] = useState(1);
-    const [customIconSearch, setCustomIconSearch] = useState("");
-    const [customIconPage, setCustomIconPage] = useState(1);
-    const [editIconUi, setEditIconUi] = useState({});
 
     useEffect(() => {
         if (propertyId) loadAmenities();
@@ -87,28 +161,6 @@ const AmenitiesManager = ({ propertyId }) => {
         if (error) console.error("Error updating amenity:", error);
     };
 
-
-    const bankPaged = useMemo(
-        () => filterAndPaginate(BANK_OPTIONS, bankSearch, bankPage, (opt) => `${opt.label} ${opt.iconKey}`),
-        [bankSearch, bankPage]
-    );
-
-    const customIconsPaged = useMemo(
-        () => filterAndPaginate(ICON_OPTIONS, customIconSearch, customIconPage, (opt) => `${opt.label} ${opt.value}`),
-        [customIconSearch, customIconPage]
-    );
-
-    const getEditState = (id) => editIconUi[id] || { search: "", page: 1 };
-    const updateEditState = (id, patch) => {
-        setEditIconUi((prev) => ({
-            ...prev,
-            [id]: {
-                ...getEditState(id),
-                ...patch,
-            },
-        }));
-    };
-
     return (
         <div style={{ padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
@@ -132,8 +184,6 @@ const AmenitiesManager = ({ propertyId }) => {
                             onClick={() => {
                                 setMode("BANK");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
-                                setBankSearch("");
-                                setBankPage(1);
                             }}
                             style={{
                                 background: mode === "BANK" ? "#10b981" : "#e5e7eb",
@@ -147,8 +197,6 @@ const AmenitiesManager = ({ propertyId }) => {
                             onClick={() => {
                                 setMode("CUSTOM");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
-                                setCustomIconSearch("");
-                                setCustomIconPage(1);
                             }}
                             style={{
                                 background: mode === "CUSTOM" ? "#8b5cf6" : "#e5e7eb",
@@ -165,41 +213,20 @@ const AmenitiesManager = ({ propertyId }) => {
                         {/* BANK MODE */}
                         {mode === "BANK" && (
                             <>
-                                <input
-                                    placeholder="Search amenity bank..."
-                                    value={bankSearch}
-                                    onChange={(e) => {
-                                        setBankSearch(e.target.value);
-                                        setBankPage(1);
-                                    }}
-                                    style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "4px", fontSize: "14px" }}
-                                />
-                                <select
+                                <SearchablePagedDropdown
+                                    options={BANK_OPTIONS}
                                     value={newAmenity.title}
-                                    onChange={(e) => {
-                                        const selected = e.target.value;
-                                        const preset = BANK_OPTIONS.find((opt) => opt.value === selected);
+                                    onChange={(selectedValue, selectedOpt) => {
                                         setNewAmenity({
                                             ...newAmenity,
-                                            title: selected,
-                                            icon_key: preset ? preset.iconKey : ""
+                                            title: selectedValue,
+                                            icon_key: selectedOpt?.iconKey || ""
                                         });
                                     }}
-                                    style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "4px", fontSize: "16px" }}
-                                >
-                                    <option value="">-- Choose from Bank --</option>
-                                    {bankPaged.pageItems.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </select>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", color: "#666" }}>
-                                    <span>{bankPaged.filtered.length} results</span>
-                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                        <button type="button" onClick={() => setBankPage((p) => Math.max(1, p - 1))} disabled={bankPaged.page <= 1}>Prev</button>
-                                        <span>Page {bankPaged.page} / {bankPaged.totalPages}</span>
-                                        <button type="button" onClick={() => setBankPage((p) => Math.min(bankPaged.totalPages, p + 1))} disabled={bankPaged.page >= bankPaged.totalPages}>Next</button>
-                                    </div>
-                                </div>
+                                    getLabel={(opt) => `${opt.label}`}
+                                    getValue={(opt) => opt.value}
+                                    placeholder="Search and choose from amenity bank..."
+                                />
                                 {newAmenity.title && (
                                     <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
                                         <span>Preview:</span>
@@ -224,35 +251,14 @@ const AmenitiesManager = ({ propertyId }) => {
                                     <label style={{ fontSize: "12px", color: "#666" }}>
                                         Search Icon ({ICON_OPTIONS.length} options)
                                     </label>
-                                    <input
-                                        placeholder="Search Icon (e.g. 'Dragon')"
-                                        value={customIconSearch}
-                                        onChange={(e) => {
-                                            setCustomIconSearch(e.target.value);
-                                            setCustomIconPage(1);
-                                        }}
-                                        style={{ width: "100%", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
-                                    />
-                                    <select
+                                    <SearchablePagedDropdown
+                                        options={ICON_OPTIONS}
                                         value={newAmenity.icon_key}
-                                        onChange={(e) => setNewAmenity((prev) => ({ ...prev, icon_key: e.target.value }))}
-                                        style={{ width: "100%", marginTop: "8px", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
-                                    >
-                                        <option value="">-- Select Icon --</option>
-                                        {customIconsPaged.pageItems.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label} ({opt.value})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", fontSize: "12px", color: "#666" }}>
-                                        <span>{customIconsPaged.filtered.length} results</span>
-                                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                            <button type="button" onClick={() => setCustomIconPage((p) => Math.max(1, p - 1))} disabled={customIconsPaged.page <= 1}>Prev</button>
-                                            <span>Page {customIconsPaged.page} / {customIconsPaged.totalPages}</span>
-                                            <button type="button" onClick={() => setCustomIconPage((p) => Math.min(customIconsPaged.totalPages, p + 1))} disabled={customIconsPaged.page >= customIconsPaged.totalPages}>Next</button>
-                                        </div>
-                                    </div>
+                                        onChange={(val) => setNewAmenity((prev) => ({ ...prev, icon_key: val }))}
+                                        getLabel={(opt) => `${opt.label} (${opt.value})`}
+                                        getValue={(opt) => opt.value}
+                                        placeholder="Search and pick icon..."
+                                    />
                                 </div>
 
                                 <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
@@ -300,45 +306,16 @@ const AmenitiesManager = ({ propertyId }) => {
                                     style={{ border: "none", background: "transparent", width: "100%", color: "#666", fontSize: "14px" }}
                                 />
                             </div>
-                            <div style={{ width: "150px" }}>
-                                <input
-                                    value={getEditState(item.id).search}
-                                    placeholder="Search icon..."
-                                    onChange={(e) => {
-                                        updateEditState(item.id, { search: e.target.value, page: 1 });
-                                    }}
-                                    style={{ padding: "4px", width: "100%", border: "1px solid #eee", borderRadius: "4px", fontSize: "12px" }}
+                            <div style={{ width: "230px" }}>
+                                <SearchablePagedDropdown
+                                    options={ICON_OPTIONS}
+                                    value={item.icon_key || ""}
+                                    onChange={(val) => handleUpdate(item.id, "icon_key", val)}
+                                    getLabel={(opt) => `${opt.label}`}
+                                    getValue={(opt) => opt.value}
+                                    placeholder="Search and pick icon..."
+                                    width="230px"
                                 />
-                                {(() => {
-                                    const state = getEditState(item.id);
-                                    const paged = filterAndPaginate(
-                                        ICON_OPTIONS,
-                                        state.search,
-                                        state.page,
-                                        (opt) => `${opt.label} ${opt.value}`
-                                    );
-                                    return (
-                                        <>
-                                            <select
-                                                value={item.icon_key || ""}
-                                                onChange={(e) => handleUpdate(item.id, "icon_key", e.target.value)}
-                                                style={{ marginTop: "6px", padding: "4px", width: "100%", border: "1px solid #eee", borderRadius: "4px", fontSize: "12px" }}
-                                            >
-                                                <option value="">-- Icon --</option>
-                                                {paged.pageItems.map((opt) => (
-                                                    <option key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div style={{ marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", color: "#666" }}>
-                                                <button type="button" onClick={() => updateEditState(item.id, { page: Math.max(1, paged.page - 1) })} disabled={paged.page <= 1}>Prev</button>
-                                                <span>{paged.page}/{paged.totalPages}</span>
-                                                <button type="button" onClick={() => updateEditState(item.id, { page: Math.min(paged.totalPages, paged.page + 1) })} disabled={paged.page >= paged.totalPages}>Next</button>
-                                            </div>
-                                        </>
-                                    );
-                                })()}
                             </div>
                             <button onClick={() => handleDelete(item.id)} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
                                 <FaTrash />
