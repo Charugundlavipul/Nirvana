@@ -1,7 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../../../supabaseClient";
-import { FaTrash, FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import { FaTrash, FaPlus } from "react-icons/fa";
 import { ICON_OPTIONS, BANK_OPTIONS, getAmenityIcon } from "../../../lib/amenityIcons.jsx";
+
+const PAGE_SIZE = 30;
+
+const filterAndPaginate = (options, searchText, page, getter) => {
+    const q = (searchText || "").trim().toLowerCase();
+    const filtered = !q
+        ? options
+        : options.filter((opt) => getter(opt).toLowerCase().includes(q));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * PAGE_SIZE;
+    return {
+        filtered,
+        totalPages,
+        page: safePage,
+        pageItems: filtered.slice(start, start + PAGE_SIZE),
+    };
+};
 
 const AmenitiesManager = ({ propertyId }) => {
     const [amenities, setAmenities] = useState([]);
@@ -9,7 +27,11 @@ const AmenitiesManager = ({ propertyId }) => {
     const [newAmenity, setNewAmenity] = useState({ title: "", description: "", icon_key: "" });
     const [isAdding, setIsAdding] = useState(false);
     const [mode, setMode] = useState("BANK"); // "BANK" or "CUSTOM"
-    const [iconSearch, setIconSearch] = useState(""); // Filter for custom icons
+    const [bankSearch, setBankSearch] = useState("");
+    const [bankPage, setBankPage] = useState(1);
+    const [customIconSearch, setCustomIconSearch] = useState("");
+    const [customIconPage, setCustomIconPage] = useState(1);
+    const [editIconUi, setEditIconUi] = useState({});
 
     useEffect(() => {
         if (propertyId) loadAmenities();
@@ -65,6 +87,28 @@ const AmenitiesManager = ({ propertyId }) => {
         if (error) console.error("Error updating amenity:", error);
     };
 
+
+    const bankPaged = useMemo(
+        () => filterAndPaginate(BANK_OPTIONS, bankSearch, bankPage, (opt) => `${opt.label} ${opt.iconKey}`),
+        [bankSearch, bankPage]
+    );
+
+    const customIconsPaged = useMemo(
+        () => filterAndPaginate(ICON_OPTIONS, customIconSearch, customIconPage, (opt) => `${opt.label} ${opt.value}`),
+        [customIconSearch, customIconPage]
+    );
+
+    const getEditState = (id) => editIconUi[id] || { search: "", page: 1 };
+    const updateEditState = (id, patch) => {
+        setEditIconUi((prev) => ({
+            ...prev,
+            [id]: {
+                ...getEditState(id),
+                ...patch,
+            },
+        }));
+    };
+
     return (
         <div style={{ padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
@@ -85,7 +129,12 @@ const AmenitiesManager = ({ propertyId }) => {
                     {/* Mode Toggle */}
                     <div style={{ display: "flex", gap: "10px", marginBottom: "15px", borderBottom: "1px solid #e5e7eb", paddingBottom: "10px" }}>
                         <button
-                            onClick={() => { setMode("BANK"); setNewAmenity({ title: "", description: "", icon_key: "" }); }}
+                            onClick={() => {
+                                setMode("BANK");
+                                setNewAmenity({ title: "", description: "", icon_key: "" });
+                                setBankSearch("");
+                                setBankPage(1);
+                            }}
                             style={{
                                 background: mode === "BANK" ? "#10b981" : "#e5e7eb",
                                 color: mode === "BANK" ? "white" : "#374151",
@@ -95,7 +144,12 @@ const AmenitiesManager = ({ propertyId }) => {
                             Select from Bank
                         </button>
                         <button
-                            onClick={() => { setMode("CUSTOM"); setNewAmenity({ title: "", description: "", icon_key: "" }); }}
+                            onClick={() => {
+                                setMode("CUSTOM");
+                                setNewAmenity({ title: "", description: "", icon_key: "" });
+                                setCustomIconSearch("");
+                                setCustomIconPage(1);
+                            }}
                             style={{
                                 background: mode === "CUSTOM" ? "#8b5cf6" : "#e5e7eb",
                                 color: mode === "CUSTOM" ? "white" : "#374151",
@@ -111,12 +165,20 @@ const AmenitiesManager = ({ propertyId }) => {
                         {/* BANK MODE */}
                         {mode === "BANK" && (
                             <>
+                                <input
+                                    placeholder="Search amenity bank..."
+                                    value={bankSearch}
+                                    onChange={(e) => {
+                                        setBankSearch(e.target.value);
+                                        setBankPage(1);
+                                    }}
+                                    style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "4px", fontSize: "14px" }}
+                                />
                                 <select
                                     value={newAmenity.title}
                                     onChange={(e) => {
                                         const selected = e.target.value;
-                                        // Find preset to get iconKey
-                                        const preset = BANK_OPTIONS.find(opt => opt.value === selected);
+                                        const preset = BANK_OPTIONS.find((opt) => opt.value === selected);
                                         setNewAmenity({
                                             ...newAmenity,
                                             title: selected,
@@ -126,10 +188,18 @@ const AmenitiesManager = ({ propertyId }) => {
                                     style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "4px", fontSize: "16px" }}
                                 >
                                     <option value="">-- Choose from Bank --</option>
-                                    {BANK_OPTIONS.map(opt => (
+                                    {bankPaged.pageItems.map((opt) => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                                     ))}
                                 </select>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", color: "#666" }}>
+                                    <span>{bankPaged.filtered.length} results</span>
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                        <button type="button" onClick={() => setBankPage((p) => Math.max(1, p - 1))} disabled={bankPaged.page <= 1}>Prev</button>
+                                        <span>Page {bankPaged.page} / {bankPaged.totalPages}</span>
+                                        <button type="button" onClick={() => setBankPage((p) => Math.min(bankPaged.totalPages, p + 1))} disabled={bankPaged.page >= bankPaged.totalPages}>Next</button>
+                                    </div>
+                                </div>
                                 {newAmenity.title && (
                                     <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
                                         <span>Preview:</span>
@@ -151,22 +221,38 @@ const AmenitiesManager = ({ propertyId }) => {
 
                                 {/* Searchable Icon Picker (Datalist) */}
                                 <div>
+                                    <label style={{ fontSize: "12px", color: "#666" }}>
+                                        Search Icon ({ICON_OPTIONS.length} options)
+                                    </label>
                                     <input
-                                        list="global-icon-options"
                                         placeholder="Search Icon (e.g. 'Dragon')"
-                                        value={iconSearch}
+                                        value={customIconSearch}
                                         onChange={(e) => {
-                                            const val = e.target.value;
-                                            setIconSearch(val);
-                                            // Check if valid selection
-                                            const match = ICON_OPTIONS.find(opt => opt.label === val || opt.value === val);
-                                            if (match) {
-                                                setNewAmenity(prev => ({ ...prev, icon_key: match.value }));
-                                            }
+                                            setCustomIconSearch(e.target.value);
+                                            setCustomIconPage(1);
                                         }}
                                         style={{ width: "100%", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
                                     />
-                                    {/* Datalist removed from here, using global one */}
+                                    <select
+                                        value={newAmenity.icon_key}
+                                        onChange={(e) => setNewAmenity((prev) => ({ ...prev, icon_key: e.target.value }))}
+                                        style={{ width: "100%", marginTop: "8px", padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
+                                    >
+                                        <option value="">-- Select Icon --</option>
+                                        {customIconsPaged.pageItems.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label} ({opt.value})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", fontSize: "12px", color: "#666" }}>
+                                        <span>{customIconsPaged.filtered.length} results</span>
+                                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                            <button type="button" onClick={() => setCustomIconPage((p) => Math.max(1, p - 1))} disabled={customIconsPaged.page <= 1}>Prev</button>
+                                            <span>Page {customIconsPaged.page} / {customIconsPaged.totalPages}</span>
+                                            <button type="button" onClick={() => setCustomIconPage((p) => Math.min(customIconsPaged.totalPages, p + 1))} disabled={customIconsPaged.page >= customIconsPaged.totalPages}>Next</button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
@@ -216,20 +302,43 @@ const AmenitiesManager = ({ propertyId }) => {
                             </div>
                             <div style={{ width: "150px" }}>
                                 <input
-                                    list="global-icon-options"
-                                    value={item.icon_key || ""}
-                                    placeholder="Icon Key"
+                                    value={getEditState(item.id).search}
+                                    placeholder="Search icon..."
                                     onChange={(e) => {
-                                        const val = e.target.value;
-                                        // Optional: Check if valid key before updating?
-                                        // For raw editing, just updating is fine, local state will match.
-                                        // Helper to find value if usage is Label
-                                        const match = ICON_OPTIONS.find(opt => opt.label === val || opt.value === val);
-                                        const finalKey = match ? match.value : val;
-                                        handleUpdate(item.id, "icon_key", finalKey);
+                                        updateEditState(item.id, { search: e.target.value, page: 1 });
                                     }}
                                     style={{ padding: "4px", width: "100%", border: "1px solid #eee", borderRadius: "4px", fontSize: "12px" }}
                                 />
+                                {(() => {
+                                    const state = getEditState(item.id);
+                                    const paged = filterAndPaginate(
+                                        ICON_OPTIONS,
+                                        state.search,
+                                        state.page,
+                                        (opt) => `${opt.label} ${opt.value}`
+                                    );
+                                    return (
+                                        <>
+                                            <select
+                                                value={item.icon_key || ""}
+                                                onChange={(e) => handleUpdate(item.id, "icon_key", e.target.value)}
+                                                style={{ marginTop: "6px", padding: "4px", width: "100%", border: "1px solid #eee", borderRadius: "4px", fontSize: "12px" }}
+                                            >
+                                                <option value="">-- Icon --</option>
+                                                {paged.pageItems.map((opt) => (
+                                                    <option key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div style={{ marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", color: "#666" }}>
+                                                <button type="button" onClick={() => updateEditState(item.id, { page: Math.max(1, paged.page - 1) })} disabled={paged.page <= 1}>Prev</button>
+                                                <span>{paged.page}/{paged.totalPages}</span>
+                                                <button type="button" onClick={() => updateEditState(item.id, { page: Math.min(paged.totalPages, paged.page + 1) })} disabled={paged.page >= paged.totalPages}>Next</button>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                             <button onClick={() => handleDelete(item.id)} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
                                 <FaTrash />
@@ -238,14 +347,10 @@ const AmenitiesManager = ({ propertyId }) => {
                     ))}
                     {amenities.length === 0 && !isAdding && <p style={{ color: "#999", textAlign: "center", marginTop: "20px" }}>No amenities yet. Add one!</p>}
 
-                    {/* Global Datalist for efficient rendering */}
-                    <datalist id="global-icon-options">
-                        {ICON_OPTIONS.slice(0, 1000).map(opt => (
-                            <option key={opt.value} value={opt.label} />
-                        ))}
-                    </datalist>
+
                 </div>
             )}
+
         </div>
     );
 };
