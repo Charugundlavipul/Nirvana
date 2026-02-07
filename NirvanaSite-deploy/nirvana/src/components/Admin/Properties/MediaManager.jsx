@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from "react";
 import styles from "./PropertyEditor.module.css"; // Reuse styling for now or split if needed
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
 const MediaManager = ({ propertyId }) => {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [adminRole, setAdminRole] = useState(null);
 
     useEffect(() => {
         loadImages();
     }, [propertyId]);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
+    }, []);
 
     const loadImages = async () => {
         try {
@@ -57,10 +67,29 @@ const MediaManager = ({ propertyId }) => {
                 });
             }
 
-            const { error: insertErr } = await supabase.from("property_images").insert(uploads);
-            if (insertErr) throw insertErr;
+            if (isSuperAdminRole(adminRole)) {
+                const { error: insertErr } = await supabase.from("property_images").insert(uploads);
+                if (insertErr) throw insertErr;
+                loadImages();
+                return;
+            }
 
-            loadImages();
+            const { data: userData } = await supabase.auth.getUser();
+            const submittedBy = userData?.user?.id || null;
+            const requests = uploads.map((row) =>
+                submitApprovalRequest({
+                    entityType: "property_image",
+                    action: "create",
+                    payload: row,
+                    submittedBy,
+                    comment: "Gallery image upload request",
+                })
+            );
+            const results = await Promise.all(requests);
+            const failed = results.find((r) => r.error);
+            if (failed?.error) throw failed.error;
+            alert("Upload request submitted for approval.");
+
         } catch (error) {
             console.error("Upload error:", error);
             alert("Upload failed: " + error.message);
@@ -72,9 +101,26 @@ const MediaManager = ({ propertyId }) => {
     const handleDelete = async (id) => {
         if (!window.confirm("Remove this image?")) return;
         try {
-            const { error } = await supabase.from("property_images").delete().eq("id", id);
+            if (isSuperAdminRole(adminRole)) {
+                const { error } = await supabase.from("property_images").delete().eq("id", id);
+                if (error) throw error;
+                setImages(prev => prev.filter(img => img.id !== id));
+                return;
+            }
+
+            const target = images.find((img) => img.id === id);
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "property_image",
+                action: "delete",
+                entityId: id,
+                payload: {},
+                beforeSnapshot: target || null,
+                submittedBy: userData?.user?.id || null,
+                comment: "Gallery image delete request",
+            });
             if (error) throw error;
-            setImages(prev => prev.filter(img => img.id !== id));
+            alert("Delete request submitted for approval.");
         } catch (error) {
             alert("Failed to delete: " + error.message);
         }

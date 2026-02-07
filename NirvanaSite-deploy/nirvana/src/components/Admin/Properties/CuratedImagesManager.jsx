@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "./CuratedImagesManager.module.css";
 import editorStyles from "./PropertyEditor.module.css"; // Reuse card/field styles
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
 const SLOTS = ["home", "bg", "secondary"];
 
@@ -9,10 +10,19 @@ const CuratedImagesManager = ({ propertyId }) => {
     const [images, setImages] = useState({ home: null, bg: null, secondary: null });
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState({ home: false, bg: false, secondary: false });
+    const [adminRole, setAdminRole] = useState(null);
 
     useEffect(() => {
         loadImages();
     }, [propertyId]);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
+    }, []);
 
     const loadImages = async () => {
         try {
@@ -52,19 +62,35 @@ const CuratedImagesManager = ({ propertyId }) => {
 
             const { data: { publicUrl } } = supabase.storage.from("property-assets").getPublicUrl(fileName);
 
-            // Upsert into DB
-            const { error: dbErr } = await supabase
-                .from("property_curated_images")
-                .upsert({
-                    property_id: propertyId,
-                    slot: slot,
-                    url: publicUrl,
-                    display_order: SLOTS.indexOf(slot)
-                }, { onConflict: 'property_id, slot' }); // Ensure unique constraint on property_id + slot
+            const payload = {
+                property_id: propertyId,
+                slot,
+                url: publicUrl,
+                display_order: SLOTS.indexOf(slot)
+            };
 
-            if (dbErr) throw dbErr;
+            if (isSuperAdminRole(adminRole)) {
+                const { error: dbErr } = await supabase
+                    .from("property_curated_images")
+                    .upsert(payload, { onConflict: 'property_id, slot' });
+                if (dbErr) throw dbErr;
+                await loadImages();
+                return;
+            }
 
-            await loadImages(); // Reload to get IDs/Fresh data
+            const existing = images[slot];
+            const { data: userData } = await supabase.auth.getUser();
+            const { error: requestError } = await submitApprovalRequest({
+                entityType: "property_curated_image",
+                action: existing ? "update" : "create",
+                entityId: existing?.id || null,
+                payload,
+                beforeSnapshot: existing || null,
+                submittedBy: userData?.user?.id || null,
+                comment: `Curated ${slot} image change request`,
+            });
+            if (requestError) throw requestError;
+            alert(`${slot} image request submitted for approval.`);
         } catch (error) {
             console.error(`Error uploading ${slot}:`, error);
             alert(`Failed to upload ${slot}: ` + error.message);
@@ -78,15 +104,30 @@ const CuratedImagesManager = ({ propertyId }) => {
         if (!confirm(`Remove ${slot} image?`)) return;
 
         try {
-            const { error } = await supabase
-                .from("property_curated_images")
-                .delete()
-                .eq("property_id", propertyId)
-                .eq("slot", slot);
+            if (isSuperAdminRole(adminRole)) {
+                const { error } = await supabase
+                    .from("property_curated_images")
+                    .delete()
+                    .eq("property_id", propertyId)
+                    .eq("slot", slot);
+                if (error) throw error;
+                setImages(prev => ({ ...prev, [slot]: null }));
+                return;
+            }
 
+            const target = images[slot];
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "property_curated_image",
+                action: "delete",
+                entityId: target.id,
+                payload: {},
+                beforeSnapshot: target,
+                submittedBy: userData?.user?.id || null,
+                comment: `Curated ${slot} image delete request`,
+            });
             if (error) throw error;
-
-            setImages(prev => ({ ...prev, [slot]: null }));
+            alert(`${slot} image delete request submitted for approval.`);
         } catch (error) {
             console.error(`Error deleting ${slot}:`, error);
             alert(`Failed to delete ${slot}: ` + error.message);

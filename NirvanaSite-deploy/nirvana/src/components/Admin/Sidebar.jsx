@@ -2,12 +2,12 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
 
-// Icons can be replaced with an icon library if available, using text/emoji for now to keep it lightweight
 const NAV_ITEMS = [
-    { label: "Dashboard", path: "/admin", exact: true, icon: "📊" },
-    { label: "Properties", path: "/admin/properties", icon: "🏠" },
-    { label: "Global Content", path: "/admin/global", icon: "🌍" },
-    // { label: "Media Library", path: "/admin/media", icon: "🖼️" },
+    { label: "Dashboard", path: "/admin", exact: true, icon: "D" },
+    { label: "Properties", path: "/admin/properties", icon: "P" },
+    { label: "Global Content", path: "/admin/global", icon: "G" },
+    { label: "Admins", path: "/admin/admins", icon: "U" },
+    { label: "Approvals", path: "/admin/approvals", icon: "A" },
 ];
 
 const Sidebar = ({ isOpen, toggle }) => {
@@ -16,7 +16,7 @@ const Sidebar = ({ isOpen, toggle }) => {
             <div className={styles.logoContainer}>
                 <div className={styles.logoText}>Nirvana Admin</div>
                 <button className={styles.toggleBtn} onClick={toggle}>
-                    {isOpen ? "◀" : "▶"}
+                    {isOpen ? "<" : ">"}
                 </button>
             </div>
 

@@ -199,6 +199,20 @@ const Dashboard = () => {
                         to="/"
                         color="#10b981"
                     />
+                    <QuickAction
+                        title="Approval Queue"
+                        description="Review pending edits"
+                        icon={FaChartLine}
+                        to="/admin/approvals"
+                        color="#ef4444"
+                    />
+                    <QuickAction
+                        title="Admin Users"
+                        description="Manage admin accounts"
+                        icon={FaEdit}
+                        to="/admin/admins"
+                        color="#0ea5e9"
+                    />
                 </div>
             </section>
 

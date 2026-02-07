@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -9,6 +10,7 @@ const ActivityManager = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [adminRole, setAdminRole] = useState(null);
 
     const [formData, setFormData] = useState({
         id: null,
@@ -21,6 +23,14 @@ const ActivityManager = () => {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
     }, []);
 
     const loadData = async () => {
@@ -90,8 +100,29 @@ const ActivityManager = () => {
 
     const handleDelete = async (id) => {
         if (!confirm("Delete this activity?")) return;
-        await supabase.from("activities").delete().eq("id", id);
-        loadData();
+        try {
+            if (isSuperAdminRole(adminRole)) {
+                await supabase.from("activities").delete().eq("id", id);
+                loadData();
+                return;
+            }
+
+            const target = activities.find((activity) => activity.id === id);
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "activity",
+                action: "delete",
+                entityId: id,
+                payload: {},
+                beforeSnapshot: target || null,
+                submittedBy: userData?.user?.id || null,
+                comment: "Activity delete request",
+            });
+            if (error) throw error;
+            alert("Delete request submitted for approval.");
+        } catch (error) {
+            alert("Error deleting activity: " + error.message);
+        }
     };
 
     const toggleProperty = (propId) => {
@@ -143,32 +174,53 @@ const ActivityManager = () => {
                 title: formData.title,
                 description: formData.description,
                 image_url: formData.image_url,
-                link_url: formData.link_url
+                link_url: formData.link_url,
+                property_ids: formData.property_ids
             };
 
-            let activityId = formData.id;
+            if (isSuperAdminRole(adminRole)) {
+                let activityId = formData.id;
 
-            if (activityId) {
-                await supabase.from("activities").update(payload).eq("id", activityId);
-            } else {
-                const { data, error } = await supabase.from("activities").insert(payload).select().single();
-                if (error) throw error;
-                activityId = data.id;
+                if (activityId) {
+                    await supabase.from("activities").update(payload).eq("id", activityId);
+                } else {
+                    const { data, error } = await supabase.from("activities").insert(payload).select().single();
+                    if (error) throw error;
+                    activityId = data.id;
+                }
+
+                await supabase.from("property_activities").delete().eq("activity_id", activityId);
+                if (formData.property_ids.length > 0) {
+                    const links = formData.property_ids.map(pid => ({
+                        activity_id: activityId,
+                        property_id: pid
+                    }));
+                    await supabase.from("property_activities").insert(links);
+                }
+
+                setIsEditing(false);
+                loadData();
+                return;
             }
 
-            // Sync Properties (M:N)
-            await supabase.from("property_activities").delete().eq("activity_id", activityId);
+            const action = formData.id ? "update" : "create";
+            const beforeSnapshot = formData.id
+                ? activities.find((activity) => activity.id === formData.id) || null
+                : null;
+            const { data: userData } = await supabase.auth.getUser();
+            const { error: requestError } = await submitApprovalRequest({
+                entityType: "activity",
+                action,
+                entityId: formData.id || null,
+                payload,
+                beforeSnapshot,
+                submittedBy: userData?.user?.id || null,
+                comment: formData.id ? "Activity update request" : "Activity creation request",
+            });
+            if (requestError) throw requestError;
 
-            if (formData.property_ids.length > 0) {
-                const links = formData.property_ids.map(pid => ({
-                    activity_id: activityId,
-                    property_id: pid
-                }));
-                await supabase.from("property_activities").insert(links);
-            }
-
+            alert("Activity change request submitted for approval.");
             setIsEditing(false);
-            loadData();
         } catch (error) {
             alert("Error saving activity: " + error.message);
         }
@@ -237,7 +289,9 @@ const ActivityManager = () => {
 
                     <div className={formStyles.actionBar}>
                         <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Cancel</button>
-                        <button type="submit" className={formStyles.saveBtn}>Save Activity</button>
+                        <button type="submit" className={formStyles.saveBtn}>
+                            {isSuperAdminRole(adminRole) ? "Save Activity" : "Submit for Approval"}
+                        </button>
                     </div>
                 </form>
             </div>

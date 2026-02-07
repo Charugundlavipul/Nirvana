@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../../../supabaseClient";
 import { FaTrash, FaPlus } from "react-icons/fa";
 import { ICON_OPTIONS, BANK_OPTIONS, getAmenityIcon } from "../../../lib/amenityIcons.jsx";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
 const PAGE_SIZE = 30;
 
@@ -106,10 +107,21 @@ const AmenitiesManager = ({ propertyId }) => {
     const [newAmenity, setNewAmenity] = useState({ title: "", description: "", icon_key: "" });
     const [isAdding, setIsAdding] = useState(false);
     const [mode, setMode] = useState("BANK"); // "BANK" or "CUSTOM"
+    const [adminRole, setAdminRole] = useState(null);
+    const [draftById, setDraftById] = useState({});
+    const [savingAmenityId, setSavingAmenityId] = useState(null);
 
     useEffect(() => {
         if (propertyId) loadAmenities();
     }, [propertyId]);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
+    }, []);
 
     const loadAmenities = async () => {
         setLoading(true);
@@ -120,45 +132,137 @@ const AmenitiesManager = ({ propertyId }) => {
             .order("created_at", { ascending: true });
 
         if (error) console.error("Error loading amenities:", error);
-        else setAmenities(data || []);
+        else {
+            const next = data || [];
+            setAmenities(next);
+            setDraftById(
+                next.reduce((acc, item) => {
+                    acc[item.id] = {
+                        title: item.title || "",
+                        description: item.description || "",
+                        icon_key: item.icon_key || "",
+                    };
+                    return acc;
+                }, {})
+            );
+        }
         setLoading(false);
     };
 
     const handleAdd = async () => {
         if (!newAmenity.title) return alert("Title is required");
+        try {
+            const payload = { ...newAmenity, property_id: propertyId };
+            if (isSuperAdminRole(adminRole)) {
+                const { data, error } = await supabase
+                    .from("amenities")
+                    .insert(payload)
+                    .select()
+                    .single();
 
-        const { data, error } = await supabase
-            .from("amenities")
-            .insert({ ...newAmenity, property_id: propertyId })
-            .select()
-            .single();
+                if (error) throw error;
+                setAmenities([...amenities, data]);
+            } else {
+                const { data: userData } = await supabase.auth.getUser();
+                const { error } = await submitApprovalRequest({
+                    entityType: "amenity",
+                    action: "create",
+                    payload,
+                    submittedBy: userData?.user?.id || null,
+                    comment: "Amenity creation request",
+                });
+                if (error) throw error;
+                alert("Amenity create request submitted for approval.");
+            }
 
-        if (error) {
-            alert("Error adding amenity: " + error.message);
-        } else {
-            setAmenities([...amenities, data]);
             setNewAmenity({ title: "", description: "", icon_key: "" });
             setIsAdding(false);
+        } catch (error) {
+            alert("Error adding amenity: " + error.message);
         }
     };
 
     const handleDelete = async (id) => {
         if (!window.confirm("Delete this amenity?")) return;
+        try {
+            if (isSuperAdminRole(adminRole)) {
+                const { error } = await supabase.from("amenities").delete().eq("id", id);
+                if (error) throw error;
+                setAmenities(amenities.filter((a) => a.id !== id));
+                return;
+            }
 
-        const { error } = await supabase.from("amenities").delete().eq("id", id);
-        if (error) {
+            const target = amenities.find((a) => a.id === id);
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "amenity",
+                action: "delete",
+                entityId: id,
+                payload: {},
+                beforeSnapshot: target || null,
+                submittedBy: userData?.user?.id || null,
+                comment: "Amenity delete request",
+            });
+            if (error) throw error;
+            alert("Amenity delete request submitted for approval.");
+        } catch (error) {
             alert("Error deleting: " + error.message);
-        } else {
-            setAmenities(amenities.filter((a) => a.id !== id));
         }
     };
 
-    const handleUpdate = async (id, field, value) => {
-        // Optimistic update
-        setAmenities(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    const handleDraftChange = (id, field, value) => {
+        setDraftById((prev) => ({
+            ...prev,
+            [id]: {
+                ...(prev[id] || {}),
+                [field]: value,
+            },
+        }));
+    };
 
-        const { error } = await supabase.from("amenities").update({ [field]: value }).eq("id", id);
-        if (error) console.error("Error updating amenity:", error);
+    const handleSaveRow = async (item) => {
+        const draft = draftById[item.id] || {};
+        const payload = {
+            title: draft.title ?? item.title ?? "",
+            description: draft.description ?? item.description ?? "",
+            icon_key: draft.icon_key ?? item.icon_key ?? "",
+            property_id: item.property_id,
+        };
+
+        setSavingAmenityId(item.id);
+        try {
+            if (isSuperAdminRole(adminRole)) {
+                const { error } = await supabase
+                    .from("amenities")
+                    .update({
+                        title: payload.title,
+                        description: payload.description,
+                        icon_key: payload.icon_key,
+                    })
+                    .eq("id", item.id);
+                if (error) throw error;
+                setAmenities((prev) =>
+                    prev.map((a) => (a.id === item.id ? { ...a, ...payload } : a))
+                );
+            } else {
+                const { data: userData } = await supabase.auth.getUser();
+                const { error } = await submitApprovalRequest({
+                    entityType: "amenity",
+                    action: "update",
+                    entityId: item.id,
+                    payload,
+                    beforeSnapshot: item,
+                    submittedBy: userData?.user?.id || null,
+                    comment: "Amenity update request",
+                });
+                if (error) throw error;
+                alert("Amenity update request submitted for approval.");
+            }
+        } catch (error) {
+            alert("Error saving amenity: " + error.message);
+        } finally {
+            setSavingAmenityId(null);
+        }
     };
 
     return (
@@ -289,38 +393,62 @@ const AmenitiesManager = ({ propertyId }) => {
             {loading ? <p>Loading...</p> : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {amenities.map((item) => (
+                        (() => {
+                            const draft = draftById[item.id] || {
+                                title: item.title || "",
+                                description: item.description || "",
+                                icon_key: item.icon_key || "",
+                            };
+                            return (
                         <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "15px", padding: "10px", border: "1px solid #f0f0f0", borderRadius: "6px", background: "white" }}>
                             <div style={{ fontSize: "24px", width: "40px", display: "flex", justifyContent: "center", color: "#666" }}>
-                                {getAmenityIcon(item.title, item.icon_key)}
+                                {getAmenityIcon(draft.title, draft.icon_key)}
                             </div>
                             <div style={{ flex: 1 }}>
                                 <input
-                                    value={item.title}
-                                    onChange={(e) => handleUpdate(item.id, "title", e.target.value)}
+                                    value={draft.title}
+                                    onChange={(e) => handleDraftChange(item.id, "title", e.target.value)}
                                     style={{ fontWeight: "bold", border: "none", background: "transparent", width: "100%", marginBottom: "4px", fontSize: "16px" }}
                                 />
                                 <input
-                                    value={item.description || ""}
+                                    value={draft.description || ""}
                                     placeholder="Add description..."
-                                    onChange={(e) => handleUpdate(item.id, "description", e.target.value)}
+                                    onChange={(e) => handleDraftChange(item.id, "description", e.target.value)}
                                     style={{ border: "none", background: "transparent", width: "100%", color: "#666", fontSize: "14px" }}
                                 />
                             </div>
                             <div style={{ width: "230px" }}>
                                 <SearchablePagedDropdown
                                     options={ICON_OPTIONS}
-                                    value={item.icon_key || ""}
-                                    onChange={(val) => handleUpdate(item.id, "icon_key", val)}
+                                    value={draft.icon_key || ""}
+                                    onChange={(val) => handleDraftChange(item.id, "icon_key", val)}
                                     getLabel={(opt) => `${opt.label}`}
                                     getValue={(opt) => opt.value}
                                     placeholder="Search and pick icon..."
                                     width="230px"
                                 />
                             </div>
+                            <button
+                                onClick={() => handleSaveRow(item)}
+                                disabled={savingAmenityId === item.id}
+                                style={{
+                                    background: "#2563eb",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    padding: "8px 10px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                }}
+                            >
+                                {savingAmenityId === item.id ? "Saving..." : (isSuperAdminRole(adminRole) ? "Save" : "Submit")}
+                            </button>
                             <button onClick={() => handleDelete(item.id)} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
                                 <FaTrash />
                             </button>
                         </div>
+                            );
+                        })()
                     ))}
                     {amenities.length === 0 && !isAdding && <p style={{ color: "#999", textAlign: "center", marginTop: "20px" }}>No amenities yet. Add one!</p>}
 

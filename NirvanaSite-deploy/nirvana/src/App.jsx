@@ -17,6 +17,8 @@ import Dashboard from "./components/Admin/Dashboard";
 import PropertyList from "./components/Admin/Properties/PropertyList";
 import PropertyEditor from "./components/Admin/Properties/PropertyEditor";
 import GlobalContent from "./components/Admin/Global/GlobalContent";
+import ApprovalQueue from "./components/Admin/Approvals/ApprovalQueue";
+import AdminUsersManager from "./components/Admin/Users/AdminUsersManager";
 import ScrollToTop from "./components/scrolltotop/ScrolltoTop";
 import './App.css';
 
@@ -55,6 +57,8 @@ function AppLayout() {
             <Route path="properties" element={<PropertyList />} />
             <Route path="properties/:slug" element={<PropertyEditor />} />
             <Route path="global" element={<GlobalContent />} />
+            <Route path="approvals" element={<ApprovalQueue />} />
+            <Route path="admins" element={<AdminUsersManager />} />
           </Route>
         </Routes>
       </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 import styles from "../Properties/PropertyEditor.module.css";
@@ -17,6 +18,7 @@ const ReviewManager = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [adminRole, setAdminRole] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -32,6 +34,14 @@ const ReviewManager = () => {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
     }, []);
 
     const loadData = async () => {
@@ -112,8 +122,30 @@ const ReviewManager = () => {
 
     const handleDelete = async (id) => {
         if (!confirm("Delete this review?")) return;
-        await supabase.from("reviews").delete().eq("id", id);
-        loadData();
+
+        try {
+            if (isSuperAdminRole(adminRole)) {
+                await supabase.from("reviews").delete().eq("id", id);
+                loadData();
+                return;
+            }
+
+            const target = reviews.find((r) => r.id === id);
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "review",
+                action: "delete",
+                entityId: id,
+                payload: {},
+                beforeSnapshot: target || null,
+                submittedBy: userData?.user?.id || null,
+                comment: "Review delete request",
+            });
+            if (error) throw error;
+            alert("Delete request submitted for approval.");
+        } catch (error) {
+            alert("Error deleting review: " + error.message);
+        }
     };
 
     const handleAvatarUpload = async (e) => {
@@ -169,36 +201,55 @@ const ReviewManager = () => {
                 content: formData.content,
                 date: formData.date,
                 avatar_url: formData.avatar_url,
-                source: normalizeSource(formData.source)
+                source: normalizeSource(formData.source),
+                property_ids: formData.property_ids
             };
 
-            let reviewId = formData.id;
+            if (isSuperAdminRole(adminRole)) {
+                let reviewId = formData.id;
 
-            if (reviewId) {
-                const { error } = await supabase.from("reviews").update(payload).eq("id", reviewId);
-                if (error) throw error;
-            } else {
-                const { data, error } = await supabase.from("reviews").insert(payload).select().single();
-                if (error) throw error;
-                reviewId = data.id;
+                if (reviewId) {
+                    const { error } = await supabase.from("reviews").update(payload).eq("id", reviewId);
+                    if (error) throw error;
+                } else {
+                    const { data, error } = await supabase.from("reviews").insert(payload).select().single();
+                    if (error) throw error;
+                    reviewId = data.id;
+                }
+
+                await supabase.from("property_reviews").delete().eq("review_id", reviewId);
+                if (formData.property_ids.length > 0) {
+                    const links = formData.property_ids.map(pid => ({
+                        review_id: reviewId,
+                        property_id: pid
+                    }));
+                    const { error: linkError } = await supabase.from("property_reviews").insert(links);
+                    if (linkError) throw linkError;
+                }
+
+                setIsEditing(false);
+                loadData();
+                return;
             }
 
-            // Sync Properties (M:N)
-            // 1. Delete existing links
-            await supabase.from("property_reviews").delete().eq("review_id", reviewId);
+            const action = formData.id ? "update" : "create";
+            const beforeSnapshot = formData.id
+                ? reviews.find((review) => review.id === formData.id) || null
+                : null;
+            const { data: userData } = await supabase.auth.getUser();
+            const { error: requestError } = await submitApprovalRequest({
+                entityType: "review",
+                action,
+                entityId: formData.id || null,
+                payload,
+                beforeSnapshot,
+                submittedBy: userData?.user?.id || null,
+                comment: formData.id ? "Review update request" : "Review creation request",
+            });
+            if (requestError) throw requestError;
 
-            // 2. Insert new links
-            if (formData.property_ids.length > 0) {
-                const links = formData.property_ids.map(pid => ({
-                    review_id: reviewId,
-                    property_id: pid
-                }));
-                const { error: linkError } = await supabase.from("property_reviews").insert(links);
-                if (linkError) throw linkError;
-            }
-
+            alert("Review change request submitted for approval.");
             setIsEditing(false);
-            loadData();
         } catch (error) {
             alert("Error saving review: " + error.message);
         }
@@ -294,7 +345,9 @@ const ReviewManager = () => {
 
                     <div className={formStyles.actionBar}>
                         <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Cancel</button>
-                        <button type="submit" className={formStyles.saveBtn}>Save Review</button>
+                        <button type="submit" className={formStyles.saveBtn}>
+                            {isSuperAdminRole(adminRole) ? "Save Review" : "Submit for Approval"}
+                        </button>
                     </div>
                 </form>
             </div>

@@ -6,6 +6,7 @@ import { supabase } from "../../../supabaseClient";
 import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -16,6 +17,8 @@ const PropertyEditor = () => {
     const [activeTab, setActiveTab] = useState("details");
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
+    const [adminRole, setAdminRole] = useState(null);
+    const [beforeSnapshot, setBeforeSnapshot] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -42,6 +45,14 @@ const PropertyEditor = () => {
         }
     }, [slug]);
 
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
+    }, []);
+
     const loadProperty = async () => {
         try {
             const { data, error } = await supabase
@@ -53,7 +64,7 @@ const PropertyEditor = () => {
             if (error) throw error;
 
             setPropertyId(data.id);
-            setFormData({
+            const normalized = {
                 name: data.name || "",
                 slug: data.slug || "",
                 booking_url: data.booking_url || "",
@@ -67,7 +78,9 @@ const PropertyEditor = () => {
                 pet_friendly: data.pet_friendly || false,
                 pet_fee: data.pet_fee || 0,
                 hot_tub: data.hot_tub || false
-            });
+            };
+            setFormData(normalized);
+            setBeforeSnapshot(normalized);
         } catch (error) {
             console.error("Error loading property:", error);
             alert("Failed to load property.");
@@ -97,6 +110,28 @@ const PropertyEditor = () => {
         try {
             const payload = { ...formData, is_published: true };
             if (!payload.booking_url) delete payload.booking_url; // Optional
+
+            const superAdmin = isSuperAdminRole(adminRole);
+            if (!superAdmin) {
+                const { data: userData } = await supabase.auth.getUser();
+                const requestAction = isNew ? "create" : "update";
+                const requestEntityId = isNew ? null : propertyId;
+
+                const { error: requestError } = await submitApprovalRequest({
+                    entityType: "property",
+                    action: requestAction,
+                    entityId: requestEntityId,
+                    payload,
+                    beforeSnapshot: isNew ? null : beforeSnapshot,
+                    submittedBy: userData?.user?.id || null,
+                    comment: isNew ? "New property creation request." : "Property update request.",
+                });
+
+                if (requestError) throw requestError;
+                alert("Change request submitted to superadmin for approval.");
+                navigate("/admin/properties");
+                return;
+            }
 
             let result;
             if (isNew) {
@@ -152,6 +187,14 @@ const PropertyEditor = () => {
                 <div className={styles.tabContent}>
                     {activeTab === "details" && (
                         <form onSubmit={handleSave} className={styles.formGrid}>
+                            {!isSuperAdminRole(adminRole) && (
+                                <div className={styles.card}>
+                                    <h3>Approval Flow Enabled</h3>
+                                    <p style={{ marginTop: "8px", color: "#555" }}>
+                                        Saving this form creates an approval request. A superadmin must approve before changes go live.
+                                    </p>
+                                </div>
+                            )}
                             <div className={styles.card}>
                                 <h3>Basic Info</h3>
                                 <div className={styles.fieldGroup}>
@@ -219,14 +262,28 @@ const PropertyEditor = () => {
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
-                                    {saving ? "Saving..." : "Save Changes"}
+                                    {saving ? "Saving..." : isSuperAdminRole(adminRole) ? "Save Changes" : "Submit for Approval"}
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    {activeTab === "media" && propertyId && (
+                    {activeTab === "media" && propertyId && isSuperAdminRole(adminRole) && (
                         <>
+                            <CuratedImagesManager propertyId={propertyId} />
+                            <div style={{ marginTop: '24px' }}></div>
+                            <MediaManager propertyId={propertyId} />
+                        </>
+                    )}
+
+                    {activeTab === "media" && propertyId && !isSuperAdminRole(adminRole) && (
+                        <>
+                            <div className={styles.card}>
+                                <h3>Approval Flow Enabled</h3>
+                                <p style={{ marginTop: "8px", color: "#555" }}>
+                                    Media changes are submitted for superadmin approval before publishing.
+                                </p>
+                            </div>
                             <CuratedImagesManager propertyId={propertyId} />
                             <div style={{ marginTop: '24px' }}></div>
                             <MediaManager propertyId={propertyId} />

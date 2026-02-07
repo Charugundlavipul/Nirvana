@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -8,6 +9,7 @@ const FaqManager = () => {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [adminRole, setAdminRole] = useState(null);
 
     const [formData, setFormData] = useState({
         id: null,
@@ -20,6 +22,14 @@ const FaqManager = () => {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const loadRole = async () => {
+            const role = await getCurrentAdminRole();
+            setAdminRole(role);
+        };
+        loadRole();
     }, []);
 
     const loadData = async () => {
@@ -91,8 +101,29 @@ const FaqManager = () => {
 
     const handleDelete = async (id) => {
         if (!confirm("Delete this FAQ?")) return;
-        await supabase.from("faqs").delete().eq("id", id);
-        loadData();
+        try {
+            if (isSuperAdminRole(adminRole)) {
+                await supabase.from("faqs").delete().eq("id", id);
+                loadData();
+                return;
+            }
+
+            const target = faqs.find((faq) => faq.id === id);
+            const { data: userData } = await supabase.auth.getUser();
+            const { error } = await submitApprovalRequest({
+                entityType: "faq",
+                action: "delete",
+                entityId: id,
+                payload: {},
+                beforeSnapshot: target || null,
+                submittedBy: userData?.user?.id || null,
+                comment: "FAQ delete request",
+            });
+            if (error) throw error;
+            alert("Delete request submitted for approval.");
+        } catch (error) {
+            alert("Error deleting FAQ: " + error.message);
+        }
     };
 
     const toggleProperty = (propId) => {
@@ -132,32 +163,53 @@ const FaqManager = () => {
                 question: formData.question,
                 answer: formData.answer,
                 display_order: parseInt(formData.display_order),
-                is_default: formData.is_default
+                is_default: formData.is_default,
+                property_ids: formData.property_ids
             };
 
-            let faqId = formData.id;
+            if (isSuperAdminRole(adminRole)) {
+                let faqId = formData.id;
 
-            if (faqId) {
-                await supabase.from("faqs").update(payload).eq("id", faqId);
-            } else {
-                const { data, error } = await supabase.from("faqs").insert(payload).select().single();
-                if (error) throw error;
-                faqId = data.id;
+                if (faqId) {
+                    await supabase.from("faqs").update(payload).eq("id", faqId);
+                } else {
+                    const { data, error } = await supabase.from("faqs").insert(payload).select().single();
+                    if (error) throw error;
+                    faqId = data.id;
+                }
+
+                await supabase.from("property_faqs").delete().eq("faq_id", faqId);
+                if (!formData.is_default && formData.property_ids.length > 0) {
+                    const links = formData.property_ids.map(pid => ({
+                        faq_id: faqId,
+                        property_id: pid
+                    }));
+                    await supabase.from("property_faqs").insert(links);
+                }
+
+                setIsEditing(false);
+                loadData();
+                return;
             }
 
-            // Sync Properties (M:N) - Only if not default
-            await supabase.from("property_faqs").delete().eq("faq_id", faqId);
+            const action = formData.id ? "update" : "create";
+            const beforeSnapshot = formData.id
+                ? faqs.find((faq) => faq.id === formData.id) || null
+                : null;
+            const { data: userData } = await supabase.auth.getUser();
+            const { error: requestError } = await submitApprovalRequest({
+                entityType: "faq",
+                action,
+                entityId: formData.id || null,
+                payload,
+                beforeSnapshot,
+                submittedBy: userData?.user?.id || null,
+                comment: formData.id ? "FAQ update request" : "FAQ creation request",
+            });
+            if (requestError) throw requestError;
 
-            if (!formData.is_default && formData.property_ids.length > 0) {
-                const links = formData.property_ids.map(pid => ({
-                    faq_id: faqId,
-                    property_id: pid
-                }));
-                await supabase.from("property_faqs").insert(links);
-            }
-
+            alert("FAQ change request submitted for approval.");
             setIsEditing(false);
-            loadData();
         } catch (error) {
             alert("Error saving FAQ: " + error.message);
         }
@@ -286,7 +338,9 @@ const FaqManager = () => {
 
                     <div className={formStyles.actionBar}>
                         <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Cancel</button>
-                        <button type="submit" className={formStyles.saveBtn}>Save FAQ</button>
+                        <button type="submit" className={formStyles.saveBtn}>
+                            {isSuperAdminRole(adminRole) ? "Save FAQ" : "Submit for Approval"}
+                        </button>
                     </div>
                 </form>
             </div>
