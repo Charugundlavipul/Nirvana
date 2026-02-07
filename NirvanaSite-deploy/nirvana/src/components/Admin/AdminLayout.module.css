@@ -1,0 +1,158 @@
+.adminContainer {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #fafafa;
+    /* Slightly cleaner white-grey */
+    color: #171717;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-left: 260px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fafafa;
+}
+
+.mainContent.expanded {
+    margin-left: 80px;
+}
+
+.topBar {
+    height: 96px;
+    /* Taller header for more breathing room */
+    background-color: #ffffff;
+    /* border-bottom: 1px solid #f0f0f0; Removed border for cleaner look, relying on subtle scroll separator if needed */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    /* More horizontal padding */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.pageTitle {
+    font-size: 32px;
+    /* Larger, bolder title */
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #171717;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.pageSubtitle {
+    font-size: 15px;
+    color: #666;
+    margin: 4px 0 0 0;
+    font-weight: 400;
+}
+
+.actions {
+    display: flex;
+    gap: 16px;
+}
+
+.signOutBtn {
+    padding: 10px 20px;
+    border: 1px solid #e5e5e5;
+    background-color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+    transition: all 0.2s ease;
+}
+
+.signOutBtn:hover {
+    background-color: #171717;
+    color: white;
+    border-color: #171717;
+}
+
+.contentScrollWrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 48px;
+    /* Consistent wide padding */
+    max-width: 1600px;
+    /* Prevent stretching on ultra-wide screens */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+.mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-left: 260px;
+    /* Width of open sidebar */
+    transition: margin-left 0.3s ease;
+    background-color: #f0f2f5;
+}
+
+.mainContent.expanded {
+    margin-left: 80px;
+    /* Width of closed sidebar */
+}
+
+.topBar {
+    height: 80px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+}
+
+.pageTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #171717;
+    margin: 0;
+}
+
+.pageSubtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0 0 0;
+}
+
+.actions {
+    display: flex;
+    gap: 16px;
+}
+
+.signOutBtn {
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    background-color: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.signOutBtn:hover {
+    background-color: #fff0f0;
+    color: #d32f2f;
+    border-color: #ffcccc;
+}
+
+.contentScrollWrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+}

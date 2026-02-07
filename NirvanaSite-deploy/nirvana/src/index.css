@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  /* Luxury / Premium Palette */
+  --color-primary: #111827;
+  /* Gray 900 (Rich Black/Charcoal) */
+  --color-primary-hover: #374151;
+  /* Gray 700 (Lighter Charcoal) */
+  --color-primary-light: #6b7280;
+  /* Gray 500 */
+  --color-accent: #60BD68;
+  /* Fern Green (User Requested) */
+
+  --color-glass: rgba(255, 255, 255, 0.9);
+
+  /* Font */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Custom Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* Custom Utility Classes */
+@layer utilities {
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+
+  .glass-card {
+    @apply bg-white rounded-xl shadow-card hover:shadow-xl transition-all duration-500 hover:-translate-y-1;
+  }
+
+  /* Refined Button Style */
+  .btn-primary {
+    @apply bg-primary text-white font-medium py-3 px-8 rounded-full hover:bg-primary-hover transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2 tracking-wide;
+  }
+
+  /* Gold Accent Text */
+  .text-gold {
+    color: var(--color-accent);
+  }
+}
+
+/* Reset / Base overrides */
+body {
+  @apply bg-white text-gray-900 antialiased font-sans;
+}

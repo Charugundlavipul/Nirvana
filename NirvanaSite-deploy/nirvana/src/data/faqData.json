@@ -1,0 +1,43 @@
+{
+  "common": [
+    {
+      "answer": "Cancellations made 30 days or more before check-in receive a full refund minus processing fees. Cancellations within 30 days are subject to our detailed cancellation policy.",
+      "question": "What is your cancellation policy?"
+    },
+    {
+      "answer": "Yes, we accept all major credit cards including Visa, MasterCard, and American Express.",
+      "question": "Do you accept credit cards?"
+    }
+  ],
+  "propertyOne": [
+    {
+      "answer": "Check-in time is at 3:00 PM and check-out time is at 11:00 AM.",
+      "question": "What are the check-in and check-out times for Nirvana?"
+    },
+    {
+      "answer": "Nirvana includes a private pool, hot tub, and lake access.",
+      "question": "What amenities are included at Nirvana?"
+    }
+  ],
+  "propertyTwo": [
+    {
+      "answer": "Check-in time is at 4:00 PM and check-out time is at 10:00 AM.",
+      "question": "What are the check-in and check-out times for Shoreside Oasis?"
+    },
+    {
+      "answer": "Shoreside Oasis includes mountain views, fireplace, and hiking trails.",
+      "question": "What amenities are included at Shoreside Oasis?"
+    }
+  ],
+  "propertyThree": [
+    {
+      "answer": "Check-in time is at 4:00 PM and check-out time is at 10:00 AM.",
+      "question": "What are the check-in and check-out times for Halftime Hideaway?"
+    },
+    {
+      "answer": "Halftime Hideaway includes a Private pool, hot tub and Exclusive Waterpark Access.",
+      "question": "What amenities are included at Halftime Hideaway?"
+    }
+  ]
+
+}

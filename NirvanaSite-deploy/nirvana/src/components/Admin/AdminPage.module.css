@@ -1,0 +1,179 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #132136;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab,
+.tabActive,
+.btn,
+.btnPrimary,
+.btnDanger {
+  border: 1px solid #a9b8cb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.tabActive,
+.btnPrimary {
+  background: #0d3a66;
+  border-color: #0d3a66;
+  color: #fff;
+}
+
+.btnDanger {
+  background: #7c1026;
+  border-color: #7c1026;
+  color: #fff;
+}
+
+.card {
+  background: #f7fafc;
+  border: 1px solid #dbe6f2;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.field input,
+.field textarea,
+.field select,
+select,
+.smallInput {
+  border: 1px solid #a9b8cb;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #dbe6f2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.thumb,
+.preview,
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #dbe6f2;
+}
+
+.preview {
+  width: 100%;
+  height: 140px;
+  margin: 6px 0;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.smallInput {
+  width: 80px;
+}
+
+.block {
+  border: 1px solid #dbe6f2;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 10px;
+  background: #fff;
+}
+
+.error {
+  color: #7c1026;
+  background: #ffe7ed;
+  border: 1px solid #ffc6d3;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.notice {
+  color: #0d3a66;
+  background: #eaf4ff;
+  border: 1px solid #cae0ff;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.muted {
+  color: #546a84;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

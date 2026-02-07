@@ -1,0 +1,104 @@
+.container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #171717;
+    background-image: radial-gradient(circle at 50% 50%, #2a2a2a 0%, #171717 100%);
+}
+
+.loginCard {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    color: #171717;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+}
+
+.title {
+    font-size: 20px;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 32px 0;
+}
+
+.error {
+    background-color: #ffe6e6;
+    color: #d63031;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+}
+
+.field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.field input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border 0.2s;
+    background-color: #ffffff;
+    color: #171717;
+    /* Explicitly set text color to black */
+}
+
+.field input:focus {
+    border-color: #171717;
+    outline: none;
+}
+
+.submitBtn {
+    background-color: #171717;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.1s, background 0.2s;
+}
+
+.submitBtn:hover {
+    background-color: #333;
+    transform: scale(1.02);
+}
+
+.submitBtn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}

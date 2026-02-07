@@ -1,0 +1,275 @@
+[
+  {
+    "id": "1",
+    "name": "Carrie",
+    "date": "2025-06-11",
+    "rating": 5,
+    "text": "Just hosted our family vacation in the beautiful mountains. Exactly like the pictures! Breath taking views. The cabin had everything we needed. Even extra clean towels in the cabinets in the bathrooms! The host is very great at communicating and making sure everything is good. The beds were extremely comfortable, hot tub was clean, tvs in every room. The perfect getaway in the mountains! Be prepared for a nice drive up!",
+    "img": "/data/Profile/1.webp"
+  },
+  {
+    "id": "2",
+    "name": "Nicole",
+    "date": "2025-05-01",
+    "rating": 5,
+    "text": "The pictures truly do not do this home justice, the view of the Smoky Mountains is nothing short of stunning! The home is spacious, warm, inviting, clean and very family oriented. There is a swing on the top deck that was a family favorite. We loved our stay and plan to book again asap! Thank you Vinay for sharing your gorgeous home!",
+    "img": "/data/Profile/9.webp"
+  },
+  {
+    "id": "3",
+    "name": "Emily",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "We thoroughly enjoyed our stay at Nirvana! The house is gorgeous and views even better! The kids enjoyed the game rooms and theater room! Everything was pristine and so well decorated. The beds were very comfortable. The house really had everything we needed. Vinay was very responsive and helpful with any questions or concerns we had. We highly recommend this place to anyone looking for a quiet, peaceful getaway!",
+    "img": "/data/Profile/4.webp"
+  },
+  {
+    "id": "4",
+    "name": "Tyler",
+    "date": "2025-06-20",
+    "rating": 5,
+    "text": "Amazing Views and plenty of things to do in this secluded chalet. We had two families staying there and the bunk room was perfect for the kids. Saw 3 bears during our stay as well about 1 miles away from the place. 30 minutes from pigeon forge and 45 from Gatlinburg. Would stay again if heading back to the mountains.",
+    "img": "/data/Profile/3.webp"
+  },
+  {
+    "id": "5",
+    "name": "Kerry",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "The house is beautiful, views are stunning. We did not have the best weather but weren’t all that upset as the house had everything we needed! The drive up is definitely one for an all wheel/4wd! Beds are very comfortable, which is a huge plus. No complaints and would stay here again!",
+    "img": "/data/Profile/6.webp"
+  },
+  {
+    "id": "6",
+    "name": "Grant",
+    "date": "2025-06-18",
+    "rating": 5,
+    "text": "We loved everything about our time at Nirvana! We stayed with a group of 12 and there was plenty of room for everybody. The kids absolutely loved the bunk room, game room, theater room and swimming pool. The adults loved playing pool and enjoying time together in the open concept kitchen/living room. The balconies on all three levels provide a stunning view that cannot be adequately described through words or photos. The home was awesome and Vinay was very quick to respond to any questions I had. I would love to stay at Nirvana again sometime soon and would highly recommend it to anyone looking to spend some relaxing time in the Smoky Mountains.",
+    "img": "/data/Profile/5.webp"
+  },
+  {
+    "id": "7",
+    "name": "Lauryn",
+    "date": "2025-05-01",
+    "rating": 4,
+    "text": "This home is absolutely beautiful with the most amazing view. Vinay was responsive the entire trip and I’m confident that the issues discussed will be resolved promptly. Nirvana allowed my family to share so much joy and love. We made unforgettable memories.",
+    "img": "/data/Profile/7.webp"
+  },
+  {
+    "id": "8",
+    "name": "Brittany",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "This house had unmatched views that exceeded our expectations. We even spotted a bear! With a family of 9, including 2 children, we had a very fun and comfortable stay. Vinay’s communication was clear and prompt. The highlights included the multiple decks and the movie theater room.",
+    "img":  "/data/Profile/10.webp"
+  },
+  {
+    "id": "9",
+    "name": "Celeste",
+    "date": "2025-03-01",
+    "rating": 5,
+    "text": "This was our first time in Tennessee and staying at Nirvana was an amazing choice. The property and views are stunning and every detail was well thought out. The kids loved the theatre and I especially loved the big porch swing with the mountain views. I saw two eagles flying…, so cool! There is so much to do in this area and we can’t wait to go back.",
+    "img": "/data/Profile/2.webp"
+  },
+  {
+    "id": "10",
+    "name": "Alex",
+    "date": "2025-02-01",
+    "rating": 5,
+    "text": "Vinay was excellent to deal with throughout the whole trip and answered any questions we had about the property. Will be staying again and we have already recommended the place to many of our close friends and family! Thanks again!!! The views and the house itself are absolutely incredible.",
+    "img": "/data/Profile/8.webp"
+  },
+  {
+    "id": "11",
+    "name": "Avyay",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "Best stay ever. Vinay is an amazing host who always replied very timely. The house was very clean and in an amazing condition. Highly recommend!",
+    "img": "/data/Profile/11.webp"
+  },
+  {
+    "id": "12",
+    "name": "Jason",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "Beautiful home. Secluded with amazing views! Vinay was quick to respond to messages. Highly Recommend!",
+    "img": "/data/Profile/13.webp"
+  },
+  {
+    "id": "13",
+    "name": "Patricia",
+    "date": "2025-03-01",
+    "rating": 5,
+    "text": "The house was a perfect place to get our family together in a peaceful and private location. There was plenty of room for everyone with a lot of extras like the game room, theater and swimming pool. Our favorite thing was the magical view!!",
+    "img": "/data/Profile/12.webp"
+  },
+  {
+    "id": "14",
+    "name": "Stephanie",
+    "date": "2025-02-01",
+    "rating": 5,
+    "text": "We had a great time, Vinay attended to all of our needs timely. The house is extremely beautiful. The weather was not great so we did not get to spend a lot of time on the beautiful decks, but there is so much to do inside the house that it was all good.",
+    "img": "/data/Profile/14.webp"
+  },
+  {
+    "id": "15",
+    "name": "Christopher",
+    "date": "2025-01-01",
+    "rating": 5,
+    "text": "Everything was exactly as pictured. Our family had an amazing time and we enjoyed the peacefulness. The kids loved the games and the pool. Would definitely recommend and if we are ever back in Tennessee we would rebook.",
+    "img": "/data/Profile/15.webp"
+  },
+  {
+    "id": "16",
+    "name": "Latrice",
+    "date": "2025-01-01",
+    "rating": 5,
+    "text": "Thank you, Vinay for hosting my family and I at your place. The home is modern and nicely, great amenities, spacious, comfortable beds, and gorgeous views. We really enjoyed ourselves.",
+    "img": "/data/Profile/16.webp"
+  },
+  {
+    "id": "17",
+    "name": "Amber",
+    "date": "2024-12-01",
+    "rating": 5,
+    "text": "This cabin was absolutely MAGICAL!! My family and I spent our Christmas together here and enjoyed every second of it!!! The views were insane, morning coffee on the balcony looks like you’re staring into a post card! The cabin was clean and just gorgeous, we will definitely stay here again!!! Vinay was an excellent host and answered all of our questions and was so accommodating! I 10 out of 10 recommend booking this beautiful nirvana cabin for a get away!!!!",
+    "img": "/data/Profile/17.webp"
+  },
+  {
+    "id": "18",
+    "name": "Nelson",
+    "date": "2025-06-04",
+    "rating": 5,
+    "text": "The house was exactly as we expected from the listing. We enjoyed our stay very much and would definitely rent from Vinay again!",
+    "img": "/data/Profile/18.webp"
+  },
+  {
+    "id": "19",
+    "name": "Serena Gauri",
+    "date": "2025-05-01",
+    "rating": 3,
+    "text": "We stayed at this Airbnb for 3 nights and 4 days and had a wonderful experience overall. The house is a beautiful, modern three-story home that's spacious and perfect for families to relax and spend quality time together. The amenities were excellent—our favorites were the mini home theater, pool table, mini swimming pool, and hot tub on the deck. We also really enjoyed the barbeque grill and the outdoor patio with gas heaters, which offered a cozy spot to enjoy the natural surroundings.\nThere are a few minor suggestions that could make the stay even better: providing higher-quality trash bags that stay in place, adding a kitchen cutting board, installing hooks in the bathroom for towels or clothes, and ensuring that all bathroom locks are functional (especially the Jack and Jill bathroom).\nOverall, it was a fantastic stay and we'd definitely recommend this property to others!",
+    "img": "/data/Profile/19.webp"
+  },
+  {
+    "id": "20",
+    "name": "Val",
+    "date": "2025-03-01",
+    "rating": 5,
+    "text": "What an amazing stay! The house looked even better than the pictures. The surrounding views are spectacular. You will definitely get beautiful photos. What a great way to wake up each morning!\nOur group traveled with kids ranging from 11-17; and there was plenty to do to keep them all well entertained at the house.\nThe location is central (about a 40 min drive) to a ton of restaurants, attractions and stores; and the drive is completely scenic.\nVinay was a responsive, friendly host, making this a relaxing stay for everyone. I would definitely recommend this spot for a memorable group or family vacation!",
+    "img": "/data/Profile/20.webp"
+  },
+  {
+    "id": "21",
+    "name": "Chase",
+    "date": "2025-02-01",
+    "rating": 5,
+    "text": "My family and I had the pleasure of staying at Nirvana this past weekend, and we created some truly unforgettable memories! The indoor pool was a big hit, especially during the winter, and we all enjoyed relaxing in the outdoor hot tub. With three toddlers, the house had everything we needed for a comfortable stay. We spent our time watching Frozen in the movie theater, cuddling by the fire outside, playing in the arcade room, and reading books in the cozy bunkroom. The house was spacious, with TVs in every bedroom, and even provided a crib for our baby, which made check-in so much easier. The mountain views were breathtaking, and we can't wait to return!",
+    "img": "/data/Profile/21.webp"
+  },
+  {
+    "id": "22",
+    "name": "Avineesh",
+    "date": "2024-11-01",
+    "rating": 5,
+    "text": "This is one of the most beautiful cabin we have ever stayed in. It's very new and very well docrated. Great use of space and provides everything you need for your stay. Host is super helpful and friendly. We will definitely stay here again.",
+    "img": "/data/Profile/24.webp"
+  },
+  {
+    "id": "23",
+    "name": "Steven",
+    "date": "2024-11-01",
+    "rating": 5,
+    "text": "Vinay was unbelievably accommodating and responsive! This cabin is by far the nicest and most comfortable that we’ve ever stayed in. THE VIEWS ARE ABSOLUTELY BREATHTAKING! The pictures do not do the views justice - you will not find a more beautiful view! If you’re looking for the perfect cabin that has EVERYTHING - this is it!",
+    "img": "/data/Profile/23.webp"
+  },
+  {
+    "id": "24",
+    "name": "Kuawme",
+    "date": "2024-10-01",
+    "rating": 5,
+    "text": "Vinay’s place was nothing short of Amazing! I’ve rented a lot of high end airbnb and Vinays top them all! It was very clean! It felt like home. We are already planning to book again!",
+    "img": "/data/Profile/22.webp"
+  },
+  {
+    "id": "25",
+    "name": "Tiffney",
+    "date": "2024-10-01",
+    "rating": 5,
+    "text": "Nirvana was everything we expected and more! Beautiful views, plenty of things to do so you don’t feel the need to leave once you are there. It was very clean and peaceful! The only negative that I would say that we had was the lack of parking available for a location that can sleep up to 14 people. It wasn’t impossible to park everyone but it was like a jigsaw puzzle at times. A must stay for sure!! We will be staying again for sure.",
+    "img": "/data/Profile/25.webp"
+  },
+  {
+    "id": "26",
+    "name": "Richard",
+    "date": "2024-08-01",
+    "rating": 5,
+    "text": "We booked this cabin for a weekend stay, and the host was extremely kind and let us check in early! The views from this cabin are breath-taking! (The pictures dont do justice!!) There was so much to do in this cabin, and noone ever got bored! There was plenty of space and everything you could need was there! This was the best cabin we've stayed at and this was our 4th stay in tennessee!!! We even got to see 3 baby cubs and a momma cub!! I would definetly reccomend this cabin!! 10/10 stay!! thank you so much!!",
+    "img":  "/data/Profile/26.webp"
+  },
+  {
+    "id": "27",
+    "name": "Anissa",
+    "date": "2025-03-01",
+    "rating": 5,
+    "text": "The house was amazing with gorgeous views! We truly enjoyed our stay and can't wait to book with Vinay again!",
+    "img": "/data/Profile/27.webp"
+  },
+  {
+    "id": "28",
+    "name": "Maureen",
+    "date": "2025-03-01",
+    "rating": 5,
+    "text": "I have never used an Airbnb before and there really aren’t words for how wonderful my trip was. It was my 70th birthday and my family took care of the cooking and the place was perfect for everyone. They were always busy. The kids were in the pool and the grown-ups were in the hot tub and we were hanging out in the living room by the fireplace that was beautiful. Every room had a wonderful view and the ambience was perfect. Everybody was happy and it was just the most wonderful memory of my life. Vinay went above and beyond on anything that we expected and we would absolutely use him again in a heartbeat. I could go on and on, but I have an appointment to get to. I wish I had the time to go into the details but I would be happy to answer any questions anybody has. For a family with older people and middle age, people and young children there was always something to do. And just sitting in the living room altogether with the kitchen right there and the dining room brought us all together.",
+    "img": "/data/Profile/28.webp"
+  },
+  {
+    "id": "29",
+    "name": "Tonya",
+    "date": "2025-01-01",
+    "rating": 5,
+    "text": "We had a wonderful time at your cabin. Thanks for getting back to us when we had a question. The views were beautiful and the house was perfect. Thank you.",
+    "img": "/data/Profile/29.webp"
+  },
+  {
+    "id": "30",
+    "name": "Seth",
+    "date": "2025-01-01",
+    "rating": 5,
+    "text": "We had a great day! Vinay was a great host and answered every question we had for him! Was a great vacation with the family!",
+    "img": "/data/Profile/30.webp"
+  },
+  {
+    "id": "31",
+    "name": "Jimmy",
+    "date": "2025-01-01",
+    "rating": 4,
+    "text": "Issues:\n1. Persistent presence of Asian/regular ladybugs and stink bugs, even after daily vacuuming. While common, this issue could likely be resolved by an exterminator.\n2. Two technicians arrived unannounced during our stay, one to work on the pool and another to fix a leaky faucet in the master bathroom.\n3. The front door lock failed, requiring us to spend time resolving it.\n4. Half the kitchen outlets stopped working, with no breaker or GFCI to resolve the issue.\n5. The living room fireplace was not functional.\nPositives:\nVinay was very responsive, seemed genuinely concerned, and did what he could to try and help.\nThe property was stunning and exactly as advertised. The cabinets, drawers, bathrooms, and bedrooms were completely stocked. The breathtaking views were amazing as well.",
+    "img": "/data/Profile/31.webp"
+  },
+  {
+    "id": "32",
+    "name": "Hunter",
+    "date": "2024-12-01",
+    "rating": 5,
+    "text": "The place was amazing and the views were beautiful. Vinay was a great host and very helpful!",
+    "img": "/data/Profile/32.webp"
+  },
+  {
+    "id": "33",
+    "name": "Myra",
+    "date": "2024-12-01",
+    "rating": 5,
+    "text": "We truly truly LOVED IT ❤️ Vinay was awesome in hosting us. Responded as soon as possible!! The house was much more beautiful in person than in the pictures. Some days our kids didn’t want to leave to town so we just did instacart and enjoyed the view. There was everything you needed at the house and more than enough activities for everyone! Not going to lie but for being the first time vacationing in the mountains and driving up at night was a steering wheel grasping experience and was well worth it waking up to a stunning beautiful view. Once again Thank You Vinay for having us!!!",
+    "img": "/data/Profile/34.webp"
+  },
+  {
+    "id": "34",
+    "name": "Brian",
+    "date": "2024-12-01",
+    "rating": 5,
+    "text": "Great place for a relaxing family vacation! Clean, easy to find, great views, plenty for our boys to do at the house, and super responsive host! One of our favorite vacation rentals to date. Thanks for having us!",
+    "img": "/data/Profile/33.webp"
+  }
+]
+

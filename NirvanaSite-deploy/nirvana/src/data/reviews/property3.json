@@ -1,0 +1,19 @@
+[
+  {
+    "id": "35",
+    "name": "Christopher",
+    "date": "2025-05-01",
+    "rating": 5,
+    "text": "We had a fantastic stay! The home was spotless, beautifully decorated, with a stunning view. The location was perfect, quiet and relaxing. The host was responsive and made check-in a breeze. Highly recommend!",
+    "img": "/data/Profile/35.webp"
+  },
+  {
+    "id": "36",
+    "name": "Gail",
+    "date": "2025-04-01",
+    "rating": 5,
+    "text": "The house was beautiful, comfortable and the setting was tranquil. We spent time here with daughter & granddaughters. The girls LOVED the lake. We all went kayaking daily. Was so peaceful. Great restaurants only 15 minutes away. A place to unwind!",
+    "img": "/data/Profile/36.webp"
+  }
+  
+]

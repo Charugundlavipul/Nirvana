@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "icon": "/icons/bath.svg",
+    "title": "Bath Amenities",
+    "description": "Bath, hair dryer, Mikado shampoo and conditioner, body soap, hot water, and shower gel."
+  },
+  {
+    "id": 2,
+    "icon": "/icons/laundry.svg",
+    "title": "Laundry",
+    "description": "Free washer and dryer in unit, towels, bed sheets, hangers, bed linen, and room-darkening blinds."
+  },
+  {
+    "id": 3,
+    "icon": "/icons/tv.svg",
+    "title": "Entertainment",
+    "description": "TV, pool table, arcade games, and an in-house cinema."
+  },
+  {
+    "id": 4,
+    "icon": "/icons/family.svg",
+    "title": "Family Friendly",
+    "description": "Cot provided for infants (52\" x 28\"), extra pillows and blankets included."
+  },
+  {
+    "id": 5,
+    "icon": "/icons/ac.svg",
+    "title": "Heating and Cooling",
+    "description": "Air conditioning, indoor fireplace, and central heating for year-round comfort."
+  },
+  {
+    "id": 6,
+    "icon": "/icons/safety.svg",
+    "title": "Home Safety",
+    "description": "Exterior cameras, smoke alarm, carbon monoxide alarm, fire extinguisher, and first aid kit."
+  },
+  {
+    "id": 7,
+    "icon": "/icons/wifi.svg",
+    "title": "High-Speed Wifi",
+    "description": "Fast and reliable WiFi available throughout the cabin."
+  },
+  {
+    "id": 8,
+    "icon": "/icons/workspace.svg",
+    "title": "Workspace",
+    "description": "Dedicated workspace available for remote work or study."
+  },
+  {
+    "id": 9,
+    "icon": "/icons/kitchen.svg",
+    "title": "Kitchen",
+    "description": "Fully equipped with refrigerator, oven, microwave, cooking basics, dishes, cutlery, coffee maker, and more."
+  },
+  {
+    "id": 10,
+    "icon": "/icons/outdoor.svg",
+    "title": "Outdoor",
+    "description": "Private patio or balcony, BBQ grill, dining area, outdoor furniture, and sun loungers."
+  },
+  {
+    "id": 11,
+    "icon": "/icons/parking.svg",
+    "title": "Parking & Facilities",
+    "description": "Free driveway parking for 4 cars, pool, hot tub, and EV charging station (Level 2)."
+  },
+  {
+    "id": 12,
+    "icon": "/icons/selfcheckin.svg",
+    "title": "Self Check-In",
+    "description": "Smart keypad entry allows flexible and secure self check-in."
+  }
+]

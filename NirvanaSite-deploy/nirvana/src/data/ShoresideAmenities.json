@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "icon": "/icons/bath.svg",
+    "title": "Bathroom",
+    "description": "Bath, hair dryer, cleaning products, shampoo, conditioner, body soap, hot water, and shower gel."
+  },
+  {
+    "id": 2,
+    "icon": "/icons/laundry.svg",
+    "title": "Bedroom and Laundry",
+    "description": "Free washer and dryer, towels, bed linen, cotton linen, wardrobe, safe, iron, and more."
+  },
+  {
+    "id": 3,
+    "icon": "/icons/tv.svg",
+    "title": "Entertainment",
+    "description": "65-inch HDTV, Bluetooth sound system, arcade games, pool table, and reading materials."
+  },
+  {
+    "id": 4,
+    "icon": "/icons/family.svg",
+    "title": "Family Features",
+    "description": "Cot, travel cot, playroom with books and toys, board games, and more for children."
+  },
+  {
+    "id": 5,
+    "icon": "/icons/ac.svg",
+    "title": "Heating and Cooling",
+    "description": "Air conditioning, electric fireplace, ceiling fan, and central heating."
+  },
+  {
+    "id": 6,
+    "icon": "/icons/safety.svg",
+    "title": "Home Safety",
+    "description": "Cameras at the door and front yard, smoke alarm, carbon monoxide alarm, extinguisher, and first aid kit."
+  },
+  {
+    "id": 7,
+    "icon": "/icons/wifi.svg",
+    "title": "Internet and Office",
+    "description": "High-speed WiFi and a private room with a dedicated workspace."
+  },
+  {
+    "id": 8,
+    "icon": "/icons/kitchen.svg",
+    "title": "Kitchen and Dining",
+    "description": "Full kitchen with fridge, oven, Keurig, toaster, rice cooker, blender, utensils, and dining table."
+  },
+  {
+    "id": 9,
+    "icon": "/icons/location.svg",
+    "title": "Location Features",
+    "description": "Lake access via dock, private entrance, nearby launderette, and direct waterfront access."
+  },
+  {
+    "id": 10,
+    "icon": "/icons/outdoor.svg",
+    "title": "Outdoor",
+    "description": "Back garden, patio, firepit, hammock, kayak, boat berth, BBQ grill, and sun loungers."
+  },
+  {
+    "id": 11,
+    "icon": "/icons/parking.svg",
+    "title": "Parking and Facilities",
+    "description": "Free driveway parking for 5 cars."
+  },
+  {
+    "id": 12,
+    "icon": "/icons/services.svg",
+    "title": "Services",
+    "description": "Self check-in via keypad and long-term stays allowed (28+ days)."
+  }
+]

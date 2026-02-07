@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "icon": "/icons/family.svg",
+    "title": "Large Group Capacity",
+    "description": "Sleeps large groups comfortably with multiple bedrooms and flexible sleeping arrangements across all levels."
+  },
+  {
+    "id": 2,
+    "icon": "/icons/pool.svg",
+    "title": "Private Indoor Heated Pool",
+    "description": "Year-round heated indoor pool with keypad lock, safety alarm, and comfortable 82°F water temperature."
+  },
+  {
+    "id": 3,
+    "icon": "/icons/hottub.svg",
+    "title": "Hot Tub",
+    "description": "Relax and unwind in the private hot tub after a day of activities and entertainment."
+  },
+  {
+    "id": 4,
+    "icon": "/icons/tv.svg",
+    "title": "Home Theatre",
+    "description": "Enjoy movie nights in your private home theatre with comfortable seating and premium sound system."
+  },
+  {
+    "id": 5,
+    "icon": "/icons/game.svg",
+    "title": "Game Rooms",
+    "description": "Multiple game rooms featuring PS5, Nintendo Switch, arcade games, gaming chairs, poker table, billiards, and golf simulator."
+  },
+  {
+    "id": 6,
+    "icon": "/icons/kitchen.svg",
+    "title": "Chef-Style Kitchen",
+    "description": "Fully equipped modern kitchen with high-end appliances, expansive island with bar seating, pots, pans, dishware & utensils for large groups."
+  },
+  {
+    "id": 7,
+    "icon": "/icons/outdoor.svg",
+    "title": "Multiple Patios",
+    "description": "Patios on every level with fire pit, BBQ grill, and outdoor seating for enjoying fresh air and views."
+  },
+  {
+    "id": 8,
+    "icon": "/icons/wifi.svg",
+    "title": "High-Speed Wi-Fi",
+    "description": "Fast and reliable high-speed Wi-Fi throughout the property for streaming, gaming, and remote work."
+  },
+  {
+    "id": 9,
+    "icon": "/icons/tv.svg",
+    "title": "Smart TVs",
+    "description": "Smart TVs in multiple rooms. Guests can access their own streaming subscriptions during their stay."
+  },
+  {
+    "id": 10,
+    "icon": "/icons/waterpark.svg",
+    "title": "FREE Waterpark Access",
+    "description": "Complimentary access to exclusive on-site waterpark with infinity pool, lazy river, splash pad, mini golf, pickleball court, and more."
+  },
+  {
+    "id": 11,
+    "icon": "/icons/bar.svg",
+    "title": "Rooftop Adults' Den",
+    "description": "Exclusive rooftop level with wet bar, seating, and games - the perfect adults-only retreat."
+  },
+  {
+    "id": 12,
+    "icon": "/icons/parking.svg",
+    "title": "Ample Parking",
+    "description": "Private on-site parking for up to 5 large SUVs or 6 mid-size vehicles. Fully paved access with no steep roads."
+  },
+  {
+    "id": 13,
+    "icon": "/icons/ev.svg",
+    "title": "EV Charging Station",
+    "description": "Level 2 EV charger (Legrand NEMA 14-50) with up to 40A charging speed for overnight charging convenience."
+  },
+  {
+    "id": 14,
+    "icon": "/icons/ac.svg",
+    "title": "Climate Control",
+    "description": "Central heating and air conditioning throughout the property for year-round comfort."
+  },
+  {
+    "id": 15,
+    "icon": "/icons/fireplace.svg",
+    "title": "Electric Fireplace",
+    "description": "Cozy electric fireplace in the open concept living room for ambiance and warmth."
+  },
+  {
+    "id": 16,
+    "icon": "/icons/laundry.svg",
+    "title": "Laundry Facilities",
+    "description": "Washer and dryer available for guest use during extended stays."
+  },
+  {
+    "id": 17,
+    "icon": "/icons/bath.svg",
+    "title": "Multiple Bathrooms",
+    "description": "8 total bathrooms (6 full, 2 half) strategically located across all levels with starter amenities provided."
+  },
+  {
+    "id": 18,
+    "icon": "/icons/safety.svg",
+    "title": "Safety Features",
+    "description": "Pool room keypad lock, safety alarms, smoke detectors, and first aid kit for guest safety."
+  },
+  {
+    "id": 19,
+    "icon": "/icons/selfcheckin.svg",
+    "title": "Self Check-In",
+    "description": "Convenient keyless entry system for flexible arrival times and hassle-free check-in."
+  },
+  {
+    "id": 20,
+    "icon": "/icons/modern.svg",
+    "title": "Modern Design",
+    "description": "Brand-new property with ultra-modern interiors, high-end finishes, and stylish furnishings throughout."
+  }
+]
