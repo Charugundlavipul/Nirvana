@@ -205,15 +205,15 @@ const Booking = () => {
             {/* Booking Widget Container */}
             <div className="w-full overflow-x-auto p-2 sm:p-4 lg:p-6">
               <div className="mx-auto w-fit overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
-                  <iframe
-                    src={getBookingUrl()}
-                    title="Booking Widget"
-                    className="block border-0"
-                    style={{ width: "350px", height: "600px" }}
-                    referrerPolicy="origin"
-                    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-target-blank"
-                  />
-                </div>
+                <iframe
+                  src={getBookingUrl()}
+                  title="Booking Widget"
+                  className="block border-0"
+                  style={{ width: "340px", height: "640px" }}
+                  referrerPolicy="origin"
+                  sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-target-blank"
+                />
+              </div>
             </div>
           </div>
         )}
