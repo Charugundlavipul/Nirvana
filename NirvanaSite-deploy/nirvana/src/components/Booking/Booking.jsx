@@ -209,7 +209,7 @@ const Booking = () => {
                   src={getBookingUrl()}
                   title="Booking Widget"
                   className="block border-0"
-                  style={{ width: "340px", height: "640px" }}
+                  style={{ width: "320px", height: "680px" }}
                   referrerPolicy="origin"
                   sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-target-blank"
                 />
