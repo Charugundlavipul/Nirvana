@@ -54,10 +54,10 @@ const Booking = () => {
   const selectedProperty = properties.find((p) => p.bookingPropertyId === selectedPropertyId);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100 lg:flex-row">
 
       {/* Left Sidebar - Property Selection */}
-      <div className="w-full lg:w-[400px] xl:w-[440px] bg-white flex flex-col z-20 shadow-2xl pt-20 lg:pt-24 border-r border-gray-200">
+      <div className="z-20 flex w-full flex-col border-r border-gray-200 bg-white pt-20 shadow-2xl lg:w-[360px] lg:pt-24 xl:w-[400px]">
 
         {/* Header */}
         <div className="px-6 pb-5 border-b border-gray-100">
@@ -66,7 +66,7 @@ const Booking = () => {
         </div>
 
         {/* Property List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
           {properties.length === 0 ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
@@ -129,7 +129,7 @@ const Booking = () => {
       </div>
 
       {/* Right Content - Booking Widget or Hero */}
-      <div className={`flex-1 flex flex-col relative transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
+      <div className={`relative flex min-h-[70vh] flex-1 flex-col transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
 
         {!selectedPropertyId ? (
           /* Empty State - Immersive Hero */
@@ -178,7 +178,7 @@ const Booking = () => {
           </div>
         ) : (
           /* Booking Widget with Property Header */
-          <div className="h-full w-full flex flex-col bg-gray-50">
+          <div className="w-full bg-gray-50">
 
             {/* Property Hero Header */}
             <div className="relative h-48 lg:h-56 overflow-hidden flex-shrink-0">
@@ -203,19 +203,17 @@ const Booking = () => {
             </div>
 
             {/* Booking Widget Container */}
-            <div className="flex-1 relative">
-              <div className="absolute inset-0 p-4 sm:p-6 lg:p-8 flex items-start justify-center">
-                <div className="h-full w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div className="w-full overflow-x-auto p-2 sm:p-4 lg:p-6">
+              <div className="mx-auto w-fit overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
                   <iframe
                     src={getBookingUrl()}
                     title="Booking Widget"
-                    className="w-full h-full border-0"
-                    style={{ minHeight: '600px' }}
+                    className="block border-0"
+                    style={{ width: "350px", height: "600px" }}
                     referrerPolicy="origin"
                     sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-target-blank"
                   />
                 </div>
-              </div>
             </div>
           </div>
         )}
