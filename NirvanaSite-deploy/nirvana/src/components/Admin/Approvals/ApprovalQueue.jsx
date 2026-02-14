@@ -28,6 +28,21 @@ const preStyle = {
   fontSize: "12px",
 };
 
+const previewButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "2px 8px",
+  borderRadius: "999px",
+  border: "1px solid #cbd5e1",
+  background: "#fff",
+  color: "#0f766e",
+  fontSize: "11px",
+  fontWeight: 600,
+  cursor: "pointer",
+  lineHeight: 1.6,
+};
+
 const ENTITY_TABLE_BY_TYPE = {
   property: "properties",
   review: "reviews",
@@ -62,6 +77,20 @@ const compactValue = (value) => {
   if (Array.isArray(value)) return value.length ? value.join(", ") : "[]";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+};
+
+const isHttpUrl = (value) => typeof value === "string" && /^https?:\/\//i.test(value.trim());
+
+const isLikelyImageUrl = (fieldKey, value) => {
+  if (!isHttpUrl(value)) return false;
+  const normalized = value.trim().toLowerCase();
+  const key = String(fieldKey || "").toLowerCase();
+
+  if (/\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/.test(normalized)) return true;
+  if (key.includes("image") || key.includes("avatar") || key.includes("thumbnail")) return true;
+  if (key === "url" && /(storage\/v1\/object|gallery|curated|highlight|property-assets)/.test(normalized)) return true;
+  if (/(property-assets|gallery|highlights|curated|avatar)/.test(normalized)) return true;
+  return false;
 };
 
 const getComparableValue = (obj, key) => {
@@ -148,6 +177,8 @@ const buildDiffRows = (req) => {
         key,
         oldValue: "-",
         newValue: compactValue(after[key]),
+        oldRaw: null,
+        newRaw: after[key],
       }))
       .slice(0, 12);
   }
@@ -159,6 +190,8 @@ const buildDiffRows = (req) => {
         key,
         oldValue: compactValue(before[key]),
         newValue: "(deleted)",
+        oldRaw: before[key],
+        newRaw: null,
       }))
       .slice(0, 12);
   }
@@ -176,6 +209,8 @@ const buildDiffRows = (req) => {
             key,
             oldValue: compactValue(prev),
             newValue: compactValue(next),
+            oldRaw: prev,
+            newRaw: next,
           }
         : null;
     })
@@ -184,11 +219,25 @@ const buildDiffRows = (req) => {
   return rows.slice(0, 12);
 };
 
-const DiffPreview = ({ req }) => {
+const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null }) => {
   const rows = useMemo(() => buildDiffRows(req), [req]);
   if (!rows.length) {
     return <div style={{ marginTop: "8px", fontSize: "12px", color: "#64748b" }}>No field-level preview available.</div>;
   }
+
+  const renderCell = (fieldKey, displayValue, rawValue) => {
+    const canPreview = enableImagePreview && isLikelyImageUrl(fieldKey, rawValue);
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <span style={{ wordBreak: "break-word" }}>{displayValue}</span>
+        {canPreview && typeof onPreviewImage === "function" ? (
+          <button type="button" style={previewButtonStyle} onClick={() => onPreviewImage(rawValue)}>
+            Preview
+          </button>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <table style={tableStyle}>
@@ -203,8 +252,12 @@ const DiffPreview = ({ req }) => {
         {rows.map((row) => (
           <tr key={row.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
             <td style={{ padding: "6px 4px", fontWeight: 600 }}>{row.key}</td>
-            <td style={{ padding: "6px 4px", color: "#475569" }}>{row.oldValue}</td>
-            <td style={{ padding: "6px 4px", color: "#0f766e" }}>{row.newValue}</td>
+            <td style={{ padding: "6px 4px", color: "#475569" }}>
+              {renderCell(row.key, row.oldValue, row.oldRaw)}
+            </td>
+            <td style={{ padding: "6px 4px", color: "#0f766e" }}>
+              {renderCell(row.key, row.newValue, row.newRaw)}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -261,6 +314,7 @@ const ApprovalQueue = () => {
   const [comment, setComment] = useState({});
   const [workingId, setWorkingId] = useState(null);
   const [showRaw, setShowRaw] = useState({});
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -358,7 +412,7 @@ const ApprovalQueue = () => {
               </div>
             ) : null}
 
-            <DiffPreview req={req} />
+            <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
 
             <div style={{ marginTop: "8px" }}>
               <button
@@ -417,6 +471,77 @@ const ApprovalQueue = () => {
           </div>
         ))
       )}
+      {previewImageUrl ? (
+        <div
+          onClick={() => setPreviewImageUrl(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.78)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+            zIndex: 2000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(96vw, 1100px)",
+              maxHeight: "90vh",
+              background: "#fff",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 12px",
+                borderBottom: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <strong style={{ fontSize: "14px", color: "#0f172a" }}>Image Preview</strong>
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                style={{
+                  border: "1px solid #cbd5e1",
+                  background: "#fff",
+                  borderRadius: "8px",
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ padding: "12px", overflow: "auto", background: "#f8fafc" }}>
+              <img
+                src={previewImageUrl}
+                alt="Approval preview"
+                style={{
+                  display: "block",
+                  maxWidth: "100%",
+                  maxHeight: "calc(90vh - 80px)",
+                  margin: "0 auto",
+                  objectFit: "contain",
+                  borderRadius: "8px",
+                  background: "#fff",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 };

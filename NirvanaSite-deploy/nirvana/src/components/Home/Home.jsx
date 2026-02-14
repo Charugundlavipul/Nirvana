@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { fetchProperties, fetchReviews } from "../../lib/contentApi";
+import { fetchProperties, fetchPropertyBundleBySlug, fetchReviews } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft } from 'react-icons/fa';
 
 const oasisImages = [
@@ -14,6 +14,9 @@ const Home = () => {
   // Dynamic properties state
   const [properties, setProperties] = useState([]);
   const [imageIndices, setImageIndices] = useState({});
+  const [cardImagesBySlug, setCardImagesBySlug] = useState({});
+  const [galleryLoadedBySlug, setGalleryLoadedBySlug] = useState({});
+  const [galleryLoadingBySlug, setGalleryLoadingBySlug] = useState({});
 
   const [reviews, setReviews] = useState([]);
   const [reviewIndex, setReviewIndex] = useState(0);
@@ -38,8 +41,17 @@ const Home = () => {
 
         // Initialize image indices for each property
         const indices = {};
-        homeProperties.forEach(p => { indices[p.id] = 0; });
+        const initialCardImages = {};
+        const initialGalleryLoaded = {};
+        homeProperties.forEach((p) => {
+          indices[p.id] = 0;
+          const primary = p.primary_image || p.image || "";
+          initialCardImages[p.slug] = primary ? [primary] : [];
+          initialGalleryLoaded[p.slug] = false;
+        });
         setImageIndices(indices);
+        setCardImagesBySlug(initialCardImages);
+        setGalleryLoadedBySlug(initialGalleryLoaded);
 
         setReviews(allReviews || []);
       } catch (error) {
@@ -77,6 +89,112 @@ const Home = () => {
 
   const nextReview = () => setReviewIndex(prev => (prev + 1) % filteredReviews.length);
   const prevReview = () => setReviewIndex(prev => (prev - 1 + filteredReviews.length) % filteredReviews.length);
+
+  const getCardImages = (property) => {
+    const images = cardImagesBySlug[property.slug] || [];
+    if (images.length) return images;
+    const fallbackPrimary = property.primary_image || property.image || "";
+    return fallbackPrimary ? [fallbackPrimary] : [];
+  };
+
+  const moveCardImage = (property, direction) => {
+    const images = getCardImages(property);
+    if (images.length <= 1) return;
+    setImageIndices((prev) => {
+      const current = prev[property.id] || 0;
+      const nextIndex =
+        direction === "next"
+          ? (current + 1) % images.length
+          : (current - 1 + images.length) % images.length;
+      return { ...prev, [property.id]: nextIndex };
+    });
+  };
+
+  const loadGalleryForCard = async (property, directionAfterLoad = null) => {
+    const slug = property.slug;
+    if (!slug) return;
+    if (galleryLoadedBySlug[slug]) {
+      if (directionAfterLoad) moveCardImage(property, directionAfterLoad);
+      return;
+    }
+    if (galleryLoadingBySlug[slug]) return;
+
+    setGalleryLoadingBySlug((prev) => ({ ...prev, [slug]: true }));
+    try {
+      const fallbackHighlights = (property.highlightImages || []).filter(Boolean);
+      const bundle = await fetchPropertyBundleBySlug(slug);
+      const primary = property.primary_image || property.image || "";
+      const galleryImages = (bundle?.galleryImages || []).filter(Boolean);
+      const candidateImages = galleryImages.length ? galleryImages : fallbackHighlights;
+
+      const seen = new Set();
+      const merged = [primary, ...candidateImages]
+        .filter(Boolean)
+        .filter((img) => {
+          if (seen.has(img)) return false;
+          seen.add(img);
+          return true;
+        });
+
+      setCardImagesBySlug((prev) => ({
+        ...prev,
+        [slug]: merged.length ? merged : (prev[slug] || []),
+      }));
+      setGalleryLoadedBySlug((prev) => ({ ...prev, [slug]: true }));
+
+      if (directionAfterLoad && merged.length > 1) {
+        setImageIndices((prev) => ({
+          ...prev,
+          [property.id]: directionAfterLoad === "next" ? 1 : merged.length - 1,
+        }));
+      }
+    } catch (error) {
+      console.error(`Failed loading gallery images for ${slug}:`, error);
+      const primary = property.primary_image || property.image || "";
+      const fallbackHighlights = (property.highlightImages || []).filter(Boolean);
+      const seen = new Set();
+      const merged = [primary, ...fallbackHighlights]
+        .filter(Boolean)
+        .filter((img) => {
+          if (seen.has(img)) return false;
+          seen.add(img);
+          return true;
+        });
+
+      if (merged.length > 1) {
+        setCardImagesBySlug((prev) => ({ ...prev, [slug]: merged }));
+        if (directionAfterLoad) {
+          setImageIndices((prev) => ({
+            ...prev,
+            [property.id]: directionAfterLoad === "next" ? 1 : merged.length - 1,
+          }));
+        }
+      }
+      setGalleryLoadedBySlug((prev) => ({ ...prev, [slug]: true }));
+    } finally {
+      setGalleryLoadingBySlug((prev) => ({ ...prev, [slug]: false }));
+    }
+  };
+
+  const handleCardNext = async (e, property) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!galleryLoadedBySlug[property.slug]) {
+      await loadGalleryForCard(property, "next");
+      return;
+    }
+    moveCardImage(property, "next");
+  };
+
+  const handleCardPrev = async (e, property) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!galleryLoadedBySlug[property.slug]) {
+      await loadGalleryForCard(property, "prev");
+      return;
+    }
+    moveCardImage(property, "prev");
+  };
 
   return (
     <div className="w-full bg-gray-50 text-gray-800 font-sans">
@@ -118,21 +236,18 @@ const Home = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {properties.map((prop, index) => {
-              // Build images array with primary image first
-              const images = [prop.primary_image, ...(prop.highlightImages || [])].filter(Boolean);
+              const images = getCardImages(prop);
               const currentIndex = imageIndices[prop.id] || 0;
-              const setIndex = (idx) => setImageIndices(prev => ({ ...prev, [prop.id]: idx }));
-
               return (
                 <SignatureCard
                   key={prop.id}
                   title={prop.name}
-                  subtitle={prop.tagline || "Luxury Retreat"}
                   location={prop.location}
-                  description={prop.description?.slice(0, 60) + (prop.description?.length > 60 ? "..." : "") || "Experience luxury living"}
                   images={images}
                   currentIndex={currentIndex}
-                  setIndex={setIndex}
+                  onPrev={(e) => handleCardPrev(e, prop)}
+                  onNext={(e) => handleCardNext(e, prop)}
+                  isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
                   link={`/${prop.slug}`}
                   stats={{
                     beds: prop.bedroom_count || 0,
@@ -224,17 +339,14 @@ const Home = () => {
 };
 
 // Signature Retreat Card Component
-const SignatureCard = ({ title, subtitle, location, description, images, currentIndex, setIndex, link, stats, badge }) => {
+const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, isGalleryLoading, link, stats, badge }) => {
   const currentImage = images[currentIndex] || "";
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
       className="group relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-200">
+      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-slate-200">
         <img
           src={currentImage}
           alt={title}
@@ -252,33 +364,34 @@ const SignatureCard = ({ title, subtitle, location, description, images, current
         )}
 
         {/* Carousel Controls */}
-        {images.length > 1 && isHovered && (
-          <>
-            <button
-              onClick={(e) => { e.preventDefault(); setIndex(prev => (prev === 0 ? images.length - 1 : prev - 1)); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg text-slate-800 hover:bg-white transition-all"
-            >
-              <FaChevronLeft size={14} />
-            </button>
-            <button
-              onClick={(e) => { e.preventDefault(); setIndex(prev => (prev === images.length - 1 ? 0 : prev + 1)); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg text-slate-800 hover:bg-white transition-all"
-            >
-              <FaChevronRight size={14} />
-            </button>
-          </>
-        )}
+        <div className="pointer-events-none absolute inset-x-0 top-[42%] z-30 flex -translate-y-1/2 justify-between px-3">
+          <button
+            type="button"
+            onClick={onPrev}
+            disabled={isGalleryLoading}
+            className="pointer-events-auto rounded-full bg-white/90 p-2 text-slate-800 shadow-lg transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Previous image"
+          >
+            <FaChevronLeft size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={isGalleryLoading}
+            className="pointer-events-auto rounded-full bg-white/90 p-2 text-slate-800 shadow-lg transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Next image"
+          >
+            <FaChevronRight size={14} />
+          </button>
+        </div>
 
         {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <p className="text-accent text-xs font-bold uppercase tracking-widest mb-1">{subtitle}</p>
+        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 text-white">
           <h3 className="text-2xl font-bold mb-2">{title}</h3>
           <p className="flex items-center gap-1.5 text-sm text-white/80 mb-3">
             <FaMapMarkerAlt className="text-accent" size={12} />
             {location}
           </p>
-          <p className="text-sm text-white/70 mb-4 line-clamp-2">{description}</p>
-
           {/* Stats */}
           <div className="flex items-center gap-4 text-sm text-white/80 mb-4">
             <span className="flex items-center gap-1.5">
@@ -295,7 +408,7 @@ const SignatureCard = ({ title, subtitle, location, description, images, current
           {/* CTA */}
           <Link
             to={link}
-            className="inline-block w-full text-center bg-white text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-accent hover:text-white transition-all duration-300 text-sm uppercase tracking-wider"
+            className="inline-block w-full text-center bg-white text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-accent hover:text-white transition-all duration-300 text-xs uppercase tracking-wide"
           >
             Explore Property
           </Link>

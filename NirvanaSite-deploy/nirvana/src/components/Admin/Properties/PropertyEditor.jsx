@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import styles from "./PropertyEditor.module.css";
@@ -7,6 +7,8 @@ import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
 import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
+import RichTextContent from "../../common/RichTextContent";
+import { sanitizeRichText } from "../../../lib/richText";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -19,6 +21,7 @@ const PropertyEditor = () => {
     const [saving, setSaving] = useState(false);
     const [adminRole, setAdminRole] = useState(null);
     const [beforeSnapshot, setBeforeSnapshot] = useState(null);
+    const descriptionRef = useRef(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -102,6 +105,58 @@ const PropertyEditor = () => {
             return next;
         });
     };
+
+    const normalizeEditorHtml = (value) => {
+        let normalized = `${value || ""}`;
+        normalized = normalized
+            .replace(/<b(\s|>)/gi, "<strong$1")
+            .replace(/<\/b>/gi, "</strong>")
+            .replace(/<i(\s|>)/gi, "<em$1")
+            .replace(/<\/i>/gi, "</em>")
+            .replace(/<div>/gi, "<p>")
+            .replace(/<\/div>/gi, "</p>")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/<p><br><\/p>/gi, "");
+
+        return sanitizeRichText(normalized).trim();
+    };
+
+    const syncDescriptionFromEditor = () => {
+        const editor = descriptionRef.current;
+        if (!editor) return;
+        const nextDescription = normalizeEditorHtml(editor.innerHTML);
+        setFormData((prev) =>
+            prev.description === nextDescription
+                ? prev
+                : { ...prev, description: nextDescription }
+        );
+    };
+
+    const runEditorCommand = (command, value = null) => {
+        const editor = descriptionRef.current;
+        if (!editor) return;
+        editor.focus();
+        document.execCommand(command, false, value);
+        syncDescriptionFromEditor();
+    };
+
+    const setBlock = (tag) => runEditorCommand("formatBlock", `<${tag}>`);
+
+    const createLink = () => {
+        const url = window.prompt("Enter URL", "https://");
+        if (!url) return;
+        runEditorCommand("createLink", url);
+    };
+
+    useEffect(() => {
+        const editor = descriptionRef.current;
+        if (!editor) return;
+        if (document.activeElement === editor) return;
+        const sanitized = sanitizeRichText(formData.description || "");
+        if (editor.innerHTML !== sanitized) {
+            editor.innerHTML = sanitized;
+        }
+    }, [formData.description]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -232,8 +287,35 @@ const PropertyEditor = () => {
                                     </div>
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Description</label>
-                                    <textarea name="description" value={formData.description} onChange={handleChange} rows={5} />
+                                    <label>Description (Rich Text)</label>
+                                    <div className={styles.richEditorShell}>
+                                        <div className={styles.richToolbar}>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={() => runEditorCommand("bold")}><strong>B</strong></button>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={() => runEditorCommand("italic")}><em>I</em></button>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={() => setBlock("h3")}>H3</button>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={() => setBlock("p")}>P</button>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={() => runEditorCommand("insertUnorderedList")}>List</button>
+                                            <button type="button" className={styles.richToolbarBtn} onClick={createLink}>Link</button>
+                                        </div>
+                                        <div
+                                            ref={descriptionRef}
+                                            className={styles.richEditor}
+                                            contentEditable
+                                            role="textbox"
+                                            aria-multiline="true"
+                                            data-placeholder="Write a long, detailed property description..."
+                                            onInput={syncDescriptionFromEditor}
+                                            onBlur={syncDescriptionFromEditor}
+                                            suppressContentEditableWarning
+                                        />
+                                    </div>
+                                    <p className={styles.richHelpText}>
+                                        Use the toolbar to format text. Preview below shows exactly what will render on the site.
+                                    </p>
+                                    <div className={styles.richPreview}>
+                                        <p className={styles.richPreviewTitle}>Preview</p>
+                                        <RichTextContent value={formData.description} className={styles.richPreviewContent} />
+                                    </div>
                                 </div>
                             </div>
 

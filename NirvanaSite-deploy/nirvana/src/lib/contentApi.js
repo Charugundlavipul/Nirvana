@@ -185,6 +185,7 @@ export async function fetchPropertyCards() {
     bookingUrl: property.booking_url || "",
     activityRoute: property.meta?.activityRoute || null,
     location: property.location,
+    description: property.description || "",
     guests_max: property.guests_max,
     bedroom_count: property.bedroom_count,
     bathroom_count: property.bathroom_count,

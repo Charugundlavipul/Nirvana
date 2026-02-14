@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaArrowRight, FaTimes, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaStar, FaHiking, FaComments, FaChevronDown, FaPlay } from 'react-icons/fa';
 import { getAmenityIcon } from '../../lib/amenityIcons.jsx';
 import { fetchPropertyBundleBySlug } from '../../lib/contentApi';
+import { createRichTextExcerpt } from '../../lib/richText';
+import RichTextContent from '../common/RichTextContent';
 
 const PropertyPage = () => {
     const { slug } = useParams();
@@ -138,6 +140,7 @@ const PropertyPage = () => {
 
     const heroImageSrc = curatedImages.bg || curatedImages.home;
     const introImageSrc = curatedImages.secondary || curatedImages.home;
+    const descriptionPreview = createRichTextExcerpt(property.description, 420);
 
     return (
         <div className="font-sans text-gray-800 bg-slate-50">
@@ -210,7 +213,18 @@ const PropertyPage = () => {
                             <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">About This Property</p>
                             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Welcome to {property.name}</h2>
                         </div>
-                        <p className="text-xl text-slate-600 leading-relaxed font-light whitespace-pre-line">{property.description}</p>
+                        <div>
+                            <p className="text-xl text-slate-600 leading-relaxed font-light">{descriptionPreview.text}</p>
+                            {descriptionPreview.isTruncated && (
+                                <button
+                                    type="button"
+                                    onClick={() => openLightbox(null, 'description')}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 px-5 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-white transition-colors"
+                                >
+                                    Read more
+                                </button>
+                            )}
+                        </div>
 
                         {/* Quick Stats */}
                         <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-200">
@@ -444,7 +458,18 @@ const PropertyPage = () => {
                     </button>
 
                     <div className="relative max-w-6xl max-h-screen p-2" onClick={(e) => e.stopPropagation()}>
-                        {lightboxType === 'amenities' ? (
+                        {lightboxType === 'description' ? (
+                            <div className="bg-white rounded-3xl p-8 md:p-12 max-w-4xl max-h-[85vh] overflow-y-auto">
+                                <div className="text-center mb-8">
+                                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">About This Property</p>
+                                    <h3 className="text-4xl font-bold text-slate-900">{property.name}</h3>
+                                </div>
+                                <RichTextContent
+                                    value={property.description}
+                                    className="text-slate-700 leading-relaxed text-base md:text-lg [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-2 [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-xl [&_h3]:font-semibold [&_blockquote]:mb-4 [&_blockquote]:border-l-4 [&_blockquote]:border-accent/30 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-accent [&_a]:underline"
+                                />
+                            </div>
+                        ) : lightboxType === 'amenities' ? (
                             <div className="bg-white rounded-3xl p-8 md:p-12 max-w-5xl max-h-[85vh] overflow-y-auto">
                                 <div className="text-center mb-10">
                                     <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">Complete List</p>
