@@ -22,6 +22,7 @@ const PropertyEditor = () => {
     const [publishing, setPublishing] = useState(false);
     const [adminRole, setAdminRole] = useState(null);
     const [isPublished, setIsPublished] = useState(true);
+    const [editorNote, setEditorNote] = useState("");
     const [beforeSnapshot, setBeforeSnapshot] = useState(null);
     const descriptionRef = useRef(null);
 
@@ -207,7 +208,7 @@ const PropertyEditor = () => {
                         existingRevision.id,
                         payload,
                         beforeSnapshot,
-                        "Revised and resubmitted."
+                        editorNote || "Revised and resubmitted."
                     );
                     if (updateError) throw updateError;
                     alert("Revision resubmitted for approval.");
@@ -219,7 +220,7 @@ const PropertyEditor = () => {
                         payload,
                         beforeSnapshot,
                         submittedBy: userData?.user?.id || null,
-                        comment: "Property update request.",
+                        comment: editorNote || "Property update request.",
                     });
                     if (requestError) throw requestError;
                     alert("Change request submitted to superadmin for approval.");
@@ -249,7 +250,7 @@ const PropertyEditor = () => {
                     existingRevision.id,
                     payload,
                     beforeSnapshot,
-                    "Revised and resubmitted for publish."
+                    editorNote || "Revised and resubmitted for publish."
                 );
                 if (updateError) throw updateError;
             } else {
@@ -260,7 +261,7 @@ const PropertyEditor = () => {
                     payload,
                     beforeSnapshot,
                     submittedBy: userData?.user?.id || null,
-                    comment: "Request to publish draft property.",
+                    comment: editorNote || "Request to publish draft property.",
                 });
                 if (requestError) throw requestError;
             }
@@ -411,6 +412,27 @@ const PropertyEditor = () => {
                                     <input type="number" name="pet_fee" value={formData.pet_fee} onChange={handleChange} />
                                 </div>
                             </div>
+
+                            {!isSuperAdminRole(adminRole) && (
+                                <div className={styles.card}>
+                                    <h3>Note to Superadmin</h3>
+                                    <textarea
+                                        value={editorNote}
+                                        onChange={(e) => setEditorNote(e.target.value)}
+                                        placeholder="Add a note for the superadmin (e.g. 'Added new photos, please review')..."
+                                        rows={2}
+                                        style={{
+                                            width: "100%",
+                                            padding: "10px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "6px",
+                                            fontSize: "13px",
+                                            resize: "vertical",
+                                            fontFamily: "inherit",
+                                        }}
+                                    />
+                                </div>
+                            )}
 
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
