@@ -283,7 +283,10 @@ const Home = () => {
           </div>
 
           <div className="flex items-center justify-center gap-4 md:gap-8">
-            <button onClick={prevReview} className="p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300">
+            <button
+              onClick={prevReview}
+              className="hidden md:inline-flex p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+            >
               <FaChevronLeft size={20} />
             </button>
 
@@ -293,8 +296,27 @@ const Home = () => {
               ))}
             </div>
 
-            <button onClick={nextReview} className="p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300">
+            <button
+              onClick={nextReview}
+              className="hidden md:inline-flex p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+            >
               <FaChevronRight size={20} />
+            </button>
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-3 md:hidden">
+            <button
+              onClick={prevReview}
+              className="inline-flex p-3 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+              aria-label="Previous review"
+            >
+              <FaChevronLeft size={18} />
+            </button>
+            <button
+              onClick={nextReview}
+              className="inline-flex p-3 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+              aria-label="Next review"
+            >
+              <FaChevronRight size={18} />
             </button>
           </div>
 
@@ -446,7 +468,7 @@ const PremiumReviewCard = ({ review }) => {
   };
 
   return (
-    <div className="min-w-[320px] md:min-w-[380px] bg-white p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col relative">
+    <div className="min-w-full md:min-w-[380px] md:max-w-[380px] bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col relative">
       <FaQuoteLeft className="absolute top-6 right-6 text-4xl text-accent/10" />
 
       <div className="flex items-center gap-4 mb-6">
