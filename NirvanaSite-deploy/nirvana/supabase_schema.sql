@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     entity_id UUID,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     before_snapshot JSONB,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'applied')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'applied', 'revision_requested')),
     submitted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -308,6 +308,21 @@ ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS comment TEXT;
 ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 CREATE INDEX IF NOT EXISTS approval_requests_status_idx ON approval_requests(status, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS approval_requests_entity_idx ON approval_requests(entity_type, entity_id);
+
+-- Migration: ensure status check constraint includes revision_requested (for existing DBs)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.constraint_column_usage
+        WHERE table_name = 'approval_requests' AND constraint_name = 'approval_requests_status_check'
+    ) THEN
+        ALTER TABLE approval_requests DROP CONSTRAINT approval_requests_status_check;
+    END IF;
+    ALTER TABLE approval_requests ADD CONSTRAINT approval_requests_status_check
+        CHECK (status IN ('pending', 'approved', 'rejected', 'applied', 'revision_requested'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END;
+$$;
 
 DO $$
 BEGIN

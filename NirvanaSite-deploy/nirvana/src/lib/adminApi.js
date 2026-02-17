@@ -52,3 +52,31 @@ export async function fetchApprovalRequests(status = "pending") {
   }
   return query;
 }
+
+export async function findRevisionRequest(entityType, entityId) {
+  if (!entityId) return null;
+  const { data } = await supabase
+    .from("approval_requests")
+    .select("*")
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .eq("status", "revision_requested")
+    .order("submitted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data || null;
+}
+
+export async function resubmitApprovalRequest(requestId, newPayload, beforeSnapshot = null, comment = null) {
+  return supabase
+    .from("approval_requests")
+    .update({
+      payload: newPayload,
+      before_snapshot: beforeSnapshot,
+      status: "pending",
+      comment: comment,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", requestId);
+}
+

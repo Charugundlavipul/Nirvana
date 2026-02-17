@@ -6,7 +6,7 @@ import { supabase } from "../../../supabaseClient";
 import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findRevisionRequest, resubmitApprovalRequest } from "../../../lib/adminApi";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 
@@ -199,17 +199,31 @@ const PropertyEditor = () => {
                 // Editors: submit update as approval request (keep current is_published)
                 payload.is_published = isPublished;
                 const { data: userData } = await supabase.auth.getUser();
-                const { error: requestError } = await submitApprovalRequest({
-                    entityType: "property",
-                    action: "update",
-                    entityId: propertyId,
-                    payload,
-                    beforeSnapshot,
-                    submittedBy: userData?.user?.id || null,
-                    comment: "Property update request.",
-                });
-                if (requestError) throw requestError;
-                alert("Change request submitted to superadmin for approval.");
+
+                // Check for an existing revision_requested request to update instead of creating a duplicate
+                const existingRevision = await findRevisionRequest("property", propertyId);
+                if (existingRevision) {
+                    const { error: updateError } = await resubmitApprovalRequest(
+                        existingRevision.id,
+                        payload,
+                        beforeSnapshot,
+                        "Revised and resubmitted."
+                    );
+                    if (updateError) throw updateError;
+                    alert("Revision resubmitted for approval.");
+                } else {
+                    const { error: requestError } = await submitApprovalRequest({
+                        entityType: "property",
+                        action: "update",
+                        entityId: propertyId,
+                        payload,
+                        beforeSnapshot,
+                        submittedBy: userData?.user?.id || null,
+                        comment: "Property update request.",
+                    });
+                    if (requestError) throw requestError;
+                    alert("Change request submitted to superadmin for approval.");
+                }
                 navigate("/admin/properties");
             }
         } catch (error) {
@@ -228,16 +242,28 @@ const PropertyEditor = () => {
             const payload = { ...formData, is_published: true };
             if (!payload.booking_url) delete payload.booking_url;
 
-            const { error: requestError } = await submitApprovalRequest({
-                entityType: "property",
-                action: "update",
-                entityId: propertyId,
-                payload,
-                beforeSnapshot,
-                submittedBy: userData?.user?.id || null,
-                comment: "Request to publish draft property.",
-            });
-            if (requestError) throw requestError;
+            // Check for an existing revision_requested request to update instead of creating a duplicate
+            const existingRevision = await findRevisionRequest("property", propertyId);
+            if (existingRevision) {
+                const { error: updateError } = await resubmitApprovalRequest(
+                    existingRevision.id,
+                    payload,
+                    beforeSnapshot,
+                    "Revised and resubmitted for publish."
+                );
+                if (updateError) throw updateError;
+            } else {
+                const { error: requestError } = await submitApprovalRequest({
+                    entityType: "property",
+                    action: "update",
+                    entityId: propertyId,
+                    payload,
+                    beforeSnapshot,
+                    submittedBy: userData?.user?.id || null,
+                    comment: "Request to publish draft property.",
+                });
+                if (requestError) throw requestError;
+            }
             alert("Publish request submitted to superadmin for approval.");
             navigate("/admin/properties");
         } catch (error) {
