@@ -531,7 +531,7 @@ const ApprovalQueue = () => {
               </div>
             </div>
 
-            {req.comment ? (
+            {req.comment && req.status === "pending" ? (
               <div style={{ marginBottom: "8px", fontSize: "13px", color: "#444" }}>
                 <strong>Editor Note:</strong> {req.comment}
               </div>
