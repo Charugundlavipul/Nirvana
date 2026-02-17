@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./CuratedImagesManager.module.css";
 import editorStyles from "./PropertyEditor.module.css"; // Reuse card/field styles
 import { supabase } from "../../../supabaseClient";
@@ -11,6 +11,7 @@ const CuratedImagesManager = ({ propertyId }) => {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState({ home: false, bg: false, secondary: false });
     const [adminRole, setAdminRole] = useState(null);
+    const fileInputRefs = useRef({});
 
     useEffect(() => {
         loadImages();
@@ -164,12 +165,21 @@ const CuratedImagesManager = ({ propertyId }) => {
 
                         <div style={{ marginTop: '8px' }}>
                             <input
+                                ref={(el) => { fileInputRefs.current[slot] = el; }}
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => handleUpload(e, slot)}
                                 disabled={uploading[slot]}
+                                style={{ display: 'none' }}
                             />
-                            {uploading[slot] && <span style={{ fontSize: '12px' }}> Uploading...</span>}
+                            <button
+                                type="button"
+                                className={styles.uploadBtn}
+                                onClick={() => fileInputRefs.current[slot]?.click()}
+                                disabled={uploading[slot]}
+                            >
+                                {uploading[slot] ? "Uploading..." : images[slot] ? "Replace Image" : "Upload Image"}
+                            </button>
                         </div>
                     </div>
                 ))}

@@ -338,6 +338,9 @@ DECLARE
     req approval_requests%ROWTYPE;
     v_actor_role TEXT;
     v_new_id UUID;
+    v_slug TEXT;
+    v_base_slug TEXT;
+    v_suffix INT;
 BEGIN
     v_actor_role := public.current_admin_role();
     IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'superadmin') THEN
@@ -353,8 +356,20 @@ BEGIN
         RAISE EXCEPTION 'Approval request not found';
     END IF;
 
-    IF req.status <> 'pending' THEN
-        RAISE EXCEPTION 'Only pending requests can be processed';
+    IF req.status NOT IN ('pending', 'revision_requested') THEN
+        RAISE EXCEPTION 'Only pending or revision_requested requests can be processed';
+    END IF;
+
+    -- Handle revision_requested: save comment, don't apply changes
+    IF p_new_status = 'revision_requested' THEN
+        UPDATE approval_requests
+        SET status = 'revision_requested',
+            approved_by = auth.uid(),
+            approved_at = NOW(),
+            comment = COALESCE(p_comment, comment),
+            updated_at = NOW()
+        WHERE id = req.id;
+        RETURN jsonb_build_object('ok', true, 'status', 'revision_requested', 'request_id', req.id);
     END IF;
 
     IF p_new_status = 'rejected' THEN
@@ -369,17 +384,26 @@ BEGIN
     END IF;
 
     IF p_new_status <> 'approved' THEN
-        RAISE EXCEPTION 'Unsupported status %, use approved/rejected', p_new_status;
+        RAISE EXCEPTION 'Unsupported status %, use approved/rejected/revision_requested', p_new_status;
     END IF;
 
     IF req.entity_type = 'property' THEN
         IF req.action = 'create' THEN
+            -- Deduplicate slug: if "my-cabin" exists, try "my-cabin-2", "my-cabin-3", etc.
+            v_base_slug := req.payload->>'slug';
+            v_slug := v_base_slug;
+            v_suffix := 2;
+            WHILE EXISTS (SELECT 1 FROM public.properties WHERE slug = v_slug) LOOP
+                v_slug := v_base_slug || '-' || v_suffix;
+                v_suffix := v_suffix + 1;
+            END LOOP;
+
             INSERT INTO public.properties (
                 slug, name, booking_url, is_published, location, description,
                 guests_max, bedroom_count, bed_details, bathroom_count, bath_details,
                 pet_friendly, pet_fee, hot_tub
             ) VALUES (
-                req.payload->>'slug',
+                v_slug,
                 req.payload->>'name',
                 req.payload->>'booking_url',
                 COALESCE((req.payload->>'is_published')::boolean, true),

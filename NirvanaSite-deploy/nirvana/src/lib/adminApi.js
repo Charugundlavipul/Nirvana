@@ -45,6 +45,10 @@ export async function fetchApprovalRequests(status = "pending") {
     .select("*")
     .order("submitted_at", { ascending: false });
 
-  if (status) query = query.eq("status", status);
+  if (Array.isArray(status)) {
+    query = query.in("status", status);
+  } else if (status) {
+    query = query.eq("status", status);
+  }
   return query;
 }

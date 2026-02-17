@@ -81,6 +81,7 @@ async function fetchPropertiesRaw() {
   let { data, error } = await supabase
     .from("properties")
     .select(withBookingColumns)
+    .eq("is_published", true)
     .order("created_at", { ascending: true });
 
   const errorMessage = `${error?.message || ""}`.toLowerCase();

@@ -19,7 +19,9 @@ const PropertyEditor = () => {
     const [activeTab, setActiveTab] = useState("details");
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
+    const [publishing, setPublishing] = useState(false);
     const [adminRole, setAdminRole] = useState(null);
+    const [isPublished, setIsPublished] = useState(true);
     const [beforeSnapshot, setBeforeSnapshot] = useState(null);
     const descriptionRef = useRef(null);
 
@@ -67,6 +69,7 @@ const PropertyEditor = () => {
             if (error) throw error;
 
             setPropertyId(data.id);
+            setIsPublished(data.is_published !== false);
             const normalized = {
                 name: data.name || "",
                 slug: data.slug || "",
@@ -163,51 +166,85 @@ const PropertyEditor = () => {
         setSaving(true);
 
         try {
-            const payload = { ...formData, is_published: true };
-            if (!payload.booking_url) delete payload.booking_url; // Optional
-
             const superAdmin = isSuperAdminRole(adminRole);
-            if (!superAdmin) {
-                const { data: userData } = await supabase.auth.getUser();
-                const requestAction = isNew ? "create" : "update";
-                const requestEntityId = isNew ? null : propertyId;
+            const payload = { ...formData };
+            if (!payload.booking_url) delete payload.booking_url;
 
+            if (superAdmin) {
+                // Superadmins save directly and always publish
+                payload.is_published = true;
+                let result;
+                if (isNew) {
+                    const { data, error } = await supabase.from("properties").insert(payload).select().single();
+                    if (error) throw error;
+                    result = data;
+                } else {
+                    const { data, error } = await supabase.from("properties").update(payload).eq("id", propertyId).select().single();
+                    if (error) throw error;
+                    result = data;
+                }
+                alert("Property saved successfully!");
+                if (isNew) navigate(`/admin/properties/${result.slug}`);
+            } else if (isNew) {
+                // Editors: create as unpublished draft directly
+                payload.is_published = false;
+                const { data, error } = await supabase.from("properties").insert(payload).select().single();
+                if (error) throw error;
+                setPropertyId(data.id);
+                setIsPublished(false);
+                setBeforeSnapshot({ ...formData });
+                alert("Draft property created! You can now add media and amenities. Submit for publish when ready.");
+                navigate(`/admin/properties/${data.slug}`);
+            } else {
+                // Editors: submit update as approval request (keep current is_published)
+                payload.is_published = isPublished;
+                const { data: userData } = await supabase.auth.getUser();
                 const { error: requestError } = await submitApprovalRequest({
                     entityType: "property",
-                    action: requestAction,
-                    entityId: requestEntityId,
+                    action: "update",
+                    entityId: propertyId,
                     payload,
-                    beforeSnapshot: isNew ? null : beforeSnapshot,
+                    beforeSnapshot,
                     submittedBy: userData?.user?.id || null,
-                    comment: isNew ? "New property creation request." : "Property update request.",
+                    comment: "Property update request.",
                 });
-
                 if (requestError) throw requestError;
                 alert("Change request submitted to superadmin for approval.");
                 navigate("/admin/properties");
-                return;
-            }
-
-            let result;
-            if (isNew) {
-                const { data, error } = await supabase.from("properties").insert(payload).select().single();
-                if (error) throw error;
-                result = data;
-            } else {
-                const { data, error } = await supabase.from("properties").update(payload).eq("id", propertyId).select().single();
-                if (error) throw error;
-                result = data;
-            }
-
-            alert("Property saved successfully!");
-            if (isNew) {
-                navigate(`/admin/properties/${result.slug}`);
             }
         } catch (error) {
             console.error("Error saving property:", error);
             alert("Error saving property: " + error.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSubmitForPublish = async () => {
+        if (!propertyId) return;
+        setPublishing(true);
+        try {
+            const { data: userData } = await supabase.auth.getUser();
+            const payload = { ...formData, is_published: true };
+            if (!payload.booking_url) delete payload.booking_url;
+
+            const { error: requestError } = await submitApprovalRequest({
+                entityType: "property",
+                action: "update",
+                entityId: propertyId,
+                payload,
+                beforeSnapshot,
+                submittedBy: userData?.user?.id || null,
+                comment: "Request to publish draft property.",
+            });
+            if (requestError) throw requestError;
+            alert("Publish request submitted to superadmin for approval.");
+            navigate("/admin/properties");
+        } catch (error) {
+            console.error("Error submitting publish request:", error);
+            alert("Error: " + error.message);
+        } finally {
+            setPublishing(false);
         }
     };
 
@@ -225,15 +262,15 @@ const PropertyEditor = () => {
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === "media" ? styles.active : ""}`}
-                        onClick={() => !isNew ? setActiveTab("media") : alert("Save property first")}
-                        disabled={isNew}
+                        onClick={() => propertyId ? setActiveTab("media") : alert("Save property first")}
+                        disabled={!propertyId}
                     >
                         Media Gallery
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === "amenities" ? styles.active : ""}`}
-                        onClick={() => !isNew ? setActiveTab("amenities") : alert("Save property first")}
-                        disabled={isNew}
+                        onClick={() => propertyId ? setActiveTab("amenities") : alert("Save property first")}
+                        disabled={!propertyId}
                     >
                         Amenities
                     </button>
@@ -242,7 +279,15 @@ const PropertyEditor = () => {
                 <div className={styles.tabContent}>
                     {activeTab === "details" && (
                         <form onSubmit={handleSave} className={styles.formGrid}>
-                            {!isSuperAdminRole(adminRole) && (
+                            {!isSuperAdminRole(adminRole) && !isPublished && !isNew && (
+                                <div className={styles.card} style={{ borderLeft: "4px solid #f59e0b", background: "#fffbeb" }}>
+                                    <h3 style={{ color: "#b45309" }}>📝 Draft Property</h3>
+                                    <p style={{ marginTop: "8px", color: "#92400e" }}>
+                                        This property is not yet published. Add details, media, and amenities, then click "Submit for Publish" when ready.
+                                    </p>
+                                </div>
+                            )}
+                            {!isSuperAdminRole(adminRole) && !isNew && isPublished && (
                                 <div className={styles.card}>
                                     <h3>Approval Flow Enabled</h3>
                                     <p style={{ marginTop: "8px", color: "#555" }}>
@@ -344,8 +389,19 @@ const PropertyEditor = () => {
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
-                                    {saving ? "Saving..." : isSuperAdminRole(adminRole) ? "Save Changes" : "Submit for Approval"}
+                                    {saving ? "Saving..." : isSuperAdminRole(adminRole) ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Submit for Approval" : "Save Draft"}
                                 </button>
+                                {!isSuperAdminRole(adminRole) && !isNew && !isPublished && (
+                                    <button
+                                        type="button"
+                                        className={styles.saveBtn}
+                                        style={{ background: "#10b981", borderColor: "#10b981" }}
+                                        disabled={publishing}
+                                        onClick={handleSubmitForPublish}
+                                    >
+                                        {publishing ? "Submitting..." : "Submit for Publish"}
+                                    </button>
+                                )}
                             </div>
                         </form>
                     )}

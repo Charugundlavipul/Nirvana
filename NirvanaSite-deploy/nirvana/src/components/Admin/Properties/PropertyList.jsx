@@ -47,8 +47,6 @@ const PropertyList = () => {
     };
 
     const getThumbnail = (p) => {
-        // Try to find the 'home' or 'primary' image from curated relations if available
-        // For now, if the query returns array, we just take the first one or a fallback
         const images = p.property_curated_images || [];
         return images.length > 0 ? images[0].url : "/assets/placeholder-house.png";
     };
@@ -81,7 +79,22 @@ const PropertyList = () => {
                                     style={{ backgroundImage: `url(${getThumbnail(p)})` }}
                                 />
                                 <div className={styles.cardContent}>
-                                    <h3 className={styles.cardTitle}>{p.name}</h3>
+                                    <h3 className={styles.cardTitle}>
+                                        {p.name}
+                                        {p.is_published === false && (
+                                            <span style={{
+                                                marginLeft: "8px",
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                padding: "2px 8px",
+                                                borderRadius: "999px",
+                                                background: "#fef3c7",
+                                                color: "#b45309",
+                                                textTransform: "uppercase",
+                                                verticalAlign: "middle"
+                                            }}>Draft</span>
+                                        )}
+                                    </h3>
                                     <p className={styles.cardLocation}>{p.location || "No location set"}</p>
                                     <div className={styles.cardStats}>
                                         <span>🛏️ {p.bedroom_count || 0} Beds</span>

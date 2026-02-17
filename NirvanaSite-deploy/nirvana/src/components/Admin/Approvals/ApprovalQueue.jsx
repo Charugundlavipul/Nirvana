@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
 import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole } from "../../../lib/adminApi";
@@ -57,9 +58,76 @@ const ENTITY_TABLE_BY_TYPE = {
 const statusBadgeStyle = (status) => {
   const normalized = String(status || "").toLowerCase();
   if (normalized === "pending") return { color: "#b45309", background: "#fef3c7" };
-  if (normalized === "applied") return { color: "#065f46", background: "#d1fae5" };
+  if (normalized === "applied" || normalized === "approved") return { color: "#065f46", background: "#d1fae5" };
   if (normalized === "rejected") return { color: "#991b1b", background: "#fee2e2" };
+  if (normalized === "revision_requested") return { color: "#9a3412", background: "#ffedd5" };
   return { color: "#334155", background: "#e2e8f0" };
+};
+
+const friendlyStatus = (status) => {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "revision_requested") return "Revision Requested";
+  return status;
+};
+
+const FIELD_LABELS = {
+  name: "Property Name",
+  slug: "URL Slug",
+  location: "Location",
+  booking_url: "Booking URL",
+  description: "Description",
+  guests_max: "Max Guests",
+  bedroom_count: "Bedrooms",
+  bathroom_count: "Bathrooms",
+  bed_details: "Bed Details",
+  bath_details: "Bath Details",
+  pet_friendly: "Pet Friendly",
+  pet_fee: "Pet Fee",
+  hot_tub: "Hot Tub",
+  is_published: "Published",
+  url: "Image URL",
+  slot: "Image Slot",
+};
+
+const friendlyFieldName = (key) => FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+const PropertyPreviewCard = ({ payload }) => {
+  if (!payload || typeof payload !== "object") return null;
+  const previewStyle = {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    background: "#f8fafc",
+    padding: "16px",
+    marginBottom: "12px",
+  };
+  return (
+    <div style={previewStyle}>
+      <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: "200px" }}>
+          <h4 style={{ margin: "0 0 8px", fontSize: "16px", color: "#0f172a" }}>{payload.name || "Untitled"}</h4>
+          {payload.location && <p style={{ margin: "0 0 6px", fontSize: "13px", color: "#64748b" }}>📍 {payload.location}</p>}
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "13px", color: "#475569", marginTop: "8px" }}>
+            {payload.guests_max && <span>👥 {payload.guests_max} Guests</span>}
+            {payload.bedroom_count && <span>🛏️ {payload.bedroom_count} Bedrooms</span>}
+            {payload.bathroom_count && <span>🚿 {payload.bathroom_count} Bathrooms</span>}
+          </div>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "12px", marginTop: "8px" }}>
+            {payload.pet_friendly && <span style={{ background: "#dcfce7", color: "#166534", padding: "2px 8px", borderRadius: "999px" }}>🐾 Pet Friendly</span>}
+            {payload.hot_tub && <span style={{ background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "999px" }}>♨️ Hot Tub</span>}
+            {payload.is_published === false && <span style={{ background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "999px" }}>Draft</span>}
+            {payload.is_published === true && <span style={{ background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: "999px" }}>Published</span>}
+          </div>
+          {payload.booking_url && <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>🔗 {payload.booking_url}</p>}
+        </div>
+      </div>
+      {payload.description && (
+        <div style={{ marginTop: "12px", padding: "10px", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", color: "#334155", maxHeight: "120px", overflow: "auto" }}>
+          <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "#94a3b8" }}>Description</strong>
+          <div style={{ marginTop: "4px" }} dangerouslySetInnerHTML={{ __html: payload.description }} />
+        </div>
+      )}
+    </div>
+  );
 };
 
 const formatDateTime = (value) => {
@@ -206,12 +274,12 @@ const buildDiffRows = (req) => {
       const changed = JSON.stringify(prev) !== JSON.stringify(next);
       return changed
         ? {
-            key,
-            oldValue: compactValue(prev),
-            newValue: compactValue(next),
-            oldRaw: prev,
-            newRaw: next,
-          }
+          key,
+          oldValue: compactValue(prev),
+          newValue: compactValue(next),
+          oldRaw: prev,
+          newRaw: next,
+        }
         : null;
     })
     .filter(Boolean);
@@ -265,15 +333,16 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null })
   );
 };
 
-const EditorRequestCard = ({ req }) => {
+const EditorRequestCard = ({ req, onRevise }) => {
   const badge = statusBadgeStyle(req.status);
+  const isRevision = req.status === "revision_requested";
   const ownerResponse = req.status !== "pending" ? req.comment : null;
 
   return (
-    <div style={cardStyle}>
+    <div style={{ ...cardStyle, borderLeft: isRevision ? "4px solid #f59e0b" : undefined }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
         <div>
-          <strong>{req.entity_type}</strong> - <span>{req.action}</span>
+          <strong>{friendlyFieldName(req.entity_type)}</strong> - <span>{req.action}</span>
         </div>
         <span
           style={{
@@ -285,29 +354,68 @@ const EditorRequestCard = ({ req }) => {
             textTransform: "uppercase",
           }}
         >
-          {req.status}
+          {friendlyStatus(req.status)}
         </span>
       </div>
       <div style={{ marginTop: "6px", fontSize: "12px", color: "#64748b" }}>
         Submitted: {formatDateTime(req.submitted_at)}
       </div>
 
-      <DiffPreview req={req} />
+      {isRevision && ownerResponse && (
+        <div style={{
+          marginTop: "10px",
+          padding: "12px 14px",
+          background: "#fffbeb",
+          border: "1px solid #fbbf24",
+          borderRadius: "8px",
+          fontSize: "13px",
+          color: "#92400e",
+        }}>
+          <strong>⚠️ Revision Requested:</strong>
+          <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{ownerResponse}</p>
+        </div>
+      )}
 
-      <div style={{ marginTop: "10px", fontSize: "12px", color: "#334155" }}>
-        <strong>Owner/Superadmin Message:</strong>{" "}
-        {ownerResponse ? ownerResponse : req.status === "pending" ? "Pending review." : "No message provided."}
-      </div>
+      <PropertyPreviewCard payload={req.payload} />
+
+      {!isRevision && (
+        <div style={{ marginTop: "10px", fontSize: "12px", color: "#334155" }}>
+          <strong>Owner/Superadmin Message:</strong>{" "}
+          {ownerResponse ? ownerResponse : req.status === "pending" ? "Pending review." : "No message provided."}
+        </div>
+      )}
       {req.approved_at ? (
         <div style={{ marginTop: "4px", fontSize: "12px", color: "#64748b" }}>
           Last update: {formatDateTime(req.approved_at)}
         </div>
       ) : null}
+
+      {isRevision && req.entity_type === "property" && req.entity_id && (
+        <div style={{ marginTop: "12px" }}>
+          <button
+            type="button"
+            onClick={() => onRevise && onRevise(req)}
+            style={{
+              padding: "10px 18px",
+              background: "#f59e0b",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: 600,
+              fontSize: "13px",
+              cursor: "pointer",
+            }}
+          >
+            ✏️ Revise & Resubmit
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
 const ApprovalQueue = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(null);
@@ -321,7 +429,7 @@ const ApprovalQueue = () => {
     const adminRole = await getCurrentAdminRole();
     setRole(adminRole);
 
-    const statusFilter = isSuperAdminRole(adminRole) ? "pending" : null;
+    const statusFilter = isSuperAdminRole(adminRole) ? ["pending", "revision_requested"] : null;
     const { data: reqData, error: reqError } = await fetchApprovalRequests(statusFilter);
 
     if (reqError) {
@@ -355,14 +463,31 @@ const ApprovalQueue = () => {
     setWorkingId(null);
   };
 
+  const handleRevise = async (req) => {
+    // Navigate to the property editor so the editor can make changes
+    if (req.entity_type === "property" && req.entity_id) {
+      // Look up the property slug
+      const { data } = await supabase.from("properties").select("slug").eq("id", req.entity_id).maybeSingle();
+      if (data?.slug) {
+        navigate(`/admin/properties/${data.slug}`);
+      } else {
+        alert("Could not find the property to revise.");
+      }
+    }
+  };
+
   if (!isSuperAdminRole(role)) {
+    const revisionNeeded = requests.filter((req) => req.status === "revision_requested");
     const pending = requests.filter((req) => req.status === "pending");
-    const processed = requests.filter((req) => req.status !== "pending");
+    const processed = requests.filter((req) => req.status !== "pending" && req.status !== "revision_requested");
 
     return (
       <AdminLayout title="My Approval Requests" subtitle="Track your submitted changes and owner/superadmin replies">
         {loading ? <div style={cardStyle}>Loading requests...</div> : null}
         {!loading && requests.length === 0 ? <div style={cardStyle}>No requests submitted yet.</div> : null}
+
+        {!loading && revisionNeeded.length > 0 ? <h3 style={{ margin: "4px 0 10px", color: "#b45309" }}>⚠️ Revisions Needed</h3> : null}
+        {!loading && revisionNeeded.map((req) => <EditorRequestCard key={req.id} req={req} onRevise={handleRevise} />)}
 
         {!loading && pending.length > 0 ? <h3 style={{ margin: "4px 0 10px" }}>Pending</h3> : null}
         {!loading && pending.map((req) => <EditorRequestCard key={req.id} req={req} />)}
@@ -412,6 +537,22 @@ const ApprovalQueue = () => {
               </div>
             ) : null}
 
+            {req.status === "revision_requested" && (
+              <div style={{
+                marginBottom: "10px",
+                padding: "10px 14px",
+                background: "#fffbeb",
+                border: "1px solid #fbbf24",
+                borderRadius: "8px",
+                fontSize: "13px",
+                color: "#92400e",
+              }}>
+                <strong>Previous Revision Note:</strong> {req.comment || "No note provided."}
+              </div>
+            )}
+
+            <PropertyPreviewCard payload={req.payload} />
+
             <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
 
             <div style={{ marginTop: "8px" }}>
@@ -432,7 +573,7 @@ const ApprovalQueue = () => {
 
             {showRaw[req.id] ? <pre style={preStyle}>{JSON.stringify(req.payload || {}, null, 2)}</pre> : null}
 
-            <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr auto auto", gap: "8px", alignItems: "center" }}>
+            <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "8px", alignItems: "center" }}>
               <input
                 value={comment[req.id] || ""}
                 onChange={(e) => setComment((prev) => ({ ...prev, [req.id]: e.target.value }))}
@@ -452,6 +593,27 @@ const ApprovalQueue = () => {
                 }}
               >
                 Reject
+              </button>
+              <button
+                onClick={() => {
+                  if (!comment[req.id]?.trim()) {
+                    alert("Please add a message explaining what needs to be revised.");
+                    return;
+                  }
+                  handleDecision(req.id, "revision_requested");
+                }}
+                disabled={workingId === req.id}
+                style={{
+                  padding: "10px 12px",
+                  border: "1px solid #f59e0b",
+                  color: "#fff",
+                  background: "#f59e0b",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Request Revision
               </button>
               <button
                 onClick={() => handleDecision(req.id, "approved")}
