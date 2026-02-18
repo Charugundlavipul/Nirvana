@@ -102,15 +102,11 @@ const Home = () => {
 
     // Mobile: Show first N items based on visibleMobileCount
     if (isMobile) {
-      return properties.slice(0, visibleMobileCount);
+      return properties.slice(0, visibleMobileCount); // Mobile: Load More list
     }
 
-    // Desktop: Carousel logic
-    const result = [];
-    for (let i = 0; i < itemsToShow; i++) {
-      result.push(properties[(currentPropertyIndex + i) % properties.length]);
-    }
-    return result;
+    // Desktop: We return ALL properties for the slider track
+    return properties;
   };
 
   useEffect(() => {
@@ -312,33 +308,40 @@ const Home = () => {
               <FaChevronRight size={24} />
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {getVisibleProperties().map((prop, index) => {
-                const images = getCardImages(prop);
-                const currentIndex = imageIndices[prop.id] || 0;
-                // Calculate the actual index in the full properties array for the badge
-                const originalIndex = properties.findIndex(p => p.id === prop.id);
+            {/* Desktop Sliding Track */}
+            <div className="overflow-hidden w-full relative">
+              <div
+                className={`flex transition-transform duration-700 ease-in-out ${isMobile ? 'flex-col' : ''}`}
+                style={!isMobile ? { transform: `translateX(-${currentPropertyIndex * (100 / 3)}%)` } : {}}
+              >
+                {getVisibleProperties().map((prop, index) => {
+                  const images = getCardImages(prop);
+                  const currentIndex = imageIndices[prop.id] || 0;
+                  // Calculate the actual index in the full properties array for the badge
+                  const originalIndex = properties.findIndex(p => p.id === prop.id);
 
-                return (
-                  <SignatureCard
-                    key={prop.id}
-                    title={prop.name}
-                    location={prop.location}
-                    images={images}
-                    currentIndex={currentIndex}
-                    onPrev={(e) => handleCardPrev(e, prop)}
-                    onNext={(e) => handleCardNext(e, prop)}
-                    isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
-                    link={`/${prop.slug}`}
-                    stats={{
-                      beds: prop.bedroom_count || 0,
-                      baths: prop.bathroom_count || 0,
-                      guests: prop.guests_max || 0
-                    }}
-                    badge={BADGES[originalIndex] || "Featured"}
-                  />
-                );
-              })}
+                  return (
+                    <div key={prop.id} className={`${isMobile ? 'w-full mb-8' : 'w-1/3 flex-shrink-0 px-4'}`}>
+                      <SignatureCard
+                        title={prop.name}
+                        location={prop.location}
+                        images={images}
+                        currentIndex={currentIndex}
+                        onPrev={(e) => handleCardPrev(e, prop)}
+                        onNext={(e) => handleCardNext(e, prop)}
+                        isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
+                        link={`/${prop.slug}`}
+                        stats={{
+                          beds: prop.bedroom_count || 0,
+                          baths: prop.bathroom_count || 0,
+                          guests: prop.guests_max || 0
+                        }}
+                        badge={BADGES[originalIndex] || "Featured"}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Mobile "Show More" Button */}
