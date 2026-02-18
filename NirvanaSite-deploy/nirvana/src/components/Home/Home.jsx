@@ -15,6 +15,7 @@ const Home = () => {
   const [properties, setProperties] = useState([]);
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
   const [itemsToShow, setItemsToShow] = useState(window.innerWidth < 1024 ? 1 : 3);
+  const [isPaused, setIsPaused] = useState(false);
   const [imageIndices, setImageIndices] = useState({});
   const [cardImagesBySlug, setCardImagesBySlug] = useState({});
   const [galleryLoadedBySlug, setGalleryLoadedBySlug] = useState({});
@@ -38,6 +39,17 @@ const Home = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Auto-scroll functionality
+  useEffect(() => {
+    if (!properties.length || isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [properties.length, isPaused]);
 
   useEffect(() => {
     const loadHomeData = async () => {
@@ -264,7 +276,13 @@ const Home = () => {
           </div>
 
           {/* Carousel Controls & Grid */}
-          <div className="relative">
+          <div
+            className="relative"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+          >
             {/* Desktop Navigation Buttons */}
             <button
               onClick={prevProperty}
