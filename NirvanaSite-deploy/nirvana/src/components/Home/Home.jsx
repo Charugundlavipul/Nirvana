@@ -120,7 +120,8 @@ const Home = () => {
 
   const getVisibleReviews = () => {
     if (!filteredReviews.length) return [];
-    const count = window.innerWidth < 768 ? 1 : 3;
+    // Sync with grid: 1 col < 1024, 3 cols >= 1024
+    const count = itemsToShow;
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(filteredReviews[(reviewIndex + i) % filteredReviews.length]);
@@ -378,10 +379,17 @@ const Home = () => {
               <FaChevronLeft size={20} />
             </button>
 
-            <div className="flex gap-6 w-full justify-center overflow-hidden">
+            <div className="hidden lg:grid grid-cols-3 gap-6 w-full">
               {getVisibleReviews().map((review, idx) => (
                 <PremiumReviewCard key={idx} review={review} />
               ))}
+            </div>
+
+            {/* Mobile/Tablet View (using flex/overflow for swipe feel or single item) */}
+            <div className="lg:hidden w-full">
+              <div className="flex justify-center">
+                <PremiumReviewCard review={getVisibleReviews()[0]} />
+              </div>
             </div>
 
             <button
@@ -556,7 +564,7 @@ const PremiumReviewCard = ({ review }) => {
   };
 
   return (
-    <div className="min-w-full md:min-w-[380px] md:max-w-[380px] bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col relative">
+    <div className="w-full h-full bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col relative">
       <FaQuoteLeft className="absolute top-6 right-6 text-4xl text-accent/10" />
 
       <div className="flex items-center gap-4 mb-6">
