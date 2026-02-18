@@ -15,6 +15,8 @@ const Home = () => {
   const [properties, setProperties] = useState([]);
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
   const [itemsToShow, setItemsToShow] = useState(window.innerWidth < 1024 ? 1 : 3);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [visibleMobileCount, setVisibleMobileCount] = useState(3);
   const [isPaused, setIsPaused] = useState(false);
   const [imageIndices, setImageIndices] = useState({});
   const [cardImagesBySlug, setCardImagesBySlug] = useState({});
@@ -33,20 +35,22 @@ const Home = () => {
   // Handle items to show on resize
   useEffect(() => {
     const handleResize = () => {
-      setItemsToShow(window.innerWidth < 1024 ? 1 : 3);
+      const mobile = window.innerWidth < 1024;
+      setItemsToShow(mobile ? 1 : 3);
+      setIsMobile(mobile);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality (Desktop only)
   useEffect(() => {
-    if (!properties.length || isPaused) return;
+    if (!properties.length || isPaused || isMobile) return;
 
     const interval = setInterval(() => {
       setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
-    }, 5000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, [properties.length, isPaused]);
@@ -95,6 +99,13 @@ const Home = () => {
 
   const getVisibleProperties = () => {
     if (!properties.length) return [];
+
+    // Mobile: Show first N items based on visibleMobileCount
+    if (isMobile) {
+      return properties.slice(0, visibleMobileCount);
+    }
+
+    // Desktop: Carousel logic
     const result = [];
     for (let i = 0; i < itemsToShow; i++) {
       result.push(properties[(currentPropertyIndex + i) % properties.length]);
@@ -330,23 +341,17 @@ const Home = () => {
               })}
             </div>
 
-            {/* Mobile Navigation Buttons */}
-            <div className="mt-8 flex items-center justify-center gap-4 lg:hidden">
-              <button
-                onClick={prevProperty}
-                className="p-4 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-                aria-label="Previous property"
-              >
-                <FaChevronLeft size={20} />
-              </button>
-              <button
-                onClick={nextProperty}
-                className="p-4 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-                aria-label="Next property"
-              >
-                <FaChevronRight size={20} />
-              </button>
-            </div>
+            {/* Mobile "Show More" Button */}
+            {isMobile && visibleMobileCount < properties.length && (
+              <div className="mt-12 flex justify-center lg:hidden">
+                <button
+                  onClick={() => setVisibleMobileCount(prev => prev + 5)}
+                  className="px-8 py-3 bg-white border border-slate-200 shadow-md text-gray-600 font-semibold rounded-full hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 uppercase tracking-widest text-sm"
+                >
+                  Show More
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
