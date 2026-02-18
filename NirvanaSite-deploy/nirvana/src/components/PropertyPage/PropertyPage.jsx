@@ -83,16 +83,28 @@ const PropertyPage = () => {
         setCurrentIndex((prev) => (prev + 1) % sliderImages.length);
     };
 
+    // Manage body scroll lock
+    useEffect(() => {
+        if (lightboxImage || lightboxType) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        // Cleanup on unmount to ensure scroll is restored
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [lightboxImage, lightboxType]);
+
     const openLightbox = (imageSrc, type = '') => {
         setLightboxImage(imageSrc);
         setLightboxType(type);
-        document.body.style.overflow = 'hidden';
     };
 
     const closeLightbox = () => {
         setLightboxImage(null);
         setLightboxType('');
-        document.body.style.overflow = 'auto';
     };
 
     const nextLightboxImage = (e) => {
@@ -140,7 +152,7 @@ const PropertyPage = () => {
 
     const heroImageSrc = curatedImages.bg || curatedImages.home;
     const introImageSrc = curatedImages.secondary || curatedImages.home;
-    const descriptionPreview = createRichTextExcerpt(property.description, 420);
+    const descriptionPreview = createRichTextExcerpt(property.description, 2000, true);
 
     return (
         <div className="font-sans text-gray-800 bg-slate-50">
@@ -214,8 +226,10 @@ const PropertyPage = () => {
                             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Welcome to {property.name}</h2>
                         </div>
                         <div>
-                            <p className="text-xl text-slate-600 leading-relaxed font-light">{descriptionPreview.text}</p>
-                            {descriptionPreview.isTruncated && (
+                            <p className="text-xl text-slate-600 leading-relaxed font-light whitespace-pre-line line-clamp-6 md:line-clamp-[12] overflow-hidden text-ellipsis">
+                                {descriptionPreview.text}
+                            </p>
+                            {(descriptionPreview.text.length > 300 || descriptionPreview.isTruncated) && (
                                 <button
                                     type="button"
                                     onClick={() => openLightbox(null, 'description')}
@@ -320,7 +334,7 @@ const PropertyPage = () => {
                         </div>
                         <Link
                             to={`/review/${slug}`}
-                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full px-6 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-accent hover:text-white transition-all duration-300 group-hover:shadow-lg"
+                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-accent hover:text-white transition-all duration-300 group-hover:shadow-lg"
                         >
                             <FaStar className="text-amber-500 group-hover:text-white" />
                             Read Reviews
@@ -340,7 +354,7 @@ const PropertyPage = () => {
                         </div>
                         <Link
                             to={`/activities/${slug}`}
-                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full px-6 py-4 bg-white text-accent font-bold rounded-xl hover:bg-slate-900 hover:text-white transition-all duration-300 group-hover:shadow-lg"
+                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-accent font-bold rounded-xl hover:bg-slate-900 hover:text-white transition-all duration-300 group-hover:shadow-lg"
                         >
                             <FaMapMarkerAlt />
                             Explore Activities

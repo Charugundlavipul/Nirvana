@@ -105,10 +105,38 @@ export function sanitizeRichText(value) {
   return root.innerHTML;
 }
 
-export function richTextToPlainText(value) {
+export function richTextToPlainText(value, preserveNewlines = false) {
   if (!value) return "";
-  const input = `${value}`;
+  let input = `${value}`;
 
+  if (preserveNewlines) {
+    // Replace block tags and breaks with newlines
+    input = input
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<\/h[1-6]>/gi, "\n")
+      .replace(/<\/li>/gi, "\n");
+
+    // Strip all remaining tags
+    input = input.replace(/<[^>]+>/g, "");
+
+    // Decode HTML entities (basic ones)
+    input = input
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"');
+
+    // Normalize whitespace: collapse multiple spaces/tabs to single space, but handle newlines
+    return input
+      .replace(/[ \t]+/g, " ")     // Collapse non-newline whitespace
+      .replace(/\n\s*\n/g, "\n\n") // Max 2 consecutive newlines
+      .replace(/^\s+|\s+$/g, "");  // Trim start/end
+  }
+
+  // Original flat text behavior
   if (typeof window === "undefined" || typeof DOMParser === "undefined") {
     return input
       .replace(/<[^>]+>/g, " ")
@@ -121,8 +149,8 @@ export function richTextToPlainText(value) {
   return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
 }
 
-export function createRichTextExcerpt(value, maxChars = 180) {
-  const plain = richTextToPlainText(value);
+export function createRichTextExcerpt(value, maxChars = 180, preserveNewlines = false) {
+  const plain = richTextToPlainText(value, preserveNewlines);
   if (plain.length <= maxChars) {
     return { text: plain, isTruncated: false };
   }
