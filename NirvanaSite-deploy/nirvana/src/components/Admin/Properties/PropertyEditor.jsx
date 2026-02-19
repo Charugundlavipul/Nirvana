@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import styles from "./PropertyEditor.module.css";
@@ -6,7 +6,7 @@ import { supabase } from "../../../supabaseClient";
 import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findRevisionRequest, resubmitApprovalRequest } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, resubmitApprovalRequest } from "../../../lib/adminApi";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 
@@ -39,6 +39,7 @@ const PropertyEditor = () => {
     const [isPublished, setIsPublished] = useState(true);
     const [editorNote, setEditorNote] = useState("");
     const [beforeSnapshot, setBeforeSnapshot] = useState(null);
+    const [propertyDraftRequest, setPropertyDraftRequest] = useState(null);
     const descriptionRef = useRef(null);
 
     // Form State
@@ -63,6 +64,15 @@ const PropertyEditor = () => {
     const approvalRequiredForEdits = !superAdmin && isPublished;
     const isDraftProperty = !isNew && !isPublished;
 
+    const draftChangedFields = useMemo(() => {
+        if (!propertyDraftRequest || !beforeSnapshot) return [];
+        const ignored = new Set(["id", "created_at", "updated_at"]);
+        return Object.keys(formData).filter((key) => {
+            if (ignored.has(key)) return false;
+            return JSON.stringify(formData[key]) !== JSON.stringify(beforeSnapshot[key]);
+        });
+    }, [propertyDraftRequest, beforeSnapshot, formData]);
+
     useEffect(() => {
         if (!isNew && slug) {
             loadProperty();
@@ -76,6 +86,34 @@ const PropertyEditor = () => {
         };
         loadRole();
     }, []);
+
+    useEffect(() => {
+        const loadOpenDraft = async () => {
+            if (!propertyId || superAdmin || !isPublished) {
+                setPropertyDraftRequest(null);
+                return;
+            }
+
+            const openRequest = await findOpenRequest("property", propertyId, "update");
+            setPropertyDraftRequest(openRequest || null);
+            if (!openRequest) return;
+
+            const payloadState = toFormState(openRequest.payload || {});
+            setFormData(payloadState);
+
+            const beforeState = openRequest.before_snapshot
+                ? toFormState(openRequest.before_snapshot)
+                : null;
+            if (beforeState) {
+                setBeforeSnapshot(beforeState);
+            }
+            if (openRequest.comment) {
+                setEditorNote(openRequest.comment);
+            }
+        };
+
+        loadOpenDraft();
+    }, [propertyId, superAdmin, isPublished]);
 
     const loadProperty = async () => {
         try {
@@ -215,21 +253,34 @@ const PropertyEditor = () => {
                 setIsPublished(false);
                 alert("Draft saved.");
             } else {
-                // Editors: submit update as approval request (keep current is_published)
+                // Editors on published properties: save as a non-live draft request.
                 payload.is_published = isPublished;
                 const { data: userData } = await supabase.auth.getUser();
+                const existingOpen = await findOpenRequest("property", propertyId, "update");
 
-                // Check for an existing revision_requested request to update instead of creating a duplicate
-                const existingRevision = await findRevisionRequest("property", propertyId);
-                if (existingRevision) {
+                if (existingOpen) {
                     const { error: updateError } = await resubmitApprovalRequest(
-                        existingRevision.id,
+                        existingOpen.id,
                         payload,
                         beforeSnapshot,
-                        editorNote || "Revised and resubmitted."
+                        editorNote || "Draft property update request."
                     );
-                    if (updateError) throw updateError;
-                    alert("Revision resubmitted for approval.");
+                    if (updateError) {
+                        // Fallback: keep editing flow usable even if update policy blocks edits on requests.
+                        const { error: requestError } = await submitApprovalRequest({
+                            entityType: "property",
+                            action: "update",
+                            entityId: propertyId,
+                            payload,
+                            beforeSnapshot,
+                            submittedBy: userData?.user?.id || null,
+                            comment: editorNote || "Property update request.",
+                        });
+                        if (requestError) throw requestError;
+                        alert("Draft update saved as a new approval request.");
+                    } else {
+                        alert("Draft changes updated.");
+                    }
                 } else {
                     const { error: requestError } = await submitApprovalRequest({
                         entityType: "property",
@@ -241,9 +292,10 @@ const PropertyEditor = () => {
                         comment: editorNote || "Property update request.",
                     });
                     if (requestError) throw requestError;
-                    alert("Change request submitted to superadmin for approval.");
+                    alert("Draft changes saved for review.");
                 }
-                navigate("/admin/properties");
+                const refreshedOpen = await findOpenRequest("property", propertyId, "update");
+                setPropertyDraftRequest(refreshedOpen || null);
             }
         } catch (error) {
             console.error("Error saving property:", error);
@@ -336,8 +388,38 @@ const PropertyEditor = () => {
                                 <div className={styles.card}>
                                     <h3>Approval Flow Enabled</h3>
                                     <p style={{ marginTop: "8px", color: "#555" }}>
-                                        Saving this form creates an approval request. A superadmin must approve before changes go live.
+                                        Published properties keep live data unchanged. Saving here updates your draft request for review.
                                     </p>
+                                </div>
+                            )}
+                            {!superAdmin && isPublished && propertyDraftRequest && (
+                                <div className={styles.card} style={{ borderLeft: "4px solid #0ea5e9", background: "#f0f9ff" }}>
+                                    <h3 style={{ color: "#0c4a6e" }}>Draft Changes Pending Review</h3>
+                                    <p style={{ marginTop: "8px", color: "#075985" }}>
+                                        Live property is unchanged. Only the fields below are currently in draft:
+                                    </p>
+                                    <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                        {draftChangedFields.length ? (
+                                            draftChangedFields.map((field) => (
+                                                <span
+                                                    key={field}
+                                                    style={{
+                                                        fontSize: "12px",
+                                                        padding: "4px 8px",
+                                                        borderRadius: "999px",
+                                                        background: "#e0f2fe",
+                                                        border: "1px solid #bae6fd",
+                                                        color: "#0c4a6e",
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    {field.replace(/_/g, " ")}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span style={{ fontSize: "12px", color: "#075985" }}>No field diffs detected yet.</span>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             <div className={styles.card}>
@@ -455,7 +537,7 @@ const PropertyEditor = () => {
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
-                                    {saving ? "Saving..." : superAdmin ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Submit for Approval" : "Save Draft"}
+                                    {saving ? "Saving..." : superAdmin ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Save Draft Changes" : "Save Draft"}
                                 </button>
                                 {!superAdmin && !isNew && !isPublished && (
                                     <button
@@ -486,7 +568,7 @@ const PropertyEditor = () => {
                                 <h3>{approvalRequiredForEdits ? "Approval Flow Enabled" : "Draft Mode Enabled"}</h3>
                                 <p style={{ marginTop: "8px", color: "#555" }}>
                                     {approvalRequiredForEdits
-                                        ? "Media changes are submitted for superadmin approval before publishing."
+                                        ? "Media changes are saved as draft requests. Live media stays unchanged until approved."
                                         : "Media updates save directly to this draft and will be reviewed together when you submit for publish."}
                                 </p>
                             </div>

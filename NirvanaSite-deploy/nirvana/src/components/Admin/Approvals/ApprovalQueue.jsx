@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
 import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole } from "../../../lib/adminApi";
+import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 
 const cardStyle = {
   border: "1px solid #e5e7eb",
@@ -44,6 +45,16 @@ const previewButtonStyle = {
   lineHeight: 1.6,
 };
 
+const sectionHeadingStyle = {
+  marginTop: "12px",
+  marginBottom: "6px",
+  fontSize: "11px",
+  fontWeight: 700,
+  color: "#475569",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
+};
+
 const ENTITY_TABLE_BY_TYPE = {
   property: "properties",
   review: "reviews",
@@ -54,6 +65,23 @@ const ENTITY_TABLE_BY_TYPE = {
   property_curated_image: "property_curated_images",
   property_highlight_image: "property_highlight_images",
 };
+
+const MANAGED_STORAGE_BUCKETS = new Set(["property-assets", "profile-pictures"]);
+const STORAGE_PUBLIC_PATH_MARKER = "/storage/v1/object/public/";
+const MEDIA_REFERENCE_TABLES = [
+  { table: "property_images", column: "url" },
+  { table: "property_curated_images", column: "url" },
+  { table: "property_highlight_images", column: "url" },
+  { table: "reviews", column: "avatar_url" },
+  { table: "activities", column: "image_url" },
+];
+const MEDIA_ENTITY_TYPES = new Set([
+  "property_image",
+  "property_curated_image",
+  "property_highlight_image",
+  "review",
+  "activity",
+]);
 
 const statusBadgeStyle = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -85,9 +113,25 @@ const FIELD_LABELS = {
   pet_fee: "Pet Fee",
   hot_tub: "Hot Tub",
   is_published: "Published",
+  summary_label: "Requested Item",
+  submitted_fields: "Submitted Fields",
+  submitted_field_count: "Field Count",
+  had_media: "Included Media",
+  removed_media_count: "Removed Media Files",
+  redacted_at: "Redacted At",
   url: "Image URL",
   slot: "Image Slot",
 };
+
+const PREVIEW_IGNORED_KEYS = new Set([
+  "__redacted",
+  "id",
+  "created_at",
+  "updated_at",
+  "submitted_by",
+  "approved_by",
+  "approval_request_id",
+]);
 
 const friendlyFieldName = (key) => FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
@@ -126,6 +170,246 @@ const PropertyPreviewCard = ({ payload }) => {
           <div style={{ marginTop: "4px" }} dangerouslySetInnerHTML={{ __html: payload.description }} />
         </div>
       )}
+    </div>
+  );
+};
+
+const collectImageFields = (obj) => {
+  if (!obj || typeof obj !== "object") return [];
+  const seen = new Set();
+  return Object.entries(obj)
+    .filter(([fieldKey, value]) => isLikelyImageUrl(fieldKey, value))
+    .map(([fieldKey, value]) => ({
+      fieldKey,
+      url: typeof value === "string" ? value.trim() : String(value || ""),
+    }))
+    .filter((item) => {
+      if (!item.url || seen.has(item.url)) return false;
+      seen.add(item.url);
+      return true;
+    });
+};
+
+const normalizeAmenityPreview = (source) => {
+  if (!source || typeof source !== "object") return null;
+  const title = typeof source.title === "string" ? source.title.trim() : "";
+  const description = typeof source.description === "string" ? source.description.trim() : "";
+  const icon_key = typeof source.icon_key === "string" ? source.icon_key.trim() : "";
+  if (!title && !description && !icon_key) return null;
+  return { title, description, icon_key };
+};
+
+const AmenityPreviewTile = ({ label, data }) => {
+  if (!data) return null;
+  return (
+    <div
+      style={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px",
+        background: "#fff",
+        padding: "10px",
+      }}
+    >
+      <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: "8px" }}>
+        {label}
+      </div>
+      <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "10px",
+            border: "1px solid #dbeafe",
+            background: "#eff6ff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "18px",
+            color: "#0f766e",
+            flexShrink: 0,
+          }}
+        >
+          {getAmenityIcon(data.title, data.icon_key)}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", wordBreak: "break-word" }}>
+            {data.title || "Untitled"}
+          </div>
+          {data.description ? (
+            <div style={{ marginTop: "3px", fontSize: "12px", color: "#475569", wordBreak: "break-word" }}>
+              {data.description}
+            </div>
+          ) : null}
+          <div style={{ marginTop: "4px", fontSize: "11px", color: "#64748b", wordBreak: "break-word" }}>
+            Icon key: {data.icon_key || "(from title mapping)"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const RequestEntityPreviewCard = ({ req, onPreviewImage = null }) => {
+  if (!req) return null;
+  const entityType = String(req.entity_type || "").toLowerCase();
+  if (entityType === "property") return null;
+
+  const action = String(req.action || "").toLowerCase();
+  const payload = parseSnapshot(req.payload);
+  const before = parseSnapshot(req.before_snapshot);
+  const isRedacted = payload.__redacted === true;
+  const mergedRequested = { ...before, ...payload };
+  const currentData = action === "create" ? null : before;
+  const requestedData = action === "delete" ? null : mergedRequested;
+  const previewSource = requestedData || currentData || payload || before;
+  const isAmenity = entityType === "amenity";
+  const currentAmenity = isAmenity ? normalizeAmenityPreview(currentData) : null;
+  const requestedAmenity = isAmenity ? normalizeAmenityPreview(requestedData) : null;
+  const hasAmenityPreview = !!currentAmenity || !!requestedAmenity;
+
+  const summaryRows = Object.entries(previewSource || {})
+    .filter(([key, value]) => !PREVIEW_IGNORED_KEYS.has(key) && !isLikelyImageUrl(key, value))
+    .filter(([key]) => !(isAmenity && (key === "title" || key === "description" || key === "icon_key")))
+    .filter(([, value]) => value !== null && value !== undefined && !(typeof value === "string" && value.trim() === ""))
+    .slice(0, 8);
+
+  const currentImages = collectImageFields(currentData);
+  const requestedImages = collectImageFields(requestedData);
+  const canPreview = typeof onPreviewImage === "function";
+  const title =
+    requestedData?.title ||
+    requestedData?.name ||
+    requestedData?.slot ||
+    currentData?.title ||
+    currentData?.name ||
+    currentData?.slot ||
+    null;
+
+  if (!summaryRows.length && !currentImages.length && !requestedImages.length && !hasAmenityPreview) {
+    return null;
+  }
+
+  const renderImageRow = (label, images) => {
+    if (!images.length) return null;
+    return (
+      <div>
+        <div style={{ fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>{label}</div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {images.map((item, index) => (
+            <div
+              key={`${label}-${item.fieldKey}-${index}`}
+              style={{
+                width: "112px",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                background: "#fff",
+                padding: "6px",
+              }}
+            >
+              <img
+                src={item.url}
+                alt={item.fieldKey}
+                style={{ width: "100%", height: "74px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+              />
+              <div style={{ marginTop: "4px", fontSize: "11px", color: "#64748b", textTransform: "capitalize" }}>
+                {friendlyFieldName(item.fieldKey)}
+              </div>
+              {canPreview ? (
+                <button type="button" style={{ ...previewButtonStyle, marginTop: "6px" }} onClick={() => onPreviewImage(item.url)}>
+                  Preview
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        background: "#f8fafc",
+        padding: "12px",
+        marginBottom: "12px",
+      }}
+    >
+      <div style={{ marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <strong style={{ fontSize: "12px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+          {friendlyFieldName(req.entity_type)}
+        </strong>
+        {title ? (
+          <span style={{ fontSize: "13px", color: "#334155" }}>{title}</span>
+        ) : null}
+      </div>
+
+      {action === "delete" ? (
+        <div style={{ marginBottom: "8px", fontSize: "12px", color: "#991b1b", fontWeight: 600 }}>
+          This request deletes the current record.
+        </div>
+      ) : null}
+      {isRedacted ? (
+        <div style={{ marginBottom: "8px", fontSize: "12px", color: "#334155" }}>
+          Detailed payload was removed after rejection to conserve storage.
+        </div>
+      ) : null}
+
+      {isAmenity && hasAmenityPreview ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: action === "update" && currentAmenity && requestedAmenity ? "repeat(auto-fit, minmax(220px, 1fr))" : "1fr",
+            gap: "8px",
+            marginBottom: summaryRows.length || currentImages.length || requestedImages.length ? "10px" : 0,
+          }}
+        >
+          {action !== "create" ? <AmenityPreviewTile label="Current Amenity" data={currentAmenity} /> : null}
+          {action !== "delete" ? (
+            <AmenityPreviewTile
+              label={action === "update" ? "Requested Amenity" : "Amenity Preview"}
+              data={requestedAmenity}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      {summaryRows.length ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: "8px",
+            marginBottom: currentImages.length || requestedImages.length ? "10px" : 0,
+          }}
+        >
+          {summaryRows.map(([key, value]) => (
+            <div
+              key={key}
+              style={{
+                background: "#fff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "8px",
+                minHeight: "54px",
+              }}
+            >
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
+                {friendlyFieldName(key)}
+              </div>
+              <div style={{ marginTop: "3px", fontSize: "13px", color: "#0f172a", wordBreak: "break-word" }}>
+                {compactValue(value)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div style={{ display: "grid", gap: "10px" }}>
+        {renderImageRow("Current Images", currentImages)}
+        {renderImageRow(action === "update" ? "Requested Images" : "Requested Image", requestedImages)}
+      </div>
     </div>
   );
 };
@@ -178,6 +462,176 @@ const parseSnapshot = (value) => {
     }
   }
   return {};
+};
+
+const extractManagedStorageAsset = (value) => {
+  if (!isHttpUrl(value)) return null;
+  try {
+    const parsed = new URL(value.trim());
+    const markerIndex = parsed.pathname.indexOf(STORAGE_PUBLIC_PATH_MARKER);
+    if (markerIndex < 0) return null;
+    const objectPart = parsed.pathname.slice(markerIndex + STORAGE_PUBLIC_PATH_MARKER.length);
+    const chunks = objectPart.split("/").filter(Boolean);
+    if (chunks.length < 2) return null;
+    const bucket = chunks.shift();
+    if (!MANAGED_STORAGE_BUCKETS.has(bucket)) return null;
+    const path = decodeURIComponent(chunks.join("/"));
+    const canonicalUrl = `${parsed.origin}${parsed.pathname}`;
+    if (!path) return null;
+    return { bucket, path, canonicalUrl, key: `${bucket}:${path}` };
+  } catch {
+    return null;
+  }
+};
+
+const collectManagedStorageAssets = (value, map = new Map()) => {
+  if (value === null || value === undefined) return map;
+  if (typeof value === "string") {
+    const asset = extractManagedStorageAsset(value);
+    if (asset) map.set(asset.key, asset);
+    return map;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectManagedStorageAssets(item, map));
+    return map;
+  }
+  if (typeof value === "object") {
+    Object.values(value).forEach((item) => collectManagedStorageAssets(item, map));
+    return map;
+  }
+  return map;
+};
+
+const buildRejectedPayloadSummary = (req, removedMediaCount = 0) => {
+  const payload = parseSnapshot(req?.payload);
+  const entityType = String(req?.entity_type || "").toLowerCase();
+  const summary = {
+    __redacted: true,
+    entity_type: entityType || null,
+    action: req?.action || null,
+    summary_label:
+      payload.title ||
+      payload.name ||
+      payload.question ||
+      payload.author_name ||
+      payload.slot ||
+      payload.slug ||
+      null,
+    submitted_field_count: 0,
+    submitted_fields: [],
+    had_media: false,
+    removed_media_count: removedMediaCount,
+    redacted_at: new Date().toISOString(),
+  };
+
+  const fieldEntries = Object.entries(payload).filter(([key]) => !PREVIEW_IGNORED_KEYS.has(key));
+  const nonMediaFields = [];
+  let hasMedia = false;
+  fieldEntries.forEach(([key, rawValue]) => {
+    if (isLikelyImageUrl(key, rawValue)) {
+      hasMedia = true;
+      return;
+    }
+    nonMediaFields.push(key);
+  });
+
+  summary.submitted_field_count = nonMediaFields.length;
+  summary.submitted_fields = nonMediaFields.slice(0, 12);
+  summary.had_media = hasMedia;
+
+  if (entityType === "amenity") {
+    if (payload.title) summary.title = String(payload.title);
+    if (payload.icon_key) summary.icon_key = String(payload.icon_key);
+    if (payload.description) summary.description = String(payload.description).slice(0, 180);
+  }
+  if (entityType === "property_curated_image") {
+    if (payload.slot) summary.slot = String(payload.slot);
+    if (payload.display_order !== undefined && payload.display_order !== null) summary.display_order = payload.display_order;
+  }
+  if (entityType === "property_image" || entityType === "property_highlight_image") {
+    if (payload.category) summary.category = String(payload.category);
+    if (payload.display_order !== undefined && payload.display_order !== null) summary.display_order = payload.display_order;
+  }
+  if (entityType === "property") {
+    if (payload.name) summary.name = String(payload.name);
+    if (payload.slug) summary.slug = String(payload.slug);
+    if (payload.location) summary.location = String(payload.location);
+  }
+
+  return summary;
+};
+
+const removeRejectedRequestAssets = async (req) => {
+  const entityType = String(req?.entity_type || "").toLowerCase();
+  if (!MEDIA_ENTITY_TYPES.has(entityType)) return { removed: 0 };
+
+  const payloadAssets = collectManagedStorageAssets(parseSnapshot(req?.payload));
+  if (!payloadAssets.size) return { removed: 0 };
+  const beforeAssets = collectManagedStorageAssets(parseSnapshot(req?.before_snapshot));
+  const candidates = Array.from(payloadAssets.values()).filter((asset) => !beforeAssets.has(asset.key));
+  if (!candidates.length) return { removed: 0 };
+
+  const openAssetKeys = new Set();
+  const { data: openRequests, error: openRequestsError } = await supabase
+    .from("approval_requests")
+    .select("id,payload,before_snapshot")
+    .in("status", ["pending", "revision_requested"])
+    .neq("id", req.id);
+  if (openRequestsError) {
+    console.error("Failed loading open requests for media cleanup safety check:", openRequestsError);
+  } else {
+    (openRequests || []).forEach((row) => {
+      collectManagedStorageAssets(parseSnapshot(row.payload)).forEach((_, key) => openAssetKeys.add(key));
+      collectManagedStorageAssets(parseSnapshot(row.before_snapshot)).forEach((_, key) => openAssetKeys.add(key));
+    });
+  }
+
+  let removed = 0;
+  for (const asset of candidates) {
+    if (openAssetKeys.has(asset.key)) continue;
+
+    let inUse = false;
+    try {
+      const checks = await Promise.all(
+        MEDIA_REFERENCE_TABLES.map(async ({ table, column }) => {
+          const result = await supabase.from(table).select("id").eq(column, asset.canonicalUrl).limit(1);
+          return { table, result };
+        })
+      );
+      inUse = checks.some(({ table, result }) => {
+        if (result.error) {
+          console.error(`Failed checking live media reference in ${table}:`, result.error);
+          return true;
+        }
+        return Array.isArray(result.data) && result.data.length > 0;
+      });
+    } catch (error) {
+      console.error("Failed checking live media references:", error);
+      inUse = true;
+    }
+
+    if (inUse) continue;
+    const { error } = await supabase.storage.from(asset.bucket).remove([asset.path]);
+    if (error) {
+      console.error(`Failed deleting rejected media ${asset.key}:`, error);
+      continue;
+    }
+    removed += 1;
+  }
+
+  return { removed };
+};
+
+const redactRejectedRequestData = async (req, removedMediaCount = 0) => {
+  const redactedPayload = buildRejectedPayloadSummary(req, removedMediaCount);
+  return supabase
+    .from("approval_requests")
+    .update({
+      payload: redactedPayload,
+      before_snapshot: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", req.id);
 };
 
 const fetchLinkedPropertyIds = async (entityType, entityId) => {
@@ -562,10 +1016,12 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
   );
 };
 
-const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null }) => {
+const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPreviewImage = null }) => {
   const badge = statusBadgeStyle(req.status);
   const isRevision = req.status === "revision_requested";
   const ownerResponse = req.status !== "pending" ? req.comment : null;
+  const entityType = String(req?.entity_type || "").toLowerCase();
+  const isPropertyRequest = entityType === "property";
 
   return (
     <div style={{ ...cardStyle, borderLeft: isRevision ? "4px solid #f59e0b" : undefined }}>
@@ -605,8 +1061,18 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null }) => {
         </div>
       )}
 
-      <PropertyPreviewCard payload={req.payload} />
-      <PropertyDraftBundleCard bundle={propertyDraftBundle} />
+      <div style={sectionHeadingStyle}>Requested Changes</div>
+      <DiffPreview req={req} enableImagePreview onPreviewImage={onPreviewImage} />
+
+      <div style={sectionHeadingStyle}>Preview</div>
+      {isPropertyRequest ? (
+        <>
+          <PropertyPreviewCard payload={req.payload} />
+          <PropertyDraftBundleCard bundle={propertyDraftBundle} onPreviewImage={onPreviewImage} />
+        </>
+      ) : (
+        <RequestEntityPreviewCard req={req} onPreviewImage={onPreviewImage} />
+      )}
 
       {!isRevision && (
         <div style={{ marginTop: "10px", fontSize: "12px", color: "#334155" }}>
@@ -620,7 +1086,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null }) => {
         </div>
       ) : null}
 
-      {isRevision && req.entity_type === "property" && req.entity_id && (
+      {isRevision && isPropertyRequest && req.entity_id && (
         <div style={{ marginTop: "12px" }}>
           <button
             type="button"
@@ -640,6 +1106,81 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null }) => {
           </button>
         </div>
       )}
+    </div>
+  );
+};
+
+const ImagePreviewModal = ({ imageUrl, onClose }) => {
+  if (!imageUrl) return null;
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15, 23, 42, 0.78)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+        zIndex: 2000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(96vw, 1100px)",
+          maxHeight: "90vh",
+          background: "#fff",
+          borderRadius: "12px",
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            padding: "10px 12px",
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <strong style={{ fontSize: "14px", color: "#0f172a" }}>Image Preview</strong>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              border: "1px solid #cbd5e1",
+              background: "#fff",
+              borderRadius: "8px",
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: "12px",
+            }}
+          >
+            Close
+          </button>
+        </div>
+        <div style={{ padding: "12px", overflow: "auto", background: "#f8fafc" }}>
+          <img
+            src={imageUrl}
+            alt="Approval preview"
+            style={{
+              display: "block",
+              maxWidth: "100%",
+              maxHeight: "calc(90vh - 80px)",
+              margin: "0 auto",
+              objectFit: "contain",
+              borderRadius: "8px",
+              background: "#fff",
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 };
@@ -680,7 +1221,9 @@ const ApprovalQueue = () => {
     loadRequests();
   }, []);
 
-  const handleDecision = async (requestId, decision) => {
+  const handleDecision = async (req, decision) => {
+    if (!req?.id) return;
+    const requestId = req.id;
     setWorkingId(requestId);
     const decisionComment = comment[requestId] || null;
     const { error } = await supabase.rpc("apply_approval_request", {
@@ -692,6 +1235,20 @@ const ApprovalQueue = () => {
     if (error) {
       alert(`Failed to ${decision}: ${error.message}`);
     } else {
+      if (decision === "rejected") {
+        let removedMediaCount = 0;
+        try {
+          const cleanup = await removeRejectedRequestAssets(req);
+          removedMediaCount = cleanup?.removed || 0;
+        } catch (cleanupError) {
+          console.error("Rejected request media cleanup failed:", cleanupError);
+        }
+
+        const { error: redactError } = await redactRejectedRequestData(req, removedMediaCount);
+        if (redactError) {
+          console.error("Failed to redact rejected request payload:", redactError);
+        }
+      }
       await loadRequests();
     }
     setWorkingId(null);
@@ -735,6 +1292,7 @@ const ApprovalQueue = () => {
               req={req}
               onRevise={handleRevise}
               propertyDraftBundle={getPropertyDraftBundle(req)}
+              onPreviewImage={(url) => setPreviewImageUrl(url)}
             />
           ))}
 
@@ -745,6 +1303,7 @@ const ApprovalQueue = () => {
               key={req.id}
               req={req}
               propertyDraftBundle={getPropertyDraftBundle(req)}
+              onPreviewImage={(url) => setPreviewImageUrl(url)}
             />
           ))}
 
@@ -755,8 +1314,10 @@ const ApprovalQueue = () => {
               key={req.id}
               req={req}
               propertyDraftBundle={getPropertyDraftBundle(req)}
+              onPreviewImage={(url) => setPreviewImageUrl(url)}
             />
           ))}
+        <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
       </AdminLayout>
     );
   }
@@ -770,6 +1331,7 @@ const ApprovalQueue = () => {
       ) : (
         requests.map((req) => {
           const propertyDraftBundle = getPropertyDraftBundle(req);
+          const isPropertyRequest = String(req?.entity_type || "").toLowerCase() === "property";
           return (
           <div key={req.id} style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
@@ -816,13 +1378,21 @@ const ApprovalQueue = () => {
               </div>
             )}
 
-            <PropertyPreviewCard payload={req.payload} />
-            <PropertyDraftBundleCard
-              bundle={propertyDraftBundle}
-              onPreviewImage={(url) => setPreviewImageUrl(url)}
-            />
-
+            <div style={sectionHeadingStyle}>Requested Changes</div>
             <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
+
+            <div style={sectionHeadingStyle}>Preview</div>
+            {isPropertyRequest ? (
+              <>
+                <PropertyPreviewCard payload={req.payload} />
+                <PropertyDraftBundleCard
+                  bundle={propertyDraftBundle}
+                  onPreviewImage={(url) => setPreviewImageUrl(url)}
+                />
+              </>
+            ) : (
+              <RequestEntityPreviewCard req={req} onPreviewImage={(url) => setPreviewImageUrl(url)} />
+            )}
 
             <div style={{ marginTop: "8px" }}>
               <button
@@ -850,7 +1420,7 @@ const ApprovalQueue = () => {
                 style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
               />
               <button
-                onClick={() => handleDecision(req.id, "rejected")}
+                onClick={() => handleDecision(req, "rejected")}
                 disabled={workingId === req.id}
                 style={{
                   padding: "10px 12px",
@@ -869,7 +1439,7 @@ const ApprovalQueue = () => {
                     alert("Please add a message explaining what needs to be revised.");
                     return;
                   }
-                  handleDecision(req.id, "revision_requested");
+                  handleDecision(req, "revision_requested");
                 }}
                 disabled={workingId === req.id}
                 style={{
@@ -885,7 +1455,7 @@ const ApprovalQueue = () => {
                 Request Revision
               </button>
               <button
-                onClick={() => handleDecision(req.id, "approved")}
+                onClick={() => handleDecision(req, "approved")}
                 disabled={workingId === req.id}
                 style={{
                   padding: "10px 12px",
@@ -902,77 +1472,7 @@ const ApprovalQueue = () => {
           </div>
         )})
       )}
-      {previewImageUrl ? (
-        <div
-          onClick={() => setPreviewImageUrl(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.78)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-            zIndex: 2000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "min(96vw, 1100px)",
-              maxHeight: "90vh",
-              background: "#fff",
-              borderRadius: "12px",
-              overflow: "hidden",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              style={{
-                padding: "10px 12px",
-                borderBottom: "1px solid #e2e8f0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              <strong style={{ fontSize: "14px", color: "#0f172a" }}>Image Preview</strong>
-              <button
-                type="button"
-                onClick={() => setPreviewImageUrl(null)}
-                style={{
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  borderRadius: "8px",
-                  padding: "6px 10px",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                }}
-              >
-                Close
-              </button>
-            </div>
-            <div style={{ padding: "12px", overflow: "auto", background: "#f8fafc" }}>
-              <img
-                src={previewImageUrl}
-                alt="Approval preview"
-                style={{
-                  display: "block",
-                  maxWidth: "100%",
-                  maxHeight: "calc(90vh - 80px)",
-                  margin: "0 auto",
-                  objectFit: "contain",
-                  borderRadius: "8px",
-                  background: "#fff",
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
     </AdminLayout>
   );
 };

@@ -2,7 +2,13 @@ import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../../../supabaseClient";
 import { FaTrash, FaPlus } from "react-icons/fa";
 import { ICON_OPTIONS, BANK_OPTIONS, getAmenityIcon } from "../../../lib/amenityIcons.jsx";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
+import {
+    fetchOpenPropertyRequests,
+    getCurrentAdminRole,
+    isSuperAdminRole,
+    parseApprovalObject,
+    submitApprovalRequest
+} from "../../../lib/adminApi";
 
 const PAGE_SIZE = 30;
 
@@ -109,12 +115,17 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
     const [mode, setMode] = useState("BANK"); // "BANK" or "CUSTOM"
     const [adminRole, setAdminRole] = useState(null);
     const [draftById, setDraftById] = useState({});
+    const [pendingDrafts, setPendingDrafts] = useState({ creates: [], updatesById: {}, deletesById: {} });
     const [savingAmenityId, setSavingAmenityId] = useState(null);
     const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
 
     useEffect(() => {
         if (propertyId) loadAmenities();
     }, [propertyId]);
+
+    useEffect(() => {
+        loadPendingDrafts();
+    }, [propertyId, canEditDirectly]);
 
     useEffect(() => {
         const loadRole = async () => {
@@ -150,6 +161,56 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
         setLoading(false);
     };
 
+    const loadPendingDrafts = async () => {
+        if (!propertyId || canEditDirectly) {
+            setPendingDrafts({ creates: [], updatesById: {}, deletesById: {} });
+            return;
+        }
+
+        const { data, error } = await fetchOpenPropertyRequests(propertyId, ["amenity"]);
+        if (error) {
+            console.error("Error loading amenity draft requests:", error);
+            return;
+        }
+
+        const next = { creates: [], updatesById: {}, deletesById: {} };
+        (data || [])
+            .slice()
+            .sort((a, b) => new Date(a.submitted_at || 0) - new Date(b.submitted_at || 0))
+            .forEach((req) => {
+                const action = String(req.action || "").toLowerCase();
+                const payload = parseApprovalObject(req.payload);
+                const beforeSnapshot = parseApprovalObject(req.before_snapshot);
+
+                if (action === "create") {
+                    next.creates.push({
+                        id: req.id,
+                        title: payload.title || "Untitled",
+                        description: payload.description || "",
+                        icon_key: payload.icon_key || "",
+                    });
+                    return;
+                }
+
+                if (!req.entity_id) return;
+                const entityId = String(req.entity_id);
+                if (action === "delete") {
+                    next.deletesById[entityId] = { id: req.id, beforeSnapshot };
+                    return;
+                }
+
+                if (action === "update") {
+                    next.updatesById[entityId] = {
+                        id: req.id,
+                        title: payload.title ?? beforeSnapshot.title ?? "",
+                        description: payload.description ?? beforeSnapshot.description ?? "",
+                        icon_key: payload.icon_key ?? beforeSnapshot.icon_key ?? "",
+                    };
+                }
+            });
+        setPendingDrafts(next);
+    };
+
     const handleAdd = async () => {
         if (!newAmenity.title) return alert("Title is required");
         try {
@@ -174,6 +235,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                 });
                 if (error) throw error;
                 alert("Amenity create request submitted for approval.");
+                await loadPendingDrafts();
             }
 
             setNewAmenity({ title: "", description: "", icon_key: "" });
@@ -206,6 +268,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
             });
             if (error) throw error;
             alert("Amenity delete request submitted for approval.");
+            await loadPendingDrafts();
         } catch (error) {
             alert("Error deleting: " + error.message);
         }
@@ -258,6 +321,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                 });
                 if (error) throw error;
                 alert("Amenity update request submitted for approval.");
+                await loadPendingDrafts();
             }
         } catch (error) {
             alert("Error saving amenity: " + error.message);
@@ -393,67 +457,127 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
 
             {loading ? <p>Loading...</p> : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {amenities.map((item) => (
-                        (() => {
-                            const draft = draftById[item.id] || {
-                                title: item.title || "",
-                                description: item.description || "",
-                                icon_key: item.icon_key || "",
-                            };
-                            return (
-                        <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "15px", padding: "10px", border: "1px solid #f0f0f0", borderRadius: "6px", background: "white" }}>
-                            <div style={{ fontSize: "24px", width: "40px", display: "flex", justifyContent: "center", color: "#666" }}>
-                                {getAmenityIcon(draft.title, draft.icon_key)}
+                    {!canEditDirectly && pendingDrafts.creates.length > 0 ? (
+                        <div style={{ background: "#eff6ff", border: "1px dashed #93c5fd", borderRadius: "8px", padding: "10px" }}>
+                            <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 700, color: "#1d4ed8", textTransform: "uppercase" }}>
+                                Draft Amenity Additions Pending ({pendingDrafts.creates.length})
+                            </p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                {pendingDrafts.creates.map((item, idx) => (
+                                    <span
+                                        key={item.id || idx}
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            padding: "6px 10px",
+                                            borderRadius: "999px",
+                                            border: "1px solid #bfdbfe",
+                                            background: "#fff",
+                                            color: "#1e3a8a",
+                                            fontSize: "12px",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        <span>{getAmenityIcon(item.title, item.icon_key)}</span>
+                                        <span>{item.title}</span>
+                                    </span>
+                                ))}
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <input
-                                    value={draft.title}
-                                    onChange={(e) => handleDraftChange(item.id, "title", e.target.value)}
-                                    style={{ fontWeight: "bold", border: "none", background: "transparent", width: "100%", marginBottom: "4px", fontSize: "16px" }}
-                                />
-                                <input
-                                    value={draft.description || ""}
-                                    placeholder="Add description..."
-                                    onChange={(e) => handleDraftChange(item.id, "description", e.target.value)}
-                                    style={{ border: "none", background: "transparent", width: "100%", color: "#666", fontSize: "14px" }}
-                                />
-                            </div>
-                            <div style={{ width: "230px" }}>
-                                <SearchablePagedDropdown
-                                    options={ICON_OPTIONS}
-                                    value={draft.icon_key || ""}
-                                    onChange={(val) => handleDraftChange(item.id, "icon_key", val)}
-                                    getLabel={(opt) => `${opt.label}`}
-                                    getValue={(opt) => opt.value}
-                                    placeholder="Search and pick icon..."
-                                    width="230px"
-                                />
-                            </div>
-                            <button
-                                onClick={() => handleSaveRow(item)}
-                                disabled={savingAmenityId === item.id}
-                                style={{
-                                    background: "#2563eb",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    padding: "8px 10px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                }}
-                            >
-                                {savingAmenityId === item.id ? "Saving..." : (canEditDirectly ? "Save" : "Submit")}
-                            </button>
-                            <button onClick={() => handleDelete(item.id)} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
-                                <FaTrash />
-                            </button>
                         </div>
-                            );
-                        })()
-                    ))}
+                    ) : null}
+
+                    {amenities.map((item) => {
+                        const itemId = String(item.id);
+                        const pendingUpdate = pendingDrafts.updatesById[itemId];
+                        const pendingDelete = pendingDrafts.deletesById[itemId];
+                        const baseDraft = draftById[item.id] || {
+                            title: item.title || "",
+                            description: item.description || "",
+                            icon_key: item.icon_key || "",
+                        };
+                        const draft = pendingUpdate ? {
+                            ...baseDraft,
+                            title: pendingUpdate.title ?? baseDraft.title,
+                            description: pendingUpdate.description ?? baseDraft.description,
+                            icon_key: pendingUpdate.icon_key ?? baseDraft.icon_key,
+                        } : baseDraft;
+
+                        const submitDisabled = savingAmenityId === item.id || (!canEditDirectly && (!!pendingUpdate || !!pendingDelete));
+
+                        return (
+                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "15px", padding: "10px", border: "1px solid #f0f0f0", borderRadius: "6px", background: "white", opacity: pendingDelete ? 0.7 : 1 }}>
+                                <div style={{ fontSize: "24px", width: "40px", display: "flex", justifyContent: "center", color: "#666" }}>
+                                    {getAmenityIcon(draft.title, draft.icon_key)}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
+                                        {pendingUpdate && !canEditDirectly ? (
+                                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                                                Draft Update Pending
+                                            </span>
+                                        ) : null}
+                                        {pendingDelete && !canEditDirectly ? (
+                                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#991b1b", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: "999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                                                Draft Delete Pending
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                    <input
+                                        value={draft.title}
+                                        disabled={!canEditDirectly && (!!pendingUpdate || !!pendingDelete)}
+                                        onChange={(e) => handleDraftChange(item.id, "title", e.target.value)}
+                                        style={{ fontWeight: "bold", border: "none", background: "transparent", width: "100%", marginBottom: "4px", fontSize: "16px" }}
+                                    />
+                                    <input
+                                        value={draft.description || ""}
+                                        disabled={!canEditDirectly && (!!pendingUpdate || !!pendingDelete)}
+                                        placeholder="Add description..."
+                                        onChange={(e) => handleDraftChange(item.id, "description", e.target.value)}
+                                        style={{ border: "none", background: "transparent", width: "100%", color: "#666", fontSize: "14px" }}
+                                    />
+                                </div>
+                                <div style={{ width: "230px" }}>
+                                    <SearchablePagedDropdown
+                                        options={ICON_OPTIONS}
+                                        value={draft.icon_key || ""}
+                                        onChange={(val) => {
+                                            if (!canEditDirectly && (!!pendingUpdate || !!pendingDelete)) return;
+                                            handleDraftChange(item.id, "icon_key", val);
+                                        }}
+                                        getLabel={(opt) => `${opt.label}`}
+                                        getValue={(opt) => opt.value}
+                                        placeholder="Search and pick icon..."
+                                        width="230px"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => handleSaveRow(item)}
+                                    disabled={submitDisabled}
+                                    style={{
+                                        background: "#2563eb",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        padding: "8px 10px",
+                                        cursor: "pointer",
+                                        fontSize: "12px",
+                                    }}
+                                >
+                                    {savingAmenityId === item.id ? "Saving..." : pendingDelete ? "Delete Pending" : pendingUpdate ? "Update Pending" : (canEditDirectly ? "Save" : "Submit")}
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(item.id)}
+                                    disabled={!canEditDirectly && !!pendingDelete}
+                                    style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}
+                                    title={!canEditDirectly && !!pendingDelete ? "Delete request already pending" : undefined}
+                                >
+                                    <FaTrash />
+                                </button>
+                            </div>
+                        );
+                    })}
                     {amenities.length === 0 && !isAdding && <p style={{ color: "#999", textAlign: "center", marginTop: "20px" }}>No amenities yet. Add one!</p>}
-
-
                 </div>
             )}
 
