@@ -101,7 +101,7 @@ const SearchablePagedDropdown = ({
     );
 };
 
-const AmenitiesManager = ({ propertyId }) => {
+const AmenitiesManager = ({ propertyId, isDraft = false }) => {
     const [amenities, setAmenities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newAmenity, setNewAmenity] = useState({ title: "", description: "", icon_key: "" });
@@ -110,6 +110,7 @@ const AmenitiesManager = ({ propertyId }) => {
     const [adminRole, setAdminRole] = useState(null);
     const [draftById, setDraftById] = useState({});
     const [savingAmenityId, setSavingAmenityId] = useState(null);
+    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
 
     useEffect(() => {
         if (propertyId) loadAmenities();
@@ -153,7 +154,7 @@ const AmenitiesManager = ({ propertyId }) => {
         if (!newAmenity.title) return alert("Title is required");
         try {
             const payload = { ...newAmenity, property_id: propertyId };
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { data, error } = await supabase
                     .from("amenities")
                     .insert(payload)
@@ -185,7 +186,7 @@ const AmenitiesManager = ({ propertyId }) => {
     const handleDelete = async (id) => {
         if (!window.confirm("Delete this amenity?")) return;
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error } = await supabase.from("amenities").delete().eq("id", id);
                 if (error) throw error;
                 setAmenities(amenities.filter((a) => a.id !== id));
@@ -231,7 +232,7 @@ const AmenitiesManager = ({ propertyId }) => {
 
         setSavingAmenityId(item.id);
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error } = await supabase
                     .from("amenities")
                     .update({
@@ -441,7 +442,7 @@ const AmenitiesManager = ({ propertyId }) => {
                                     fontSize: "12px",
                                 }}
                             >
-                                {savingAmenityId === item.id ? "Saving..." : (isSuperAdminRole(adminRole) ? "Save" : "Submit")}
+                                {savingAmenityId === item.id ? "Saving..." : (canEditDirectly ? "Save" : "Submit")}
                             </button>
                             <button onClick={() => handleDelete(item.id)} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
                                 <FaTrash />

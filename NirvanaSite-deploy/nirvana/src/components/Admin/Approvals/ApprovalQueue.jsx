@@ -232,6 +232,79 @@ const hydrateMissingSnapshots = async (rows) => {
   return hydrated;
 };
 
+const emptyPropertyDraftBundle = () => ({
+  curated: [],
+  gallery: [],
+  amenities: [],
+});
+
+const buildPropertyDraftBundleMap = async (rows) => {
+  const propertyIds = Array.from(
+    new Set(
+      (rows || [])
+        .filter((req) => String(req?.entity_type || "").toLowerCase() === "property" && req?.entity_id)
+        .map((req) => String(req.entity_id))
+    )
+  );
+
+  if (!propertyIds.length) return {};
+
+  const [curatedRes, galleryRes, amenitiesRes] = await Promise.all([
+    supabase
+      .from("property_curated_images")
+      .select("property_id,slot,url,display_order")
+      .in("property_id", propertyIds)
+      .order("display_order", { ascending: true }),
+    supabase
+      .from("property_images")
+      .select("property_id,url,display_order")
+      .in("property_id", propertyIds)
+      .order("display_order", { ascending: true }),
+    supabase
+      .from("amenities")
+      .select("property_id,title,description,icon_key")
+      .in("property_id", propertyIds)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const bundles = propertyIds.reduce((acc, propertyId) => {
+    acc[propertyId] = emptyPropertyDraftBundle();
+    return acc;
+  }, {});
+
+  if (curatedRes.error) {
+    console.error("Failed to load curated draft images for approval queue:", curatedRes.error);
+  } else {
+    (curatedRes.data || []).forEach((row) => {
+      const propertyId = String(row.property_id);
+      if (!bundles[propertyId]) bundles[propertyId] = emptyPropertyDraftBundle();
+      bundles[propertyId].curated.push(row);
+    });
+  }
+
+  if (galleryRes.error) {
+    console.error("Failed to load draft gallery images for approval queue:", galleryRes.error);
+  } else {
+    (galleryRes.data || []).forEach((row) => {
+      const propertyId = String(row.property_id);
+      if (!bundles[propertyId]) bundles[propertyId] = emptyPropertyDraftBundle();
+      bundles[propertyId].gallery.push(row);
+    });
+  }
+
+  if (amenitiesRes.error) {
+    console.error("Failed to load draft amenities for approval queue:", amenitiesRes.error);
+  } else {
+    (amenitiesRes.data || []).forEach((row) => {
+      const propertyId = String(row.property_id);
+      if (!bundles[propertyId]) bundles[propertyId] = emptyPropertyDraftBundle();
+      bundles[propertyId].amenities.push(row);
+    });
+  }
+
+  return bundles;
+};
+
 const buildDiffRows = (req) => {
   const action = String(req?.action || "").toLowerCase();
   const before = parseSnapshot(req?.before_snapshot);
@@ -333,7 +406,163 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null })
   );
 };
 
-const EditorRequestCard = ({ req, onRevise }) => {
+const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
+  if (!bundle) return null;
+
+  const curated = bundle.curated || [];
+  const gallery = bundle.gallery || [];
+  const amenities = bundle.amenities || [];
+  const hasAnyDraftContent = curated.length > 0 || gallery.length > 0 || amenities.length > 0;
+  if (!hasAnyDraftContent) return null;
+
+  const canPreview = typeof onPreviewImage === "function";
+  const renderThumb = (item, label, key) => {
+    const thumb = (
+      <>
+        <img
+          src={item.url}
+          alt={label}
+          style={{
+            width: "100%",
+            height: "68px",
+            objectFit: "cover",
+            borderRadius: "6px",
+            border: "1px solid #e2e8f0",
+          }}
+        />
+        <span style={{ marginTop: "4px", fontSize: "11px", color: "#64748b", textTransform: "capitalize" }}>{label}</span>
+      </>
+    );
+
+    if (!canPreview) {
+      return (
+        <div
+          key={key}
+          style={{ width: "92px", display: "flex", flexDirection: "column", alignItems: "center" }}
+        >
+          {thumb}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => onPreviewImage(item.url)}
+        style={{
+          width: "92px",
+          border: "none",
+          background: "transparent",
+          padding: 0,
+          cursor: "pointer",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        {thumb}
+      </button>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        background: "#f8fafc",
+        padding: "12px",
+        marginBottom: "12px",
+      }}
+    >
+      <strong style={{ fontSize: "12px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+        Draft Content Snapshot
+      </strong>
+
+      <div style={{ marginTop: "10px", display: "grid", gap: "10px" }}>
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+            Key Images ({curated.length})
+          </div>
+          {curated.length ? (
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {curated.map((item, idx) => renderThumb(item, item.slot || "image", `curated-${item.slot || idx}`))}
+            </div>
+          ) : (
+            <div style={{ fontSize: "12px", color: "#94a3b8" }}>No curated images in draft.</div>
+          )}
+        </div>
+
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+            Gallery ({gallery.length})
+          </div>
+          {gallery.length ? (
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {gallery.slice(0, 6).map((item, idx) => renderThumb(item, `#${idx + 1}`, `gallery-${idx}`))}
+              {gallery.length > 6 ? (
+                <div
+                  style={{
+                    minWidth: "92px",
+                    height: "68px",
+                    borderRadius: "6px",
+                    border: "1px dashed #cbd5e1",
+                    background: "#fff",
+                    color: "#64748b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                  }}
+                >
+                  +{gallery.length - 6} more
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div style={{ fontSize: "12px", color: "#94a3b8" }}>No gallery images in draft.</div>
+          )}
+        </div>
+
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+            Amenities ({amenities.length})
+          </div>
+          {amenities.length ? (
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {amenities.slice(0, 10).map((item, idx) => (
+                <span
+                  key={`amenity-${item.title || idx}-${idx}`}
+                  style={{
+                    fontSize: "12px",
+                    padding: "4px 8px",
+                    borderRadius: "999px",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    color: "#334155",
+                  }}
+                >
+                  {item.title || "Untitled"}
+                </span>
+              ))}
+              {amenities.length > 10 ? (
+                <span style={{ fontSize: "12px", color: "#64748b", alignSelf: "center" }}>
+                  +{amenities.length - 10} more
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <div style={{ fontSize: "12px", color: "#94a3b8" }}>No amenities in draft.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null }) => {
   const badge = statusBadgeStyle(req.status);
   const isRevision = req.status === "revision_requested";
   const ownerResponse = req.status !== "pending" ? req.comment : null;
@@ -377,6 +606,7 @@ const EditorRequestCard = ({ req, onRevise }) => {
       )}
 
       <PropertyPreviewCard payload={req.payload} />
+      <PropertyDraftBundleCard bundle={propertyDraftBundle} />
 
       {!isRevision && (
         <div style={{ marginTop: "10px", fontSize: "12px", color: "#334155" }}>
@@ -423,6 +653,7 @@ const ApprovalQueue = () => {
   const [workingId, setWorkingId] = useState(null);
   const [showRaw, setShowRaw] = useState({});
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [propertyDraftBundlesById, setPropertyDraftBundlesById] = useState({});
 
   const loadRequests = async () => {
     setLoading(true);
@@ -435,9 +666,12 @@ const ApprovalQueue = () => {
     if (reqError) {
       console.error(reqError);
       setRequests([]);
+      setPropertyDraftBundlesById({});
     } else {
       const hydrated = await hydrateMissingSnapshots(reqData || []);
+      const bundleMap = await buildPropertyDraftBundleMap(hydrated);
       setRequests(hydrated);
+      setPropertyDraftBundlesById(bundleMap);
     }
     setLoading(false);
   };
@@ -476,6 +710,13 @@ const ApprovalQueue = () => {
     }
   };
 
+  const getPropertyDraftBundle = (req) => {
+    if (String(req?.entity_type || "").toLowerCase() !== "property" || !req?.entity_id) {
+      return null;
+    }
+    return propertyDraftBundlesById[String(req.entity_id)] || null;
+  };
+
   if (!isSuperAdminRole(role)) {
     const revisionNeeded = requests.filter((req) => req.status === "revision_requested");
     const pending = requests.filter((req) => req.status === "pending");
@@ -487,13 +728,35 @@ const ApprovalQueue = () => {
         {!loading && requests.length === 0 ? <div style={cardStyle}>No requests submitted yet.</div> : null}
 
         {!loading && revisionNeeded.length > 0 ? <h3 style={{ margin: "4px 0 10px", color: "#b45309" }}>⚠️ Revisions Needed</h3> : null}
-        {!loading && revisionNeeded.map((req) => <EditorRequestCard key={req.id} req={req} onRevise={handleRevise} />)}
+        {!loading &&
+          revisionNeeded.map((req) => (
+            <EditorRequestCard
+              key={req.id}
+              req={req}
+              onRevise={handleRevise}
+              propertyDraftBundle={getPropertyDraftBundle(req)}
+            />
+          ))}
 
         {!loading && pending.length > 0 ? <h3 style={{ margin: "4px 0 10px" }}>Pending</h3> : null}
-        {!loading && pending.map((req) => <EditorRequestCard key={req.id} req={req} />)}
+        {!loading &&
+          pending.map((req) => (
+            <EditorRequestCard
+              key={req.id}
+              req={req}
+              propertyDraftBundle={getPropertyDraftBundle(req)}
+            />
+          ))}
 
         {!loading && processed.length > 0 ? <h3 style={{ margin: "16px 0 10px" }}>Processed</h3> : null}
-        {!loading && processed.map((req) => <EditorRequestCard key={req.id} req={req} />)}
+        {!loading &&
+          processed.map((req) => (
+            <EditorRequestCard
+              key={req.id}
+              req={req}
+              propertyDraftBundle={getPropertyDraftBundle(req)}
+            />
+          ))}
       </AdminLayout>
     );
   }
@@ -505,7 +768,9 @@ const ApprovalQueue = () => {
       ) : requests.length === 0 ? (
         <div style={cardStyle}>No pending requests.</div>
       ) : (
-        requests.map((req) => (
+        requests.map((req) => {
+          const propertyDraftBundle = getPropertyDraftBundle(req);
+          return (
           <div key={req.id} style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
               <div>
@@ -552,6 +817,10 @@ const ApprovalQueue = () => {
             )}
 
             <PropertyPreviewCard payload={req.payload} />
+            <PropertyDraftBundleCard
+              bundle={propertyDraftBundle}
+              onPreviewImage={(url) => setPreviewImageUrl(url)}
+            />
 
             <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
 
@@ -631,7 +900,7 @@ const ApprovalQueue = () => {
               </button>
             </div>
           </div>
-        ))
+        )})
       )}
       {previewImageUrl ? (
         <div

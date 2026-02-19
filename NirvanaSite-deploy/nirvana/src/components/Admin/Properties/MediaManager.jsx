@@ -3,11 +3,12 @@ import styles from "./PropertyEditor.module.css"; // Reuse styling for now or sp
 import { supabase } from "../../../supabaseClient";
 import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
-const MediaManager = ({ propertyId }) => {
+const MediaManager = ({ propertyId, isDraft = false }) => {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [adminRole, setAdminRole] = useState(null);
+    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
 
     useEffect(() => {
         loadImages();
@@ -67,10 +68,10 @@ const MediaManager = ({ propertyId }) => {
                 });
             }
 
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error: insertErr } = await supabase.from("property_images").insert(uploads);
                 if (insertErr) throw insertErr;
-                loadImages();
+                await loadImages();
                 return;
             }
 
@@ -101,7 +102,7 @@ const MediaManager = ({ propertyId }) => {
     const handleDelete = async (id) => {
         if (!window.confirm("Remove this image?")) return;
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error } = await supabase.from("property_images").delete().eq("id", id);
                 if (error) throw error;
                 setImages(prev => prev.filter(img => img.id !== id));

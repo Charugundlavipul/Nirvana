@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./CuratedImagesManager.module.css";
-import editorStyles from "./PropertyEditor.module.css"; // Reuse card/field styles
 import { supabase } from "../../../supabaseClient";
 import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
 
 const SLOTS = ["home", "bg", "secondary"];
 
-const CuratedImagesManager = ({ propertyId }) => {
+const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
     const [images, setImages] = useState({ home: null, bg: null, secondary: null });
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState({ home: false, bg: false, secondary: false });
     const [adminRole, setAdminRole] = useState(null);
     const fileInputRefs = useRef({});
+    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
 
     useEffect(() => {
         loadImages();
@@ -70,7 +70,7 @@ const CuratedImagesManager = ({ propertyId }) => {
                 display_order: SLOTS.indexOf(slot)
             };
 
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error: dbErr } = await supabase
                     .from("property_curated_images")
                     .upsert(payload, { onConflict: 'property_id, slot' });
@@ -105,7 +105,7 @@ const CuratedImagesManager = ({ propertyId }) => {
         if (!confirm(`Remove ${slot} image?`)) return;
 
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (canEditDirectly) {
                 const { error } = await supabase
                     .from("property_curated_images")
                     .delete()

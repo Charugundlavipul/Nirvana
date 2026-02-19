@@ -11,6 +11,21 @@ import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const toFormState = (data = {}) => ({
+    name: data.name || "",
+    slug: data.slug || "",
+    booking_url: data.booking_url || "",
+    location: data.location || "",
+    description: data.description || "",
+    guests_max: data.guests_max || "",
+    bedroom_count: data.bedroom_count || "",
+    bathroom_count: data.bathroom_count || "",
+    bed_details: data.bed_details || "",
+    bath_details: data.bath_details || "",
+    pet_friendly: data.pet_friendly || false,
+    pet_fee: data.pet_fee || 0,
+    hot_tub: data.hot_tub || false
+});
 
 const PropertyEditor = () => {
     const { slug } = useParams();
@@ -44,6 +59,9 @@ const PropertyEditor = () => {
     });
 
     const [propertyId, setPropertyId] = useState(null);
+    const superAdmin = isSuperAdminRole(adminRole);
+    const approvalRequiredForEdits = !superAdmin && isPublished;
+    const isDraftProperty = !isNew && !isPublished;
 
     useEffect(() => {
         if (!isNew && slug) {
@@ -71,21 +89,7 @@ const PropertyEditor = () => {
 
             setPropertyId(data.id);
             setIsPublished(data.is_published !== false);
-            const normalized = {
-                name: data.name || "",
-                slug: data.slug || "",
-                booking_url: data.booking_url || "",
-                location: data.location || "",
-                description: data.description || "",
-                guests_max: data.guests_max || "",
-                bedroom_count: data.bedroom_count || "",
-                bathroom_count: data.bathroom_count || "",
-                bed_details: data.bed_details || "",
-                bath_details: data.bath_details || "",
-                pet_friendly: data.pet_friendly || false,
-                pet_fee: data.pet_fee || 0,
-                hot_tub: data.hot_tub || false
-            };
+            const normalized = toFormState(data);
             setFormData(normalized);
             setBeforeSnapshot(normalized);
         } catch (error) {
@@ -167,7 +171,6 @@ const PropertyEditor = () => {
         setSaving(true);
 
         try {
-            const superAdmin = isSuperAdminRole(adminRole);
             const payload = { ...formData };
             if (!payload.booking_url) delete payload.booking_url;
 
@@ -196,6 +199,21 @@ const PropertyEditor = () => {
                 setBeforeSnapshot({ ...formData });
                 alert("Draft property created! You can now add media and amenities. Submit for publish when ready.");
                 navigate(`/admin/properties/${data.slug}`);
+            } else if (!isPublished) {
+                // Editors save draft changes directly while property is unpublished.
+                payload.is_published = false;
+                const { data, error } = await supabase
+                    .from("properties")
+                    .update(payload)
+                    .eq("id", propertyId)
+                    .select()
+                    .single();
+                if (error) throw error;
+                const normalized = toFormState(data);
+                setFormData(normalized);
+                setBeforeSnapshot(normalized);
+                setIsPublished(false);
+                alert("Draft saved.");
             } else {
                 // Editors: submit update as approval request (keep current is_published)
                 payload.is_published = isPublished;
@@ -306,15 +324,15 @@ const PropertyEditor = () => {
                 <div className={styles.tabContent}>
                     {activeTab === "details" && (
                         <form onSubmit={handleSave} className={styles.formGrid}>
-                            {!isSuperAdminRole(adminRole) && !isPublished && !isNew && (
+                            {!superAdmin && !isPublished && !isNew && (
                                 <div className={styles.card} style={{ borderLeft: "4px solid #f59e0b", background: "#fffbeb" }}>
-                                    <h3 style={{ color: "#b45309" }}>📝 Draft Property</h3>
+                                    <h3 style={{ color: "#b45309" }}>Draft Property</h3>
                                     <p style={{ marginTop: "8px", color: "#92400e" }}>
-                                        This property is not yet published. Add details, media, and amenities, then click "Submit for Publish" when ready.
+                                        This property is not yet published. Draft saves are direct and visible immediately. Submit for publish only when details, images, and amenities are complete.
                                     </p>
                                 </div>
                             )}
-                            {!isSuperAdminRole(adminRole) && !isNew && isPublished && (
+                            {!superAdmin && !isNew && isPublished && (
                                 <div className={styles.card}>
                                     <h3>Approval Flow Enabled</h3>
                                     <p style={{ marginTop: "8px", color: "#555" }}>
@@ -413,7 +431,7 @@ const PropertyEditor = () => {
                                 </div>
                             </div>
 
-                            {!isSuperAdminRole(adminRole) && (
+                            {!superAdmin && (
                                 <div className={styles.card}>
                                     <h3>Note to Superadmin</h3>
                                     <textarea
@@ -437,9 +455,9 @@ const PropertyEditor = () => {
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
-                                    {saving ? "Saving..." : isSuperAdminRole(adminRole) ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Submit for Approval" : "Save Draft"}
+                                    {saving ? "Saving..." : superAdmin ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Submit for Approval" : "Save Draft"}
                                 </button>
-                                {!isSuperAdminRole(adminRole) && !isNew && !isPublished && (
+                                {!superAdmin && !isNew && !isPublished && (
                                     <button
                                         type="button"
                                         className={styles.saveBtn}
@@ -454,30 +472,32 @@ const PropertyEditor = () => {
                         </form>
                     )}
 
-                    {activeTab === "media" && propertyId && isSuperAdminRole(adminRole) && (
+                    {activeTab === "media" && propertyId && superAdmin && (
                         <>
-                            <CuratedImagesManager propertyId={propertyId} />
+                            <CuratedImagesManager propertyId={propertyId} isDraft={isDraftProperty} />
                             <div style={{ marginTop: '24px' }}></div>
-                            <MediaManager propertyId={propertyId} />
+                            <MediaManager propertyId={propertyId} isDraft={isDraftProperty} />
                         </>
                     )}
 
-                    {activeTab === "media" && propertyId && !isSuperAdminRole(adminRole) && (
+                    {activeTab === "media" && propertyId && !superAdmin && (
                         <>
                             <div className={styles.card}>
-                                <h3>Approval Flow Enabled</h3>
+                                <h3>{approvalRequiredForEdits ? "Approval Flow Enabled" : "Draft Mode Enabled"}</h3>
                                 <p style={{ marginTop: "8px", color: "#555" }}>
-                                    Media changes are submitted for superadmin approval before publishing.
+                                    {approvalRequiredForEdits
+                                        ? "Media changes are submitted for superadmin approval before publishing."
+                                        : "Media updates save directly to this draft and will be reviewed together when you submit for publish."}
                                 </p>
                             </div>
-                            <CuratedImagesManager propertyId={propertyId} />
+                            <CuratedImagesManager propertyId={propertyId} isDraft={isDraftProperty} />
                             <div style={{ marginTop: '24px' }}></div>
-                            <MediaManager propertyId={propertyId} />
+                            <MediaManager propertyId={propertyId} isDraft={isDraftProperty} />
                         </>
                     )}
 
                     {activeTab === "amenities" && propertyId && (
-                        <AmenitiesManager propertyId={propertyId} />
+                        <AmenitiesManager propertyId={propertyId} isDraft={isDraftProperty} />
                     )}
                 </div>
             </div>
