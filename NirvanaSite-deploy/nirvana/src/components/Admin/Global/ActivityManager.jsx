@@ -181,10 +181,13 @@ const ActivityManager = () => {
             if (isSuperAdminRole(adminRole)) {
                 let activityId = formData.id;
 
+                // Exclude property_ids from the direct table payload
+                const { property_ids, ...dbPayload } = payload;
+
                 if (activityId) {
-                    await supabase.from("activities").update(payload).eq("id", activityId);
+                    await supabase.from("activities").update(dbPayload).eq("id", activityId);
                 } else {
-                    const { data, error } = await supabase.from("activities").insert(payload).select().single();
+                    const { data, error } = await supabase.from("activities").insert(dbPayload).select().single();
                     if (error) throw error;
                     activityId = data.id;
                 }

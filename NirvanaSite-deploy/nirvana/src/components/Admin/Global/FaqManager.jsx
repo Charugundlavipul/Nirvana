@@ -170,10 +170,13 @@ const FaqManager = () => {
             if (isSuperAdminRole(adminRole)) {
                 let faqId = formData.id;
 
+                // Exclude property_ids from the direct table payload
+                const { property_ids, ...dbPayload } = payload;
+
                 if (faqId) {
-                    await supabase.from("faqs").update(payload).eq("id", faqId);
+                    await supabase.from("faqs").update(dbPayload).eq("id", faqId);
                 } else {
-                    const { data, error } = await supabase.from("faqs").insert(payload).select().single();
+                    const { data, error } = await supabase.from("faqs").insert(dbPayload).select().single();
                     if (error) throw error;
                     faqId = data.id;
                 }

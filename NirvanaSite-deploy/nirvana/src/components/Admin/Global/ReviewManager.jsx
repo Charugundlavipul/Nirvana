@@ -208,11 +208,14 @@ const ReviewManager = () => {
             if (isSuperAdminRole(adminRole)) {
                 let reviewId = formData.id;
 
+                // Exclude property_ids from the direct table payload
+                const { property_ids, ...dbPayload } = payload;
+
                 if (reviewId) {
-                    const { error } = await supabase.from("reviews").update(payload).eq("id", reviewId);
+                    const { error } = await supabase.from("reviews").update(dbPayload).eq("id", reviewId);
                     if (error) throw error;
                 } else {
-                    const { data, error } = await supabase.from("reviews").insert(payload).select().single();
+                    const { data, error } = await supabase.from("reviews").insert(dbPayload).select().single();
                     if (error) throw error;
                     reviewId = data.id;
                 }
