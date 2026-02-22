@@ -15,6 +15,7 @@ const ActivityManager = () => {
     const [formData, setFormData] = useState({
         id: null,
         property_ids: [],
+        is_default: false,
         title: "",
         description: "",
         image_url: "",
@@ -65,6 +66,7 @@ const ActivityManager = () => {
             return {
                 ...a,
                 property_ids: linkedIds,
+                is_default: propertyCount > 0 && linkedIds.length === propertyCount,
                 property_names: displayLabel
             };
         });
@@ -78,6 +80,7 @@ const ActivityManager = () => {
         setFormData({
             id: activity.id,
             property_ids: activity.property_ids || [],
+            is_default: activity.is_default || false,
             title: activity.title || "",
             description: activity.description || "",
             image_url: activity.image_url || "",
@@ -90,6 +93,7 @@ const ActivityManager = () => {
         setFormData({
             id: null,
             property_ids: [],
+            is_default: false,
             title: "",
             description: "",
             image_url: "",
@@ -126,6 +130,7 @@ const ActivityManager = () => {
     };
 
     const toggleProperty = (propId) => {
+        if (formData.is_default) return;
         setFormData(prev => {
             const current = new Set(prev.property_ids);
             if (current.has(propId)) {
@@ -138,11 +143,23 @@ const ActivityManager = () => {
     };
 
     const handleSelectAll = () => {
+        if (formData.is_default) return;
         if (formData.property_ids.length === properties.length) {
             setFormData(prev => ({ ...prev, property_ids: [] }));
         } else {
             setFormData(prev => ({ ...prev, property_ids: properties.map(p => p.id) }));
         }
+    };
+
+    const handleToggleDefault = () => {
+        setFormData(prev => {
+            const nextDefault = !prev.is_default;
+            return {
+                ...prev,
+                is_default: nextDefault,
+                property_ids: nextDefault ? properties.map(p => p.id) : []
+            };
+        });
     };
 
     const handleImageUpload = async (e) => {
@@ -170,12 +187,16 @@ const ActivityManager = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
+            const propertyIds = formData.is_default
+                ? properties.map(p => p.id)
+                : formData.property_ids;
+
             const payload = {
                 title: formData.title,
                 description: formData.description,
                 image_url: formData.image_url,
                 link_url: formData.link_url,
-                property_ids: formData.property_ids
+                property_ids: propertyIds
             };
 
             if (isSuperAdminRole(adminRole)) {
@@ -193,8 +214,8 @@ const ActivityManager = () => {
                 }
 
                 await supabase.from("property_activities").delete().eq("activity_id", activityId);
-                if (formData.property_ids.length > 0) {
-                    const links = formData.property_ids.map(pid => ({
+                if (payload.property_ids.length > 0) {
+                    const links = payload.property_ids.map(pid => ({
                         activity_id: activityId,
                         property_id: pid
                     }));
@@ -235,20 +256,98 @@ const ActivityManager = () => {
                 <h3>{formData.id ? "Edit Activity" : "New Activity"}</h3>
                 <form onSubmit={handleSave} className={formStyles.formGrid}>
                     <div className={formStyles.fieldGroup}>
-                        <label>Linked Properties (Leave empty for Global)</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px', border: '1px solid #ddd', padding: '12px', borderRadius: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                        <label
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                cursor: 'pointer',
+                                padding: '16px',
+                                background: formData.is_default ? '#e8f5e9' : '#f8f9fa',
+                                borderRadius: '10px',
+                                border: formData.is_default ? '2px solid #4caf50' : '2px solid #e0e0e0',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={formData.is_default}
+                                onChange={handleToggleDefault}
+                                style={{ width: '20px', height: '20px', accentColor: '#4caf50' }}
+                            />
+                            <div>
+                                <strong style={{ color: formData.is_default ? '#2e7d32' : '#333', fontSize: '15px' }}>
+                                    Default Activity
+                                </strong>
+                                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+                                    Default activities are shown for all properties.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div className={formStyles.fieldGroup} style={{ opacity: formData.is_default ? 0.5 : 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <label style={{ marginBottom: 0 }}>Linked Properties</label>
+                            <button
+                                type="button"
+                                onClick={handleSelectAll}
+                                disabled={formData.is_default}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: formData.is_default ? '#aaa' : '#0984e3',
+                                    cursor: formData.is_default ? 'not-allowed' : 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                {formData.property_ids.length === properties.length ? "Deselect All" : "Select All"}
+                            </button>
+                        </div>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                            gap: '8px',
+                            border: '1px solid #ddd',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            maxHeight: '150px',
+                            overflowY: 'auto',
+                            background: formData.is_default ? '#f5f5f5' : 'white'
+                        }}>
                             {properties.map(p => (
-                                <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                                <label
+                                    key={p.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: formData.is_default ? 'not-allowed' : 'pointer',
+                                        fontSize: '13px',
+                                        color: formData.is_default ? '#999' : '#333'
+                                    }}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={formData.property_ids.includes(p.id)}
                                         onChange={() => toggleProperty(p.id)}
+                                        disabled={formData.is_default}
                                         style={{ width: '16px', height: '16px' }}
                                     />
                                     {p.name}
                                 </label>
                             ))}
                         </div>
+                        <p style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
+                            {formData.is_default
+                                ? "This activity will be linked to all properties."
+                                : formData.property_ids.length === 0
+                                    ? "Not linked to any property (Hidden)"
+                                    : formData.property_ids.length === properties.length
+                                        ? "Visible on ALL properties"
+                                        : `Visible on ${formData.property_ids.length} selected properties`}
+                        </p>
                     </div>
 
                     <div className={formStyles.fieldGroup}>

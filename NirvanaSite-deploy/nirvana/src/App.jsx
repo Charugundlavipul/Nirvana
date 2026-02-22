@@ -10,6 +10,7 @@ import Home from "./components/Home/Home";
 import ReviewsPage from "./components/Review/ReviewPage";
 import PropertyOverview from "./components/PropertyOverview/propertyOverview";
 import PropertyPage from "./components/PropertyPage/PropertyPage";
+import PropertyGalleryPage from "./components/PropertyGallery/PropertyGalleryPage";
 import ActivitiesPage from "./components/NearbyActivities/ActivitiesPage";
 import AdminLogin from "./components/Admin/AdminLogin";
 import ProtectedAdminRoute from "./components/Admin/ProtectedAdminRoute";
@@ -46,6 +47,9 @@ function AppLayout() {
 
           {/* Dynamic Activity Route */}
           <Route path="/activities/:slug" element={<ActivitiesPage />} />
+
+          {/* Property Gallery Subpage */}
+          <Route path="/:slug/gallery" element={<PropertyGalleryPage />} />
 
           {/* Dynamic Property Route */}
           <Route path="/:slug" element={<PropertyPage />} />

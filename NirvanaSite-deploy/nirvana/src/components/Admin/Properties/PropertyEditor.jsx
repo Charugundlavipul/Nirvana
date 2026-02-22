@@ -6,15 +6,18 @@ import { supabase } from "../../../supabaseClient";
 import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, resubmitApprovalRequest } from "../../../lib/adminApi";
+import SpacesManager from "./SpacesManager";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest } from "../../../lib/adminApi";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
+import { normalizePropertySpaces } from "../../../lib/propertySpaces";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 const toFormState = (data = {}) => ({
     name: data.name || "",
     slug: data.slug || "",
     booking_url: data.booking_url || "",
+    video_url: data.video_url || "",
     location: data.location || "",
     description: data.description || "",
     guests_max: data.guests_max || "",
@@ -24,7 +27,8 @@ const toFormState = (data = {}) => ({
     bath_details: data.bath_details || "",
     pet_friendly: data.pet_friendly || false,
     pet_fee: data.pet_fee || 0,
-    hot_tub: data.hot_tub || false
+    hot_tub: data.hot_tub || false,
+    spaces: normalizePropertySpaces(data.spaces),
 });
 
 const PropertyEditor = () => {
@@ -47,6 +51,7 @@ const PropertyEditor = () => {
         name: "",
         slug: "",
         booking_url: "",
+        video_url: "",
         location: "",
         description: "",
         guests_max: "",
@@ -56,7 +61,8 @@ const PropertyEditor = () => {
         bath_details: "",
         pet_friendly: false,
         pet_fee: 0,
-        hot_tub: false
+        hot_tub: false,
+        spaces: [],
     });
 
     const [propertyId, setPropertyId] = useState(null);
@@ -98,11 +104,11 @@ const PropertyEditor = () => {
             setPropertyDraftRequest(openRequest || null);
             if (!openRequest) return;
 
-            const payloadState = toFormState(openRequest.payload || {});
+            const payloadState = toFormState(parseApprovalObject(openRequest.payload));
             setFormData(payloadState);
 
             const beforeState = openRequest.before_snapshot
-                ? toFormState(openRequest.before_snapshot)
+                ? toFormState(parseApprovalObject(openRequest.before_snapshot))
                 : null;
             if (beforeState) {
                 setBeforeSnapshot(beforeState);
@@ -202,14 +208,13 @@ const PropertyEditor = () => {
         if (editor.innerHTML !== sanitized) {
             editor.innerHTML = sanitized;
         }
-    }, [formData.description]);
+    }, [formData.description, loading, activeTab]);
 
-    const handleSave = async (e) => {
-        e.preventDefault();
+    const persistPropertyChanges = async () => {
         setSaving(true);
 
         try {
-            const payload = { ...formData };
+            const payload = { ...formData, spaces: normalizePropertySpaces(formData.spaces) };
             if (!payload.booking_url) delete payload.booking_url;
 
             if (superAdmin) {
@@ -234,7 +239,8 @@ const PropertyEditor = () => {
                 if (error) throw error;
                 setPropertyId(data.id);
                 setIsPublished(false);
-                setBeforeSnapshot({ ...formData });
+                setBeforeSnapshot(toFormState(data));
+                setFormData(toFormState(data));
                 alert("Draft property created! You can now add media and amenities. Submit for publish when ready.");
                 navigate(`/admin/properties/${data.slug}`);
             } else if (!isPublished) {
@@ -259,9 +265,14 @@ const PropertyEditor = () => {
                 const existingOpen = await findOpenRequest("property", propertyId, "update");
 
                 if (existingOpen) {
+                    const mergedPayload = {
+                        ...(existingOpen.payload || {}),
+                        ...payload,
+                        spaces: normalizePropertySpaces(payload.spaces),
+                    };
                     const { error: updateError } = await resubmitApprovalRequest(
                         existingOpen.id,
-                        payload,
+                        mergedPayload,
                         beforeSnapshot,
                         editorNote || "Draft property update request."
                     );
@@ -271,7 +282,7 @@ const PropertyEditor = () => {
                             entityType: "property",
                             action: "update",
                             entityId: propertyId,
-                            payload,
+                            payload: mergedPayload,
                             beforeSnapshot,
                             submittedBy: userData?.user?.id || null,
                             comment: editorNote || "Property update request.",
@@ -305,12 +316,24 @@ const PropertyEditor = () => {
         }
     };
 
+    const handleSave = async (e) => {
+        e.preventDefault();
+        await persistPropertyChanges();
+    };
+
+    const handleSpacesChange = (nextSpaces) => {
+        setFormData((prev) => ({
+            ...prev,
+            spaces: normalizePropertySpaces(nextSpaces),
+        }));
+    };
+
     const handleSubmitForPublish = async () => {
         if (!propertyId) return;
         setPublishing(true);
         try {
             const { data: userData } = await supabase.auth.getUser();
-            const payload = { ...formData, is_published: true };
+            const payload = { ...formData, spaces: normalizePropertySpaces(formData.spaces), is_published: true };
             if (!payload.booking_url) delete payload.booking_url;
 
             // Check for an existing revision_requested request to update instead of creating a duplicate
@@ -345,6 +368,14 @@ const PropertyEditor = () => {
         }
     };
 
+    const saveButtonLabel = superAdmin
+        ? "Save Changes"
+        : isNew
+            ? "Create Draft"
+            : isPublished
+                ? "Save Draft Changes"
+                : "Save Draft";
+
     if (loading) return <div className={styles.loading}>Loading editor...</div>;
 
     return (
@@ -363,6 +394,13 @@ const PropertyEditor = () => {
                         disabled={!propertyId}
                     >
                         Media Gallery
+                    </button>
+                    <button
+                        className={`${styles.tab} ${activeTab === "spaces" ? styles.active : ""}`}
+                        onClick={() => propertyId ? setActiveTab("spaces") : alert("Save property first")}
+                        disabled={!propertyId}
+                    >
+                        Spaces
                     </button>
                     <button
                         className={`${styles.tab} ${activeTab === "amenities" ? styles.active : ""}`}
@@ -439,6 +477,15 @@ const PropertyEditor = () => {
                                 <div className={styles.fieldGroup}>
                                     <label>Booking URL (Hospitable)</label>
                                     <input name="booking_url" value={formData.booking_url} onChange={handleChange} placeholder="https://booking.hospitable.com/..." />
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label>Video URL</label>
+                                    <input
+                                        name="video_url"
+                                        value={formData.video_url}
+                                        onChange={handleChange}
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                    />
                                 </div>
                             </div>
 
@@ -537,7 +584,7 @@ const PropertyEditor = () => {
                             <div className={styles.actionBar}>
                                 <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
-                                    {saving ? "Saving..." : superAdmin ? "Save Changes" : isNew ? "Create Draft" : isPublished ? "Save Draft Changes" : "Save Draft"}
+                                    {saving ? "Saving..." : saveButtonLabel}
                                 </button>
                                 {!superAdmin && !isNew && !isPublished && (
                                     <button
@@ -575,6 +622,35 @@ const PropertyEditor = () => {
                             <CuratedImagesManager propertyId={propertyId} isDraft={isDraftProperty} />
                             <div style={{ marginTop: '24px' }}></div>
                             <MediaManager propertyId={propertyId} isDraft={isDraftProperty} />
+                        </>
+                    )}
+
+                    {activeTab === "spaces" && propertyId && (
+                        <>
+                            {!superAdmin && isPublished && (
+                                <div className={styles.card}>
+                                    <h3>Approval Flow Enabled</h3>
+                                    <p style={{ marginTop: "8px", color: "#555" }}>
+                                        Space updates are part of property draft changes. Save spaces and submit for review to publish.
+                                    </p>
+                                </div>
+                            )}
+                            <SpacesManager
+                                propertyId={propertyId}
+                                spaces={formData.spaces}
+                                onChange={handleSpacesChange}
+                            />
+                            <div className={styles.actionBar}>
+                                <button type="button" className={styles.cancelBtn} onClick={() => navigate("/admin/properties")}>Cancel</button>
+                                <button
+                                    type="button"
+                                    className={styles.saveBtn}
+                                    disabled={saving}
+                                    onClick={persistPropertyChanges}
+                                >
+                                    {saving ? "Saving..." : saveButtonLabel}
+                                </button>
+                            </div>
                         </>
                     )}
 

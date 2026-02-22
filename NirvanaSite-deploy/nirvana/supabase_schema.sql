@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS properties (
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
     booking_url TEXT,
+    video_url TEXT,
     is_published BOOLEAN DEFAULT TRUE,
     location TEXT,
     description TEXT,
@@ -29,14 +30,19 @@ CREATE TABLE IF NOT EXISTS properties (
     pet_friendly BOOLEAN DEFAULT FALSE,
     pet_fee NUMERIC(10,2) DEFAULT 0,
     hot_tub BOOLEAN DEFAULT FALSE,
+    spaces JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS booking_url TEXT;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS spaces JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE properties ALTER COLUMN is_published SET DEFAULT TRUE;
+ALTER TABLE properties ALTER COLUMN spaces SET DEFAULT '[]'::jsonb;
 UPDATE properties SET is_published = TRUE WHERE is_published IS DISTINCT FROM TRUE;
+UPDATE properties SET spaces = '[]'::jsonb WHERE spaces IS NULL;
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -414,13 +420,14 @@ BEGIN
             END LOOP;
 
             INSERT INTO public.properties (
-                slug, name, booking_url, is_published, location, description,
+                slug, name, booking_url, video_url, is_published, location, description,
                 guests_max, bedroom_count, bed_details, bathroom_count, bath_details,
-                pet_friendly, pet_fee, hot_tub
+                pet_friendly, pet_fee, hot_tub, spaces
             ) VALUES (
                 v_slug,
                 req.payload->>'name',
                 req.payload->>'booking_url',
+                req.payload->>'video_url',
                 COALESCE((req.payload->>'is_published')::boolean, true),
                 req.payload->>'location',
                 req.payload->>'description',
@@ -431,7 +438,8 @@ BEGIN
                 req.payload->>'bath_details',
                 COALESCE((req.payload->>'pet_friendly')::boolean, false),
                 COALESCE(NULLIF(req.payload->>'pet_fee', '')::numeric, 0),
-                COALESCE((req.payload->>'hot_tub')::boolean, false)
+                COALESCE((req.payload->>'hot_tub')::boolean, false),
+                COALESCE(req.payload->'spaces', '[]'::jsonb)
             );
         ELSIF req.action = 'update' THEN
             UPDATE public.properties
@@ -439,6 +447,7 @@ BEGIN
                 slug = req.payload->>'slug',
                 name = req.payload->>'name',
                 booking_url = req.payload->>'booking_url',
+                video_url = req.payload->>'video_url',
                 is_published = COALESCE((req.payload->>'is_published')::boolean, true),
                 location = req.payload->>'location',
                 description = req.payload->>'description',
@@ -450,6 +459,7 @@ BEGIN
                 pet_friendly = COALESCE((req.payload->>'pet_friendly')::boolean, false),
                 pet_fee = COALESCE(NULLIF(req.payload->>'pet_fee', '')::numeric, 0),
                 hot_tub = COALESCE((req.payload->>'hot_tub')::boolean, false),
+                spaces = COALESCE(req.payload->'spaces', '[]'::jsonb),
                 updated_at = NOW()
             WHERE id = req.entity_id;
         ELSIF req.action = 'delete' THEN
@@ -1251,4 +1261,3 @@ BEGIN
     END IF;
 END;
 $$;
-

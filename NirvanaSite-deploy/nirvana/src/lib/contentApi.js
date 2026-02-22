@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { normalizePropertySpaces } from "./propertySpaces";
 
 // Define fallback metadata directly or fetch from DB if needed
 // For now, removing the static MAP reliance
@@ -30,6 +31,7 @@ const normalizeProperty = (property, curatedByPropertyId) => {
   const curated = curatedByPropertyId[property.id] || {};
   return {
     ...property,
+    spaces: normalizePropertySpaces(property.spaces),
     curated: {
       home: curated.home || "", // Fallback empty if not in DB
       bg: curated.bg || "",
@@ -77,32 +79,54 @@ async function fetchPropertiesRaw() {
   const baseColumns =
     "id,slug,name,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
   const withBookingColumns = `id,slug,name,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+  const withBookingAndSpacesColumns = `${withBookingColumns},spaces`;
+  const withBookingSpacesAndVideoColumns = `${withBookingAndSpacesColumns},video_url`;
 
-  let { data, error } = await supabase
-    .from("properties")
-    .select(withBookingColumns)
-    .eq("is_published", true)
-    .order("created_at", { ascending: true });
+  const attempts = [
+    {
+      columns: withBookingSpacesAndVideoColumns,
+      normalize: (row) => row,
+    },
+    {
+      columns: withBookingAndSpacesColumns,
+      normalize: (row) => ({ ...row, video_url: "" }),
+    },
+    {
+      columns: withBookingColumns,
+      normalize: (row) => ({ ...row, spaces: [], video_url: "" }),
+    },
+    {
+      columns: baseColumns,
+      normalize: (row) => ({ ...row, booking_url: "", spaces: [], video_url: "" }),
+    },
+  ];
 
-  const errorMessage = `${error?.message || ""}`.toLowerCase();
-  const missingBookingUrlColumn =
-    error &&
-    (errorMessage.includes("booking_url") &&
-      (errorMessage.includes("does not exist") ||
-        errorMessage.includes("could not find the")));
+  let lastMissingColumnError = null;
 
-  if (missingBookingUrlColumn) {
-    const fallback = await supabase
+  for (const attempt of attempts) {
+    const { data, error } = await supabase
       .from("properties")
-      .select(baseColumns)
+      .select(attempt.columns)
+      .eq("is_published", true)
       .order("created_at", { ascending: true });
-    if (fallback.error) throw fallback.error;
-    data = (fallback.data || []).map((row) => ({ ...row, booking_url: "" }));
-    error = null;
+
+    if (!error) {
+      return (data || []).map(attempt.normalize).sort(sortByPropertyOrder);
+    }
+
+    const errorMessage = `${error?.message || ""}`.toLowerCase();
+    const missingColumnError =
+      errorMessage.includes("does not exist") ||
+      errorMessage.includes("could not find the");
+    if (!missingColumnError) {
+      throw error;
+    }
+
+    lastMissingColumnError = error;
   }
 
-  if (error) throw error;
-  return (data || []).sort(sortByPropertyOrder);
+  if (lastMissingColumnError) throw lastMissingColumnError;
+  return [];
 }
 
 async function fetchCuratedRows(propertyIds) {
@@ -195,6 +219,7 @@ export async function fetchPropertyCards() {
     hot_tub: property.hot_tub,
     pet_friendly: property.pet_friendly,
     pet_fee: property.pet_fee,
+    video_url: property.video_url || "",
     curated: property.curated,
   }));
 }
@@ -235,6 +260,7 @@ export async function fetchPropertyBundleBySlug(slug) {
   return {
     property,
     curated: property.curated,
+    spaces: property.spaces || [],
     galleryImages: (galleryRes.data || []).map((item) => item.url),
     highlightImages: (highlightsRes.data || []).map((item) => item.url),
     amenities: amenitiesRes.data || [],

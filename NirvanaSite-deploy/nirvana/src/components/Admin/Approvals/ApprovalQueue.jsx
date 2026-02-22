@@ -4,6 +4,7 @@ import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
 import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole } from "../../../lib/adminApi";
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
+import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
 
 const cardStyle = {
   border: "1px solid #e5e7eb",
@@ -112,6 +113,7 @@ const FIELD_LABELS = {
   pet_friendly: "Pet Friendly",
   pet_fee: "Pet Fee",
   hot_tub: "Hot Tub",
+  spaces: "Spaces",
   is_published: "Published",
   summary_label: "Requested Item",
   submitted_fields: "Submitted Fields",
@@ -137,6 +139,7 @@ const friendlyFieldName = (key) => FIELD_LABELS[key] || key.replace(/_/g, " ").r
 
 const PropertyPreviewCard = ({ payload }) => {
   if (!payload || typeof payload !== "object") return null;
+  const spaces = normalizePropertySpaces(payload.spaces);
   const previewStyle = {
     border: "1px solid #e2e8f0",
     borderRadius: "10px",
@@ -170,6 +173,31 @@ const PropertyPreviewCard = ({ payload }) => {
           <div style={{ marginTop: "4px" }} dangerouslySetInnerHTML={{ __html: payload.description }} />
         </div>
       )}
+      <div style={{ marginTop: "12px", padding: "10px", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", color: "#334155" }}>
+        <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "#94a3b8" }}>Spaces</strong>
+        <div style={{ marginTop: "4px", fontWeight: 600, color: "#0f172a" }}>{summarizeSpaces(spaces)}</div>
+        {spaces.length ? (
+          <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {spaces.map((space) => (
+              <span
+                key={space.id}
+                style={{
+                  fontSize: "12px",
+                  padding: "4px 8px",
+                  borderRadius: "999px",
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  color: "#334155",
+                }}
+              >
+                {space.name} ({space.images.length})
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div style={{ marginTop: "6px", color: "#64748b", fontSize: "12px" }}>No spaces in this request.</div>
+        )}
+      </div>
     </div>
   );
 };
@@ -423,12 +451,156 @@ const formatDateTime = (value) => {
   }
 };
 
-const compactValue = (value) => {
+const compactValue = (value, key = null) => {
   if (value === null || value === undefined) return "-";
+  if (key === "spaces") return summarizeSpaces(value);
   if (typeof value === "string") return value.trim() === "" ? "-" : value;
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "[]";
+  if (Array.isArray(value)) {
+    if (!value.length) return "[]";
+    if (value.every((item) => typeof item === "string" || typeof item === "number")) {
+      return value.join(", ");
+    }
+    return `${value.length} items`;
+  }
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+};
+
+const getSpaceDiffKey = (space, index) => {
+  if (space?.id) return `id:${space.id}`;
+  const normalizedName = String(space?.name || "").trim().toLowerCase();
+  if (normalizedName) return `name:${normalizedName}`;
+  return `idx:${index}`;
+};
+
+const buildSpacesDiff = (beforeRaw, afterRaw) => {
+  const beforeSpaces = normalizePropertySpaces(beforeRaw);
+  const afterSpaces = normalizePropertySpaces(afterRaw);
+
+  const beforeByKey = new Map();
+  beforeSpaces.forEach((space, index) => beforeByKey.set(getSpaceDiffKey(space, index), space));
+
+  const afterByKey = new Map();
+  afterSpaces.forEach((space, index) => afterByKey.set(getSpaceDiffKey(space, index), space));
+
+  const addedSpaces = [];
+  const removedSpaces = [];
+  const renamedSpaces = [];
+  const addedImages = [];
+  const removedImages = [];
+  const renamedImages = [];
+
+  afterByKey.forEach((space, key) => {
+    if (!beforeByKey.has(key)) {
+      addedSpaces.push(space);
+      (space?.images || [])
+        .filter((image) => image?.url)
+        .forEach((image) => {
+          addedImages.push({
+            spaceName: space?.name || "Unnamed Space",
+            image,
+            reason: "space_added",
+          });
+        });
+    }
+  });
+
+  beforeByKey.forEach((space, key) => {
+    if (!afterByKey.has(key)) {
+      removedSpaces.push(space);
+      (space?.images || [])
+        .filter((image) => image?.url)
+        .forEach((image) => {
+          removedImages.push({
+            spaceName: space?.name || "Unnamed Space",
+            image,
+            reason: "space_removed",
+          });
+        });
+    }
+  });
+
+  afterByKey.forEach((afterSpace, key) => {
+    if (!beforeByKey.has(key)) return;
+    const beforeSpace = beforeByKey.get(key);
+
+    const beforeName = String(beforeSpace?.name || "").trim();
+    const afterName = String(afterSpace?.name || "").trim();
+    if (beforeName !== afterName) {
+      renamedSpaces.push({ beforeName, afterName });
+    }
+
+    const beforeImageByUrl = new Map(
+      (beforeSpace?.images || [])
+        .filter((image) => image?.url)
+        .map((image) => [image.url, image])
+    );
+    const afterImageByUrl = new Map(
+      (afterSpace?.images || [])
+        .filter((image) => image?.url)
+        .map((image) => [image.url, image])
+    );
+
+    afterImageByUrl.forEach((image, url) => {
+      if (!beforeImageByUrl.has(url)) {
+        addedImages.push({
+          spaceName: afterName || afterSpace?.name || "Unnamed Space",
+          image,
+          reason: "image_added",
+        });
+        return;
+      }
+
+      const beforeImage = beforeImageByUrl.get(url);
+      const beforeImageName = String(beforeImage?.name || "").trim();
+      const afterImageName = String(image?.name || "").trim();
+      if (beforeImageName !== afterImageName) {
+        renamedImages.push({
+          spaceName: afterName || beforeName || afterSpace?.name || "Unnamed Space",
+          url,
+          beforeName: beforeImageName,
+          afterName: afterImageName,
+          image,
+        });
+      }
+    });
+
+    beforeImageByUrl.forEach((image, url) => {
+      if (!afterImageByUrl.has(url)) {
+        removedImages.push({
+          spaceName: beforeName || beforeSpace?.name || "Unnamed Space",
+          image,
+          reason: "image_removed",
+        });
+      }
+    });
+  });
+
+  return {
+    beforeSpaces,
+    afterSpaces,
+    addedSpaces,
+    removedSpaces,
+    renamedSpaces,
+    addedImages,
+    removedImages,
+    renamedImages,
+  };
+};
+
+const getSpaceImageLabel = (image) => {
+  const explicitName = String(image?.name || "").trim();
+  if (explicitName) return explicitName;
+  const url = String(image?.url || "").trim();
+  if (!url) return "(unnamed image)";
+  try {
+    const parsed = new URL(url);
+    const file = parsed.pathname.split("/").filter(Boolean).pop() || "";
+    return decodeURIComponent(file) || url;
+  } catch {
+    const file = url.split("?")[0].split("/").pop() || "";
+    return decodeURIComponent(file) || url;
+  }
 };
 
 const isHttpUrl = (value) => typeof value === "string" && /^https?:\/\//i.test(value.trim());
@@ -771,7 +943,7 @@ const buildDiffRows = (req) => {
       .map((key) => ({
         key,
         oldValue: "-",
-        newValue: compactValue(after[key]),
+        newValue: compactValue(after[key], key),
         oldRaw: null,
         newRaw: after[key],
       }))
@@ -783,7 +955,7 @@ const buildDiffRows = (req) => {
       .filter((key) => !ignored.has(key))
       .map((key) => ({
         key,
-        oldValue: compactValue(before[key]),
+        oldValue: compactValue(before[key], key),
         newValue: "(deleted)",
         oldRaw: before[key],
         newRaw: null,
@@ -791,19 +963,22 @@ const buildDiffRows = (req) => {
       .slice(0, 12);
   }
 
-  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
+  // For update requests, payload is often partial. Merge with current snapshot so
+  // omitted fields are treated as unchanged instead of "removed".
+  const mergedAfter = { ...before, ...after };
+  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(mergedAfter)])).filter(
     (key) => !ignored.has(key)
   );
   const rows = keys
     .map((key) => {
       const prev = getComparableValue(before, key);
-      const next = getComparableValue(after, key);
+      const next = getComparableValue(mergedAfter, key);
       const changed = JSON.stringify(prev) !== JSON.stringify(next);
       return changed
         ? {
           key,
-          oldValue: compactValue(prev),
-          newValue: compactValue(next),
+          oldValue: compactValue(prev, key),
+          newValue: compactValue(next, key),
           oldRaw: prev,
           newRaw: next,
         }
@@ -814,11 +989,271 @@ const buildDiffRows = (req) => {
   return rows.slice(0, 12);
 };
 
+const requestHasSpacesChange = (req) => {
+  const rows = buildDiffRows(req);
+  return rows.some((row) => row.key === "spaces");
+};
+
+const getRequestPrimaryLabel = (req) => {
+  const payload = parseSnapshot(req?.payload);
+  const before = parseSnapshot(req?.before_snapshot);
+  const merged = { ...before, ...payload };
+  return (
+    merged.name ||
+    merged.title ||
+    merged.question ||
+    merged.author_name ||
+    merged.slot ||
+    merged.slug ||
+    merged.url ||
+    null
+  );
+};
+
+const buildRequestSummaryData = (req) => {
+  const rows = buildDiffRows(req);
+  const action = String(req?.action || "").toLowerCase();
+  const entityType = String(req?.entity_type || "").toLowerCase();
+  const label = getRequestPrimaryLabel(req);
+  const chips = [];
+  const highlights = [];
+
+  if (action === "create") chips.push("Create request");
+  if (action === "update") chips.push("Update request");
+  if (action === "delete") chips.push("Delete request");
+
+  chips.push(`${rows.length} changed fields`);
+
+  const imageRows = rows.filter((row) => isLikelyImageUrl(row.key, row.newRaw) || isLikelyImageUrl(row.key, row.oldRaw));
+  if (imageRows.length) chips.push(`${imageRows.length} media field changes`);
+
+  const changedFieldNames = rows
+    .map((row) => friendlyFieldName(row.key))
+    .filter(Boolean)
+    .slice(0, 6);
+  if (changedFieldNames.length) {
+    highlights.push(`Changed fields: ${changedFieldNames.join(", ")}`);
+  }
+
+  const spacesRow = rows.find((row) => row.key === "spaces");
+  if (spacesRow) {
+    const spacesDiff = buildSpacesDiff(spacesRow.oldRaw, spacesRow.newRaw);
+    const netSpaceDelta = spacesDiff.afterSpaces.length - spacesDiff.beforeSpaces.length;
+    if (spacesDiff.addedSpaces.length) {
+      highlights.push(`Spaces added: ${spacesDiff.addedSpaces.map((space) => space.name || "Unnamed Space").join(", ")}`);
+    }
+    if (spacesDiff.removedSpaces.length) {
+      highlights.push(`Spaces removed: ${spacesDiff.removedSpaces.map((space) => space.name || "Unnamed Space").join(", ")}`);
+    }
+    if (spacesDiff.renamedSpaces.length) {
+      highlights.push(
+        `Spaces renamed: ${spacesDiff.renamedSpaces
+          .map((item) => `${item.beforeName || "Unnamed"} -> ${item.afterName || "Unnamed"}`)
+          .join(", ")}`
+      );
+    }
+    if (spacesDiff.addedImages.length || spacesDiff.removedImages.length) {
+      highlights.push(
+        `Space image changes: +${spacesDiff.addedImages.length} / -${spacesDiff.removedImages.length}`
+      );
+    }
+    if (spacesDiff.renamedImages.length) {
+      highlights.push(`Image names updated: ${spacesDiff.renamedImages.length}`);
+    }
+    chips.push(`Space delta ${netSpaceDelta >= 0 ? `+${netSpaceDelta}` : `${netSpaceDelta}`}`);
+  }
+
+  if (entityType === "property" && rows.some((row) => row.key === "is_published")) {
+    chips.push("Publish state changed");
+  }
+
+  return {
+    title: `${friendlyFieldName(req?.entity_type)} ${action}${label ? `: ${label}` : ""}`,
+    chips,
+    highlights,
+  };
+};
+
+const RequestSummaryCard = ({ req }) => {
+  const summary = useMemo(() => buildRequestSummaryData(req), [req]);
+  return (
+    <div
+      style={{
+        marginTop: "10px",
+        marginBottom: "10px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        background: "#f8fafc",
+        padding: "12px",
+      }}
+    >
+      <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em", color: "#64748b", fontWeight: 700 }}>
+        At a glance
+      </div>
+      <div style={{ marginTop: "4px", fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
+        {summary.title}
+      </div>
+
+      {summary.chips.length ? (
+        <div style={{ marginTop: "8px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {summary.chips.map((chip, index) => (
+            <span
+              key={`${req?.id}-summary-chip-${index}`}
+              style={{
+                fontSize: "11px",
+                padding: "4px 8px",
+                borderRadius: "999px",
+                border: "1px solid #cbd5e1",
+                background: "#fff",
+                color: "#334155",
+                fontWeight: 600,
+              }}
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {summary.highlights.length ? (
+        <div style={{ marginTop: "8px", display: "grid", gap: "4px" }}>
+          {summary.highlights.slice(0, 4).map((item, index) => (
+            <div key={`${req?.id}-summary-highlight-${index}`} style={{ fontSize: "12px", color: "#475569" }}>
+              - {item}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null }) => {
   const rows = useMemo(() => buildDiffRows(req), [req]);
   if (!rows.length) {
     return <div style={{ marginTop: "8px", fontSize: "12px", color: "#64748b" }}>No field-level preview available.</div>;
   }
+
+  const renderSpacesCell = (row, mode) => {
+    const diff = buildSpacesDiff(row.oldRaw, row.newRaw);
+    const isRequested = mode === "requested";
+    const spaces = isRequested ? diff.afterSpaces : diff.beforeSpaces;
+    const imageChanges = isRequested ? diff.addedImages : diff.removedImages;
+    const imageChangesLabel = isRequested ? "Added images" : "Removed images";
+
+    return (
+      <div style={{ display: "grid", gap: "8px" }}>
+        <div style={{ fontWeight: 600, color: isRequested ? "#0f766e" : "#334155" }}>
+          {summarizeSpaces(spaces)}
+        </div>
+
+        {spaces.length ? (
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {spaces.slice(0, 10).map((space, index) => (
+              <span
+                key={`${mode}-space-${space.id || index}`}
+                style={{
+                  fontSize: "11px",
+                  padding: "4px 7px",
+                  borderRadius: "999px",
+                  border: "1px solid #cbd5e1",
+                  background: "#fff",
+                  color: "#334155",
+                  maxWidth: "220px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={`${space.name || "Unnamed Space"} (${space.images?.length || 0} images)`}
+              >
+                {space.name || "Unnamed Space"} ({space.images?.length || 0})
+              </span>
+            ))}
+            {spaces.length > 10 ? (
+              <span style={{ fontSize: "11px", color: "#64748b" }}>+{spaces.length - 10} more</span>
+            ) : null}
+          </div>
+        ) : (
+          <div style={{ fontSize: "11px", color: "#64748b" }}>No spaces</div>
+        )}
+
+        {isRequested && diff.addedSpaces.length ? (
+          <div style={{ fontSize: "11px", color: "#166534" }}>
+            <strong>Added spaces:</strong>{" "}
+            {diff.addedSpaces.map((space) => space.name || "Unnamed Space").join(", ")}
+          </div>
+        ) : null}
+
+        {isRequested && diff.renamedSpaces.length ? (
+          <div style={{ fontSize: "11px", color: "#0f766e" }}>
+            <strong>Renamed spaces:</strong>{" "}
+            {diff.renamedSpaces
+              .map((item) => `${item.beforeName || "Unnamed"} -> ${item.afterName || "Unnamed"}`)
+              .join(", ")}
+          </div>
+        ) : null}
+
+        {!isRequested && diff.removedSpaces.length ? (
+          <div style={{ fontSize: "11px", color: "#991b1b" }}>
+            <strong>Removed spaces:</strong>{" "}
+            {diff.removedSpaces.map((space) => space.name || "Unnamed Space").join(", ")}
+          </div>
+        ) : null}
+
+        {imageChanges.length ? (
+          <div style={{ display: "grid", gap: "4px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: isRequested ? "#166534" : "#991b1b" }}>
+              {imageChangesLabel}: {imageChanges.length}
+            </div>
+            {imageChanges.slice(0, 10).map((item, index) => (
+              <div key={`${mode}-image-change-${index}`} style={{ fontSize: "11px", color: "#475569", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{item.spaceName}:</span>
+                <span>{getSpaceImageLabel(item.image)}</span>
+                {item.reason === "space_added" ? (
+                  <span style={{ fontSize: "10px", color: "#166534" }}>(from new space)</span>
+                ) : null}
+                {item.reason === "space_removed" ? (
+                  <span style={{ fontSize: "10px", color: "#991b1b" }}>(from removed space)</span>
+                ) : null}
+                {enableImagePreview && typeof onPreviewImage === "function" && item.image?.url ? (
+                  <button type="button" style={previewButtonStyle} onClick={() => onPreviewImage(item.image.url)}>
+                    Preview
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            {imageChanges.length > 10 ? (
+              <div style={{ fontSize: "11px", color: "#64748b" }}>+{imageChanges.length - 10} more changes</div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {isRequested && diff.renamedImages.length ? (
+          <div style={{ display: "grid", gap: "4px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#0f766e" }}>
+              Updated image names: {diff.renamedImages.length}
+            </div>
+            {diff.renamedImages.slice(0, 10).map((item, index) => (
+              <div key={`renamed-image-${index}`} style={{ fontSize: "11px", color: "#475569", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{item.spaceName}:</span>
+                <span>
+                  {(item.beforeName || "(empty)") + " -> " + (item.afterName || "(empty)")}
+                </span>
+                {enableImagePreview && typeof onPreviewImage === "function" && item.image?.url ? (
+                  <button type="button" style={previewButtonStyle} onClick={() => onPreviewImage(item.image.url)}>
+                    Preview
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            {diff.renamedImages.length > 10 ? (
+              <div style={{ fontSize: "11px", color: "#64748b" }}>+{diff.renamedImages.length - 10} more name updates</div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   const renderCell = (fieldKey, displayValue, rawValue) => {
     const canPreview = enableImagePreview && isLikelyImageUrl(fieldKey, rawValue);
@@ -848,10 +1283,14 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null })
           <tr key={row.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
             <td style={{ padding: "6px 4px", fontWeight: 600 }}>{row.key}</td>
             <td style={{ padding: "6px 4px", color: "#475569" }}>
-              {renderCell(row.key, row.oldValue, row.oldRaw)}
+              {row.key === "spaces"
+                ? renderSpacesCell(row, "current")
+                : renderCell(row.key, row.oldValue, row.oldRaw)}
             </td>
             <td style={{ padding: "6px 4px", color: "#0f766e" }}>
-              {renderCell(row.key, row.newValue, row.newRaw)}
+              {row.key === "spaces"
+                ? renderSpacesCell(row, "requested")
+                : renderCell(row.key, row.newValue, row.newRaw)}
             </td>
           </tr>
         ))}
@@ -1022,6 +1461,8 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
   const ownerResponse = req.status !== "pending" ? req.comment : null;
   const entityType = String(req?.entity_type || "").toLowerCase();
   const isPropertyRequest = entityType === "property";
+  const hasSpacesChange = useMemo(() => requestHasSpacesChange(req), [req]);
+  const hidePropertyPreviewForSpaces = isPropertyRequest && hasSpacesChange;
 
   return (
     <div style={{ ...cardStyle, borderLeft: isRevision ? "4px solid #f59e0b" : undefined }}>
@@ -1064,14 +1505,22 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
       <div style={sectionHeadingStyle}>Requested Changes</div>
       <DiffPreview req={req} enableImagePreview onPreviewImage={onPreviewImage} />
 
-      <div style={sectionHeadingStyle}>Preview</div>
-      {isPropertyRequest ? (
+      {!hidePropertyPreviewForSpaces ? (
         <>
-          <PropertyPreviewCard payload={req.payload} />
-          <PropertyDraftBundleCard bundle={propertyDraftBundle} onPreviewImage={onPreviewImage} />
+          <div style={sectionHeadingStyle}>Preview</div>
+          {isPropertyRequest ? (
+            <>
+              <PropertyPreviewCard payload={req.payload} />
+              <PropertyDraftBundleCard bundle={propertyDraftBundle} onPreviewImage={onPreviewImage} />
+            </>
+          ) : (
+            <RequestEntityPreviewCard req={req} onPreviewImage={onPreviewImage} />
+          )}
         </>
       ) : (
-        <RequestEntityPreviewCard req={req} onPreviewImage={onPreviewImage} />
+        <div style={{ marginTop: "10px", fontSize: "12px", color: "#64748b" }}>
+          Space update detected. Use the Requested Changes section for detailed space/image diffs.
+        </div>
       )}
 
       {!isRevision && (
@@ -1195,6 +1644,9 @@ const ApprovalQueue = () => {
   const [showRaw, setShowRaw] = useState({});
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [propertyDraftBundlesById, setPropertyDraftBundlesById] = useState({});
+  const [entityFilter, setEntityFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
 
   const loadRequests = async () => {
     setLoading(true);
@@ -1274,6 +1726,52 @@ const ApprovalQueue = () => {
     return propertyDraftBundlesById[String(req.entity_id)] || null;
   };
 
+  const superAdminFilteredRequests = useMemo(() => {
+    if (!isSuperAdminRole(role)) return requests;
+    return (requests || []).filter((req) => {
+      const entityType = String(req?.entity_type || "").toLowerCase();
+      const action = String(req?.action || "").toLowerCase();
+      const primaryLabel = String(getRequestPrimaryLabel(req) || "").toLowerCase();
+      const note = String(req?.comment || "").toLowerCase();
+      const requestId = String(req?.id || "").toLowerCase();
+      const query = String(searchText || "").trim().toLowerCase();
+
+      if (entityFilter !== "all" && entityType !== entityFilter) return false;
+      if (actionFilter !== "all" && action !== actionFilter) return false;
+      if (!query) return true;
+
+      return (
+        entityType.includes(query) ||
+        action.includes(query) ||
+        primaryLabel.includes(query) ||
+        note.includes(query) ||
+        requestId.includes(query)
+      );
+    });
+  }, [requests, role, entityFilter, actionFilter, searchText]);
+
+  const superAdminOverview = useMemo(() => {
+    const source = superAdminFilteredRequests;
+    const byEntity = {};
+    const byAction = {};
+    source.forEach((req) => {
+      const entityType = String(req?.entity_type || "").toLowerCase() || "unknown";
+      const action = String(req?.action || "").toLowerCase() || "unknown";
+      byEntity[entityType] = (byEntity[entityType] || 0) + 1;
+      byAction[action] = (byAction[action] || 0) + 1;
+    });
+    return { total: source.length, byEntity, byAction };
+  }, [superAdminFilteredRequests]);
+
+  const superAdminAllEntityCounts = useMemo(() => {
+    const byEntity = {};
+    (requests || []).forEach((req) => {
+      const entityType = String(req?.entity_type || "").toLowerCase() || "unknown";
+      byEntity[entityType] = (byEntity[entityType] || 0) + 1;
+    });
+    return byEntity;
+  }, [requests]);
+
   if (!isSuperAdminRole(role)) {
     const revisionNeeded = requests.filter((req) => req.status === "revision_requested");
     const pending = requests.filter((req) => req.status === "pending");
@@ -1324,14 +1822,77 @@ const ApprovalQueue = () => {
 
   return (
     <AdminLayout title="Approval Queue" subtitle="Review pending requests with quick before/after preview">
+      <div style={{ ...cardStyle, marginBottom: "14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ fontSize: "12px", color: "#475569" }}>
+            Showing <strong>{superAdminOverview.total}</strong> request(s)
+          </div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {Object.entries(superAdminOverview.byAction).map(([action, count]) => (
+              <span
+                key={`action-overview-${action}`}
+                style={{
+                  fontSize: "11px",
+                  padding: "4px 8px",
+                  borderRadius: "999px",
+                  border: "1px solid #cbd5e1",
+                  background: "#fff",
+                  color: "#334155",
+                  fontWeight: 600,
+                }}
+              >
+                {action}: {count}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 160px 160px", gap: "8px" }}>
+          <input
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search by entity, item name, note, or request ID"
+            style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "13px" }}
+          />
+
+          <select
+            value={entityFilter}
+            onChange={(e) => setEntityFilter(e.target.value)}
+            style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "13px", background: "#fff" }}
+          >
+            <option value="all">All entities</option>
+            {Object.keys(superAdminAllEntityCounts)
+              .sort()
+              .map((entity) => (
+                <option key={`entity-filter-${entity}`} value={entity}>
+                  {friendlyFieldName(entity)} ({superAdminAllEntityCounts[entity]})
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={actionFilter}
+            onChange={(e) => setActionFilter(e.target.value)}
+            style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "13px", background: "#fff" }}
+          >
+            <option value="all">All actions</option>
+            <option value="create">Create</option>
+            <option value="update">Update</option>
+            <option value="delete">Delete</option>
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <div style={cardStyle}>Loading requests...</div>
-      ) : requests.length === 0 ? (
+      ) : superAdminFilteredRequests.length === 0 ? (
         <div style={cardStyle}>No pending requests.</div>
       ) : (
-        requests.map((req) => {
+        superAdminFilteredRequests.map((req) => {
           const propertyDraftBundle = getPropertyDraftBundle(req);
           const isPropertyRequest = String(req?.entity_type || "").toLowerCase() === "property";
+          const hasSpacesChange = requestHasSpacesChange(req);
+          const hidePropertyPreviewForSpaces = isPropertyRequest && hasSpacesChange;
           return (
           <div key={req.id} style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
@@ -1378,20 +1939,30 @@ const ApprovalQueue = () => {
               </div>
             )}
 
+            <RequestSummaryCard req={req} />
+
             <div style={sectionHeadingStyle}>Requested Changes</div>
             <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
 
-            <div style={sectionHeadingStyle}>Preview</div>
-            {isPropertyRequest ? (
+            {!hidePropertyPreviewForSpaces ? (
               <>
-                <PropertyPreviewCard payload={req.payload} />
-                <PropertyDraftBundleCard
-                  bundle={propertyDraftBundle}
-                  onPreviewImage={(url) => setPreviewImageUrl(url)}
-                />
+                <div style={sectionHeadingStyle}>Preview</div>
+                {isPropertyRequest ? (
+                  <>
+                    <PropertyPreviewCard payload={req.payload} />
+                    <PropertyDraftBundleCard
+                      bundle={propertyDraftBundle}
+                      onPreviewImage={(url) => setPreviewImageUrl(url)}
+                    />
+                  </>
+                ) : (
+                  <RequestEntityPreviewCard req={req} onPreviewImage={(url) => setPreviewImageUrl(url)} />
+                )}
               </>
             ) : (
-              <RequestEntityPreviewCard req={req} onPreviewImage={(url) => setPreviewImageUrl(url)} />
+              <div style={{ marginTop: "10px", fontSize: "12px", color: "#64748b" }}>
+                Space update detected. Use the Requested Changes section for detailed space/image diffs.
+              </div>
             )}
 
             <div style={{ marginTop: "8px" }}>

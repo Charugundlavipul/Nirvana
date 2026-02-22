@@ -153,6 +153,7 @@ const PropertyPage = () => {
     const heroImageSrc = curatedImages.bg || curatedImages.home;
     const introImageSrc = curatedImages.secondary || curatedImages.home;
     const descriptionPreview = createRichTextExcerpt(property.description, 2000, true);
+    const videoUrl = `${property.video_url || ''}`.trim();
 
     return (
         <div className="font-sans text-gray-800 bg-slate-50">
@@ -202,12 +203,22 @@ const PropertyPage = () => {
                         >
                             Book Your Stay
                         </Link>
-                        <button
-                            onClick={() => document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' })}
+                        <Link
+                            to={`/${slug}/gallery`}
                             className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold border border-white/30 transition-all"
                         >
                             <FaPlay size={12} /> View Gallery
-                        </button>
+                        </Link>
+                        {videoUrl && (
+                            <a
+                                href={videoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold border border-white/30 transition-all"
+                            >
+                                <FaPlay size={12} /> Watch Video
+                            </a>
+                        )}
                     </div>
                 </div>
 
