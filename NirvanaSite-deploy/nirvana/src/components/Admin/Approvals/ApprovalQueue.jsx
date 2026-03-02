@@ -124,6 +124,7 @@ const FIELD_LABELS = {
   url: "Image URL",
   slot: "Image Slot",
   property_id: "Property",
+  property_ids: "Properties",
 };
 
 const PREVIEW_IGNORED_KEYS = new Set([
@@ -137,6 +138,18 @@ const PREVIEW_IGNORED_KEYS = new Set([
 ]);
 
 const friendlyFieldName = (key) => FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+const resolvePropertyValue = (key, value, propertyNamesById) => {
+  if (!propertyNamesById || typeof propertyNamesById !== "object") return null;
+  if (key === "property_id" && typeof value === "string" && propertyNamesById[value]) {
+    return propertyNamesById[value];
+  }
+  if (key === "property_ids" && Array.isArray(value)) {
+    const names = value.map((id) => propertyNamesById[id] || id);
+    return names.join(", ");
+  }
+  return null;
+};
 
 const PropertyPreviewCard = ({ payload }) => {
   if (!payload || typeof payload !== "object") return null;
@@ -428,9 +441,7 @@ const RequestEntityPreviewCard = ({ req, onPreviewImage = null, propertyNamesByI
                 {friendlyFieldName(key)}
               </div>
               <div style={{ marginTop: "3px", fontSize: "13px", color: "#0f172a", wordBreak: "break-word" }}>
-                {key === "property_id" && propertyNamesById[value]
-                  ? propertyNamesById[value]
-                  : compactValue(value)}
+                {resolvePropertyValue(key, value, propertyNamesById) || compactValue(value)}
               </div>
             </div>
           ))}
@@ -1260,9 +1271,8 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null, p
 
   const renderCell = (fieldKey, displayValue, rawValue) => {
     const canPreview = enableImagePreview && isLikelyImageUrl(fieldKey, rawValue);
-    const resolvedDisplay = fieldKey === "property_id" && propertyNamesById[rawValue]
-      ? propertyNamesById[rawValue]
-      : displayValue;
+    const resolved = resolvePropertyValue(fieldKey, rawValue, propertyNamesById);
+    const resolvedDisplay = resolved || displayValue;
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
         <span style={{ wordBreak: "break-word" }}>{resolvedDisplay}</span>
