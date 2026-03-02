@@ -70,6 +70,10 @@ const Footer = () => {
                             <Link to="/book" className="transition hover:text-accent">Book</Link>
                             <span className="text-slate-600">|</span>
                             <Link to="/contact" className="transition hover:text-accent">Contact</Link>
+                            <span className="text-slate-600">|</span>
+                            <Link to="/terms" className="transition hover:text-accent">Terms</Link>
+                            <span className="text-slate-600">|</span>
+                            <Link to="/privacy" className="transition hover:text-accent">Privacy</Link>
                         </div>
                     </div>
                 </div>

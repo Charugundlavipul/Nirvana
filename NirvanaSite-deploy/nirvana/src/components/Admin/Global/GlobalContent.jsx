@@ -4,6 +4,7 @@ import styles from "../Properties/PropertyEditor.module.css"; // Reusing tabs st
 import ReviewManager from "./ReviewManager";
 import FaqManager from "./FaqManager";
 import ActivityManager from "./ActivityManager";
+import LegalPagesManager from "./LegalPagesManager";
 
 const GlobalContent = () => {
     const [activeTab, setActiveTab] = useState("reviews");
@@ -30,12 +31,19 @@ const GlobalContent = () => {
                     >
                         Activities
                     </button>
+                    <button
+                        className={`${styles.tab} ${activeTab === "legal" ? styles.active : ""}`}
+                        onClick={() => setActiveTab("legal")}
+                    >
+                        Legal Pages
+                    </button>
                 </div>
 
                 <div className={styles.tabContent}>
                     {activeTab === "reviews" && <ReviewManager />}
                     {activeTab === "faqs" && <FaqManager />}
                     {activeTab === "activities" && <ActivityManager />}
+                    {activeTab === "legal" && <LegalPagesManager />}
                 </div>
             </div>
         </AdminLayout>

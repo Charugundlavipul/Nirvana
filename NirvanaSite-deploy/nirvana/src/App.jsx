@@ -13,6 +13,7 @@ import PropertyPage from "./components/PropertyPage/PropertyPage";
 import PropertyGalleryPage from "./components/PropertyGallery/PropertyGalleryPage";
 import ActivitiesPage from "./components/NearbyActivities/ActivitiesPage";
 import ContactUs from "./components/Contact/ContactUs";
+import LegalPage from "./components/Legal/LegalPage";
 import AdminLogin from "./components/Admin/AdminLogin";
 import ProtectedAdminRoute from "./components/Admin/ProtectedAdminRoute";
 import Dashboard from "./components/Admin/Dashboard";
@@ -52,6 +53,10 @@ function AppLayout() {
 
           {/* Property Gallery Subpage */}
           <Route path="/:slug/gallery" element={<PropertyGalleryPage />} />
+
+          {/* Legal Pages */}
+          <Route path="/terms" element={<LegalPage pageKey="terms_and_conditions" />} />
+          <Route path="/privacy" element={<LegalPage pageKey="privacy_policy" />} />
 
           {/* Dynamic Property Route */}
           <Route path="/:slug" element={<PropertyPage />} />

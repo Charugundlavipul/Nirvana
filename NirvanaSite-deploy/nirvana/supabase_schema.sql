@@ -1261,3 +1261,52 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- 10. Site Content (Legal Pages: T&C, Privacy Policy)
+CREATE TABLE IF NOT EXISTS site_content (
+    key TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL DEFAULT '',
+    effective_date DATE,
+    last_updated DATE,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE site_content ADD COLUMN IF NOT EXISTS effective_date DATE;
+ALTER TABLE site_content ADD COLUMN IF NOT EXISTS last_updated DATE;
+
+INSERT INTO site_content (key, title, content, effective_date, last_updated) VALUES
+    ('terms_and_conditions', 'Terms and Conditions', '', '2026-02-27', '2026-02-27'),
+    ('privacy_policy', 'Privacy Policy', '', '2026-02-27', '2026-02-27')
+ON CONFLICT (key) DO NOTHING;
+
+ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'site_content'
+        AND policyname = 'Public site content is viewable by everyone'
+    ) THEN
+        CREATE POLICY "Public site content is viewable by everyone"
+        ON site_content FOR SELECT USING (true);
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'site_content'
+        AND policyname = 'Admins can manage site content'
+    ) THEN
+        CREATE POLICY "Admins can manage site content"
+        ON site_content FOR ALL
+        USING (current_admin_role() IN ('owner', 'superadmin'));
+    END IF;
+END;
+$$;
