@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchPropertyCards } from "../../lib/contentApi";
-import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 
 const Booking = () => {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ const Booking = () => {
   const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -53,6 +54,12 @@ const Booking = () => {
 
   const selectedProperty = properties.find((p) => p.bookingPropertyId === selectedPropertyId);
 
+  const filteredProperties = properties.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (p.title || "").toLowerCase().includes(q) || (p.location || "").toLowerCase().includes(q);
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 lg:flex-row">
 
@@ -63,6 +70,16 @@ const Booking = () => {
         <div className="px-6 pb-5 border-b border-gray-100">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Book Your Stay</h1>
           <p className="text-gray-500 mt-1 text-sm">Select your luxury escape below</p>
+          <div className="relative mt-3">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search properties..."
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm text-gray-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder-gray-400"
+            />
+          </div>
         </div>
 
         {/* Property List */}
@@ -73,8 +90,10 @@ const Booking = () => {
                 <div key={i} className="animate-pulse bg-gray-100 rounded-xl h-24"></div>
               ))}
             </div>
+          ) : filteredProperties.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">No properties match "{searchQuery}"</div>
           ) : (
-            properties.map((property) => (
+            filteredProperties.map((property) => (
               <div
                 key={property.slug}
                 onClick={() => handlePropertySelect(property.bookingPropertyId)}
