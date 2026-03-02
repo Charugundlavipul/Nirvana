@@ -1,6 +1,6 @@
 ﻿import React from "react";
 import { Link } from "react-router-dom";
-import { FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
+import { FaYoutube, FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
 
 const Footer = () => {
 
@@ -52,6 +52,7 @@ const Footer = () => {
                         <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Follow</h4>
                         <p className="mb-4 text-sm text-slate-300">Get updates and behind-the-scenes content.</p>
                         <div className="flex gap-3">
+                            <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaYoutube /></a>
                             <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaInstagram /></a>
                             <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaFacebook /></a>
                         </div>
