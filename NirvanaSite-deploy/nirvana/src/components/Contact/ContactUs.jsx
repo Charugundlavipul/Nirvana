@@ -1,11 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import { FaEnvelope, FaPhone, FaInstagram, FaFacebook, FaYoutube, FaMapMarkerAlt, FaPaperPlane } from "react-icons/fa";
+import React, { useEffect, useRef } from "react";
+import { FaEnvelope, FaPhone, FaInstagram, FaFacebook, FaMapMarkerAlt } from "react-icons/fa";
 
 const ContactUs = () => {
     const heroRef = useRef(null);
-    const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
-    const [submitted, setSubmitted] = useState(false);
-    const [sending, setSending] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -17,21 +14,6 @@ const ContactUs = () => {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
-
-    const handleChange = (e) => {
-        setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSending(true);
-        // Send via mailto as a fallback
-        const mailtoLink = `mailto:vkrvacations@gmail.com?subject=${encodeURIComponent(formData.subject || "Contact from Website")}&body=${encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`)}`;
-        window.location.href = mailtoLink;
-        setSending(false);
-        setSubmitted(true);
-        setFormData({ name: "", email: "", subject: "", message: "" });
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800 pb-20">
@@ -107,151 +89,47 @@ const ContactUs = () => {
                     </a>
                 </div>
 
-                {/* Locations + Form */}
-                <div className="grid gap-12 lg:grid-cols-2">
+                {/* Locations */}
+                <div className="max-w-3xl mx-auto space-y-8">
+                    <div className="text-center">
+                        <h2 className="text-3xl font-bold text-gray-900">Our Locations</h2>
+                        <p className="mt-3 text-gray-600 leading-relaxed">
+                            Our luxury properties are located in the heart of the Smoky Mountains and on the beautiful shores of Lake Norman.
+                        </p>
+                    </div>
 
-                    {/* Left: Locations & Info */}
-                    <div className="space-y-8">
-                        <div>
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-accent pl-4">Our Locations</h2>
-                            <p className="mt-3 text-gray-600 leading-relaxed">
-                                Our luxury properties are located in the heart of the Smoky Mountains and on the beautiful shores of Lake Norman.
-                            </p>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                                <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent">
-                                    <FaMapMarkerAlt />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-900">Sevierville, Tennessee</h4>
-                                    <p className="text-sm text-gray-500 mt-1">Gateway to the Great Smoky Mountains — perfect for nature lovers and adventure seekers.</p>
-                                </div>
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                            <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent">
+                                <FaMapMarkerAlt />
                             </div>
-
-                            <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                                <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent">
-                                    <FaMapMarkerAlt />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-900">Lake Norman, North Carolina</h4>
-                                    <p className="text-sm text-gray-500 mt-1">Lakeside luxury with stunning waterfront views and endless water activities.</p>
-                                </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Sevierville, Tennessee</h4>
+                                <p className="text-sm text-gray-500 mt-1">Gateway to the Great Smoky Mountains — perfect for nature lovers and adventure seekers.</p>
                             </div>
                         </div>
 
-                        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h4 className="font-bold text-gray-900 mb-3">Follow Us</h4>
-                            <div className="flex gap-3">
-                                <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
-                                    <FaYoutube size={18} />
-                                </a>
-                                <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
-                                    <FaInstagram size={18} />
-                                </a>
-                                <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
-                                    <FaFacebook size={18} />
-                                </a>
+                        <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                            <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent">
+                                <FaMapMarkerAlt />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Lake Norman, North Carolina</h4>
+                                <p className="text-sm text-gray-500 mt-1">Lakeside luxury with stunning waterfront views and endless water activities.</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right: Contact Form */}
-                    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Send Us a Message</h2>
-                        <p className="text-sm text-gray-500 mb-6">Fill out the form below and we&rsquo;ll get back to you as soon as possible.</p>
-
-                        {submitted ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <div className="grid h-16 w-16 place-items-center rounded-full bg-accent/10 text-accent text-2xl mb-4">
-                                    <FaPaperPlane />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900">Message Ready!</h3>
-                                <p className="text-sm text-gray-500 mt-2">Your email client should have opened. If not, please email us directly at vkrvacations@gmail.com.</p>
-                                <button
-                                    onClick={() => setSubmitted(false)}
-                                    className="mt-6 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-white transition hover:bg-accent/90"
-                                >
-                                    Send Another Message
-                                </button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label htmlFor="contact-name" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                                            Name
-                                        </label>
-                                        <input
-                                            id="contact-name"
-                                            name="name"
-                                            type="text"
-                                            required
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            placeholder="Your name"
-                                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="contact-email" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                                            Email
-                                        </label>
-                                        <input
-                                            id="contact-email"
-                                            name="email"
-                                            type="email"
-                                            required
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            placeholder="you@example.com"
-                                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label htmlFor="contact-subject" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                                        Subject
-                                    </label>
-                                    <input
-                                        id="contact-subject"
-                                        name="subject"
-                                        type="text"
-                                        value={formData.subject}
-                                        onChange={handleChange}
-                                        placeholder="Booking inquiry, general question, etc."
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label htmlFor="contact-message" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                                        Message
-                                    </label>
-                                    <textarea
-                                        id="contact-message"
-                                        name="message"
-                                        required
-                                        rows={5}
-                                        value={formData.message}
-                                        onChange={handleChange}
-                                        placeholder="Tell us how we can help..."
-                                        className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={sending}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-accent/90 disabled:opacity-60"
-                                >
-                                    <FaPaperPlane size={13} />
-                                    {sending ? "Opening..." : "Send Message"}
-                                </button>
-                            </form>
-                        )}
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
+                        <h4 className="font-bold text-gray-900 mb-3">Follow Us</h4>
+                        <div className="flex justify-center gap-3">
+                            <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
+                                <FaInstagram size={18} />
+                            </a>
+                            <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
+                                <FaFacebook size={18} />
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

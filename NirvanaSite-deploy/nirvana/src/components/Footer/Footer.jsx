@@ -1,30 +1,10 @@
-﻿import React, { useState } from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
-import { FaYoutube, FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
 
 const Footer = () => {
-    const [email, setEmail] = useState("");
-    const [subscribed, setSubscribed] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (!email) return;
-        setIsSubmitting(true);
-        try {
-            await fetch("https://sheetdb.io/api/v1/no4ub34t8pujw", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: [{ mail: email }] }),
-            });
-            setSubscribed(true);
-            setEmail("");
-        } catch (err) {
-            alert("There was an error subscribing. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+
 
     return (
         <footer className="mt-16 font-sans">
@@ -69,21 +49,9 @@ const Footer = () => {
                     </section>
 
                     <section>
-                        <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Stay In Touch</h4>
-                        <form className="space-y-3" onSubmit={handleSubmit}>
-                            <input type="email" placeholder="Email address" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={subscribed || isSubmitting} className="w-full rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-3 text-sm text-white placeholder-slate-400 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60" />
-                            <button type="submit" disabled={subscribed || isSubmitting} className="w-full rounded-xl bg-accent px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white transition hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-60">
-                                {subscribed ? "Subscribed" : isSubmitting ? "Subscribing..." : "Subscribe"}
-                            </button>
-                        </form>
-                        {subscribed && <p className="mt-3 text-xs font-medium text-accent">Thanks, you are on the list.</p>}
-                    </section>
-
-                    <section>
                         <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Follow</h4>
                         <p className="mb-4 text-sm text-slate-300">Get updates and behind-the-scenes content.</p>
                         <div className="flex gap-3">
-                            <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaYoutube /></a>
                             <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaInstagram /></a>
                             <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaFacebook /></a>
                         </div>
