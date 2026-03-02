@@ -90,9 +90,9 @@ function Navbar() {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-white z-40 flex flex-col items-center justify-center gap-8 transition-transform duration-300 md:hidden pt-20 ${isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 transition-transform duration-300 md:hidden pt-20 ${isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
-        style={{ backgroundColor: '#ffffff' }}
+        style={{ background: '#ffffff' }}
       >
         {navLinks.map((link) => (
           <Link
