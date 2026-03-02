@@ -64,6 +64,7 @@ const Footer = () => {
                             <li><Link to="/review" className="transition hover:text-accent">Reviews</Link></li>
                             <li><Link to="/faq" className="transition hover:text-accent">FAQ</Link></li>
                             <li><Link to="/about" className="transition hover:text-accent">About Us</Link></li>
+                            <li><Link to="/contact" className="transition hover:text-accent">Contact Us</Link></li>
                         </ul>
                     </section>
 
@@ -98,6 +99,8 @@ const Footer = () => {
                             <Link to="/about" className="transition hover:text-accent">About</Link>
                             <span className="text-slate-600">|</span>
                             <Link to="/book" className="transition hover:text-accent">Book</Link>
+                            <span className="text-slate-600">|</span>
+                            <Link to="/contact" className="transition hover:text-accent">Contact</Link>
                         </div>
                     </div>
                 </div>

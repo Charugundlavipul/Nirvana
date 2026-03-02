@@ -121,11 +121,11 @@ const Booking = () => {
         </div>
 
         {/* Footer CTA */}
-        {/* <div className="p-4 border-t border-gray-100 bg-gray-50/80">
+        <div className="p-4 border-t border-gray-100 bg-gray-50/80">
           <p className="text-xs text-gray-500 text-center">
-            Need help? <a href="/contact" className="text-accent font-semibold hover:underline">Contact us</a>
+            Questions about a property? <a href="/contact" className="text-accent font-semibold hover:underline">Contact us</a>
           </p>
-        </div> */}
+        </div>
       </div>
 
       {/* Right Content - Booking Widget or Hero */}

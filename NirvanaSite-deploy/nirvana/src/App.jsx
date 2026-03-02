@@ -12,6 +12,7 @@ import PropertyOverview from "./components/PropertyOverview/propertyOverview";
 import PropertyPage from "./components/PropertyPage/PropertyPage";
 import PropertyGalleryPage from "./components/PropertyGallery/PropertyGalleryPage";
 import ActivitiesPage from "./components/NearbyActivities/ActivitiesPage";
+import ContactUs from "./components/Contact/ContactUs";
 import AdminLogin from "./components/Admin/AdminLogin";
 import ProtectedAdminRoute from "./components/Admin/ProtectedAdminRoute";
 import Dashboard from "./components/Admin/Dashboard";
@@ -38,6 +39,7 @@ function AppLayout() {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/faq/:slug" element={<FAQ />} />
+          <Route path="/contact" element={<ContactUs />} />
           <Route path="/book" element={<Booking />} />
 
           <Route path="/review" element={<ReviewsPage />} />
