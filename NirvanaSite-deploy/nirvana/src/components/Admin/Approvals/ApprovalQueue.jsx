@@ -1316,6 +1316,9 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null, p
 };
 
 const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
+  const [galleryVisible, setGalleryVisible] = useState(6);
+  const [amenitiesVisible, setAmenitiesVisible] = useState(10);
+
   if (!bundle) return null;
 
   const curated = bundle.curated || [];
@@ -1375,6 +1378,9 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
     );
   };
 
+  const galleryRemaining = gallery.length - galleryVisible;
+  const amenitiesRemaining = amenities.length - amenitiesVisible;
+
   return (
     <div
       style={{
@@ -1409,25 +1415,28 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
           </div>
           {gallery.length ? (
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {gallery.slice(0, 6).map((item, idx) => renderThumb(item, `#${idx + 1}`, `gallery-${idx}`))}
-              {gallery.length > 6 ? (
-                <div
+              {gallery.slice(0, galleryVisible).map((item, idx) => renderThumb(item, `#${idx + 1}`, `gallery-${idx}`))}
+              {galleryRemaining > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setGalleryVisible((prev) => prev + 5)}
                   style={{
                     minWidth: "92px",
                     height: "68px",
                     borderRadius: "6px",
                     border: "1px dashed #cbd5e1",
                     background: "#fff",
-                    color: "#64748b",
+                    color: "#0f766e",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "12px",
                     fontWeight: 600,
+                    cursor: "pointer",
                   }}
                 >
-                  +{gallery.length - 6} more
-                </div>
+                  +{galleryRemaining} more
+                </button>
               ) : null}
             </div>
           ) : (
@@ -1441,7 +1450,7 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
           </div>
           {amenities.length ? (
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {amenities.slice(0, 10).map((item, idx) => (
+              {amenities.slice(0, amenitiesVisible).map((item, idx) => (
                 <span
                   key={`amenity-${item.title || idx}-${idx}`}
                   style={{
@@ -1456,10 +1465,23 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
                   {item.title || "Untitled"}
                 </span>
               ))}
-              {amenities.length > 10 ? (
-                <span style={{ fontSize: "12px", color: "#64748b", alignSelf: "center" }}>
-                  +{amenities.length - 10} more
-                </span>
+              {amenitiesRemaining > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setAmenitiesVisible((prev) => prev + 10)}
+                  style={{
+                    fontSize: "12px",
+                    color: "#0f766e",
+                    alignSelf: "center",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    padding: "4px 8px",
+                  }}
+                >
+                  +{amenitiesRemaining} more
+                </button>
               ) : null}
             </div>
           ) : (
