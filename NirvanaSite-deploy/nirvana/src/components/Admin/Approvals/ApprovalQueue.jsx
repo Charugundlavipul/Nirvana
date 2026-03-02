@@ -123,6 +123,7 @@ const FIELD_LABELS = {
   redacted_at: "Redacted At",
   url: "Image URL",
   slot: "Image Slot",
+  property_id: "Property",
 };
 
 const PREVIEW_IGNORED_KEYS = new Set([
@@ -277,7 +278,7 @@ const AmenityPreviewTile = ({ label, data }) => {
   );
 };
 
-const RequestEntityPreviewCard = ({ req, onPreviewImage = null }) => {
+const RequestEntityPreviewCard = ({ req, onPreviewImage = null, propertyNamesById = {} }) => {
   if (!req) return null;
   const entityType = String(req.entity_type || "").toLowerCase();
   if (entityType === "property") return null;
@@ -427,7 +428,9 @@ const RequestEntityPreviewCard = ({ req, onPreviewImage = null }) => {
                 {friendlyFieldName(key)}
               </div>
               <div style={{ marginTop: "3px", fontSize: "13px", color: "#0f172a", wordBreak: "break-word" }}>
-                {compactValue(value)}
+                {key === "property_id" && propertyNamesById[value]
+                  ? propertyNamesById[value]
+                  : compactValue(value)}
               </div>
             </div>
           ))}
@@ -1128,7 +1131,7 @@ const RequestSummaryCard = ({ req }) => {
   );
 };
 
-const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null }) => {
+const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null, propertyNamesById = {} }) => {
   const rows = useMemo(() => buildDiffRows(req), [req]);
   if (!rows.length) {
     return <div style={{ marginTop: "8px", fontSize: "12px", color: "#64748b" }}>No field-level preview available.</div>;
@@ -1257,9 +1260,12 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null })
 
   const renderCell = (fieldKey, displayValue, rawValue) => {
     const canPreview = enableImagePreview && isLikelyImageUrl(fieldKey, rawValue);
+    const resolvedDisplay = fieldKey === "property_id" && propertyNamesById[rawValue]
+      ? propertyNamesById[rawValue]
+      : displayValue;
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-        <span style={{ wordBreak: "break-word" }}>{displayValue}</span>
+        <span style={{ wordBreak: "break-word" }}>{resolvedDisplay}</span>
         {canPreview && typeof onPreviewImage === "function" ? (
           <button type="button" style={previewButtonStyle} onClick={() => onPreviewImage(rawValue)}>
             Preview
@@ -1455,7 +1461,7 @@ const PropertyDraftBundleCard = ({ bundle, onPreviewImage = null }) => {
   );
 };
 
-const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPreviewImage = null }) => {
+const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPreviewImage = null, propertyNamesById = {} }) => {
   const badge = statusBadgeStyle(req.status);
   const isRevision = req.status === "revision_requested";
   const ownerResponse = req.status !== "pending" ? req.comment : null;
@@ -1503,7 +1509,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
       )}
 
       <div style={sectionHeadingStyle}>Requested Changes</div>
-      <DiffPreview req={req} enableImagePreview onPreviewImage={onPreviewImage} />
+      <DiffPreview req={req} enableImagePreview onPreviewImage={onPreviewImage} propertyNamesById={propertyNamesById} />
 
       {!hidePropertyPreviewForSpaces ? (
         <>
@@ -1514,7 +1520,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
               <PropertyDraftBundleCard bundle={propertyDraftBundle} onPreviewImage={onPreviewImage} />
             </>
           ) : (
-            <RequestEntityPreviewCard req={req} onPreviewImage={onPreviewImage} />
+            <RequestEntityPreviewCard req={req} onPreviewImage={onPreviewImage} propertyNamesById={propertyNamesById} />
           )}
         </>
       ) : (
@@ -1644,6 +1650,7 @@ const ApprovalQueue = () => {
   const [showRaw, setShowRaw] = useState({});
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [propertyDraftBundlesById, setPropertyDraftBundlesById] = useState({});
+  const [propertyNamesById, setPropertyNamesById] = useState({});
   const [entityFilter, setEntityFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
@@ -1652,6 +1659,14 @@ const ApprovalQueue = () => {
     setLoading(true);
     const adminRole = await getCurrentAdminRole();
     setRole(adminRole);
+
+    // Fetch property names for ID -> name resolution
+    const { data: propsData } = await supabase.from("properties").select("id,name");
+    if (propsData) {
+      const map = {};
+      propsData.forEach((p) => { map[p.id] = p.name; });
+      setPropertyNamesById(map);
+    }
 
     const statusFilter = isSuperAdminRole(adminRole) ? ["pending", "revision_requested"] : null;
     const { data: reqData, error: reqError } = await fetchApprovalRequests(statusFilter);
@@ -1791,6 +1806,7 @@ const ApprovalQueue = () => {
               onRevise={handleRevise}
               propertyDraftBundle={getPropertyDraftBundle(req)}
               onPreviewImage={(url) => setPreviewImageUrl(url)}
+              propertyNamesById={propertyNamesById}
             />
           ))}
 
@@ -1802,6 +1818,7 @@ const ApprovalQueue = () => {
               req={req}
               propertyDraftBundle={getPropertyDraftBundle(req)}
               onPreviewImage={(url) => setPreviewImageUrl(url)}
+              propertyNamesById={propertyNamesById}
             />
           ))}
 
@@ -1813,6 +1830,7 @@ const ApprovalQueue = () => {
               req={req}
               propertyDraftBundle={getPropertyDraftBundle(req)}
               onPreviewImage={(url) => setPreviewImageUrl(url)}
+              propertyNamesById={propertyNamesById}
             />
           ))}
         <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
@@ -1894,154 +1912,155 @@ const ApprovalQueue = () => {
           const hasSpacesChange = requestHasSpacesChange(req);
           const hidePropertyPreviewForSpaces = isPropertyRequest && hasSpacesChange;
           return (
-          <div key={req.id} style={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
-              <div>
-                <strong>{req.entity_type}</strong> - <span>{req.action}</span>
-                <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-                  Submitted: {formatDateTime(req.submitted_at)}
+            <div key={req.id} style={cardStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                <div>
+                  <strong>{req.entity_type}</strong> - <span>{req.action}</span>
+                  <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+                    Submitted: {formatDateTime(req.submitted_at)}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#666" }}>Request ID: {req.id}</div>
                 </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>Request ID: {req.id}</div>
+                <div>
+                  <span
+                    style={{
+                      ...statusBadgeStyle(req.status),
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "4px 8px",
+                      borderRadius: "999px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {req.status}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span
+
+              {req.comment && req.status === "pending" ? (
+                <div style={{ marginBottom: "8px", fontSize: "13px", color: "#444" }}>
+                  <strong>Editor Note:</strong> {req.comment}
+                </div>
+              ) : null}
+
+              {req.status === "revision_requested" && (
+                <div style={{
+                  marginBottom: "10px",
+                  padding: "10px 14px",
+                  background: "#fffbeb",
+                  border: "1px solid #fbbf24",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "#92400e",
+                }}>
+                  <strong>Previous Revision Note:</strong> {req.comment || "No note provided."}
+                </div>
+              )}
+
+              <RequestSummaryCard req={req} />
+
+              <div style={sectionHeadingStyle}>Requested Changes</div>
+              <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} propertyNamesById={propertyNamesById} />
+
+              {!hidePropertyPreviewForSpaces ? (
+                <>
+                  <div style={sectionHeadingStyle}>Preview</div>
+                  {isPropertyRequest ? (
+                    <>
+                      <PropertyPreviewCard payload={req.payload} />
+                      <PropertyDraftBundleCard
+                        bundle={propertyDraftBundle}
+                        onPreviewImage={(url) => setPreviewImageUrl(url)}
+                      />
+                    </>
+                  ) : (
+                    <RequestEntityPreviewCard req={req} onPreviewImage={(url) => setPreviewImageUrl(url)} propertyNamesById={propertyNamesById} />
+                  )}
+                </>
+              ) : (
+                <div style={{ marginTop: "10px", fontSize: "12px", color: "#64748b" }}>
+                  Space update detected. Use the Requested Changes section for detailed space/image diffs.
+                </div>
+              )}
+
+              <div style={{ marginTop: "8px" }}>
+                <button
+                  onClick={() => setShowRaw((prev) => ({ ...prev, [req.id]: !prev[req.id] }))}
                   style={{
-                    ...statusBadgeStyle(req.status),
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    padding: "4px 8px",
-                    borderRadius: "999px",
-                    textTransform: "uppercase",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: "12px",
                   }}
                 >
-                  {req.status}
-                </span>
+                  {showRaw[req.id] ? "Hide Raw Payload" : "Show Raw Payload"}
+                </button>
+              </div>
+
+              {showRaw[req.id] ? <pre style={preStyle}>{JSON.stringify(req.payload || {}, null, 2)}</pre> : null}
+
+              <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "8px", alignItems: "center" }}>
+                <input
+                  value={comment[req.id] || ""}
+                  onChange={(e) => setComment((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                  placeholder="Message back to editor (optional)..."
+                  style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
+                />
+                <button
+                  onClick={() => handleDecision(req, "rejected")}
+                  disabled={workingId === req.id}
+                  style={{
+                    padding: "10px 12px",
+                    border: "1px solid #ef4444",
+                    color: "#ef4444",
+                    background: "#fff",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={() => {
+                    if (!comment[req.id]?.trim()) {
+                      alert("Please add a message explaining what needs to be revised.");
+                      return;
+                    }
+                    handleDecision(req, "revision_requested");
+                  }}
+                  disabled={workingId === req.id}
+                  style={{
+                    padding: "10px 12px",
+                    border: "1px solid #f59e0b",
+                    color: "#fff",
+                    background: "#f59e0b",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Request Revision
+                </button>
+                <button
+                  onClick={() => handleDecision(req, "approved")}
+                  disabled={workingId === req.id}
+                  style={{
+                    padding: "10px 12px",
+                    border: "1px solid #10b981",
+                    color: "#fff",
+                    background: "#10b981",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Approve & Publish
+                </button>
               </div>
             </div>
-
-            {req.comment && req.status === "pending" ? (
-              <div style={{ marginBottom: "8px", fontSize: "13px", color: "#444" }}>
-                <strong>Editor Note:</strong> {req.comment}
-              </div>
-            ) : null}
-
-            {req.status === "revision_requested" && (
-              <div style={{
-                marginBottom: "10px",
-                padding: "10px 14px",
-                background: "#fffbeb",
-                border: "1px solid #fbbf24",
-                borderRadius: "8px",
-                fontSize: "13px",
-                color: "#92400e",
-              }}>
-                <strong>Previous Revision Note:</strong> {req.comment || "No note provided."}
-              </div>
-            )}
-
-            <RequestSummaryCard req={req} />
-
-            <div style={sectionHeadingStyle}>Requested Changes</div>
-            <DiffPreview req={req} enableImagePreview onPreviewImage={(url) => setPreviewImageUrl(url)} />
-
-            {!hidePropertyPreviewForSpaces ? (
-              <>
-                <div style={sectionHeadingStyle}>Preview</div>
-                {isPropertyRequest ? (
-                  <>
-                    <PropertyPreviewCard payload={req.payload} />
-                    <PropertyDraftBundleCard
-                      bundle={propertyDraftBundle}
-                      onPreviewImage={(url) => setPreviewImageUrl(url)}
-                    />
-                  </>
-                ) : (
-                  <RequestEntityPreviewCard req={req} onPreviewImage={(url) => setPreviewImageUrl(url)} />
-                )}
-              </>
-            ) : (
-              <div style={{ marginTop: "10px", fontSize: "12px", color: "#64748b" }}>
-                Space update detected. Use the Requested Changes section for detailed space/image diffs.
-              </div>
-            )}
-
-            <div style={{ marginTop: "8px" }}>
-              <button
-                onClick={() => setShowRaw((prev) => ({ ...prev, [req.id]: !prev[req.id] }))}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                }}
-              >
-                {showRaw[req.id] ? "Hide Raw Payload" : "Show Raw Payload"}
-              </button>
-            </div>
-
-            {showRaw[req.id] ? <pre style={preStyle}>{JSON.stringify(req.payload || {}, null, 2)}</pre> : null}
-
-            <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "8px", alignItems: "center" }}>
-              <input
-                value={comment[req.id] || ""}
-                onChange={(e) => setComment((prev) => ({ ...prev, [req.id]: e.target.value }))}
-                placeholder="Message back to editor (optional)..."
-                style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
-              />
-              <button
-                onClick={() => handleDecision(req, "rejected")}
-                disabled={workingId === req.id}
-                style={{
-                  padding: "10px 12px",
-                  border: "1px solid #ef4444",
-                  color: "#ef4444",
-                  background: "#fff",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                Reject
-              </button>
-              <button
-                onClick={() => {
-                  if (!comment[req.id]?.trim()) {
-                    alert("Please add a message explaining what needs to be revised.");
-                    return;
-                  }
-                  handleDecision(req, "revision_requested");
-                }}
-                disabled={workingId === req.id}
-                style={{
-                  padding: "10px 12px",
-                  border: "1px solid #f59e0b",
-                  color: "#fff",
-                  background: "#f59e0b",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                Request Revision
-              </button>
-              <button
-                onClick={() => handleDecision(req, "approved")}
-                disabled={workingId === req.id}
-                style={{
-                  padding: "10px 12px",
-                  border: "1px solid #10b981",
-                  color: "#fff",
-                  background: "#10b981",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                Approve & Publish
-              </button>
-            </div>
-          </div>
-        )})
+          )
+        })
       )}
       <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
     </AdminLayout>
