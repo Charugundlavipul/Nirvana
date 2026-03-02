@@ -188,10 +188,10 @@ const PropertyPage = () => {
                                 <span>{property.bathroom_count} Bathrooms</span>
                             </div>
                         )}
-                        {property.guest_count && (
+                        {property.guests_max && (
                             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
                                 <FaUsers className="text-accent" />
-                                <span>Up to {property.guest_count} Guests</span>
+                                <span>Up to {property.guests_max} Guests</span>
                             </div>
                         )}
                     </div>
@@ -254,15 +254,15 @@ const PropertyPage = () => {
                         {/* Quick Stats */}
                         <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-200">
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.bedroom_count || '5'}</p>
+                                <p className="text-3xl font-bold text-accent">{property.bedroom_count || '-'}</p>
                                 <p className="text-sm text-slate-500 uppercase tracking-wider">Bedrooms</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.bathroom_count || '4'}</p>
+                                <p className="text-3xl font-bold text-accent">{property.bathroom_count || '-'}</p>
                                 <p className="text-sm text-slate-500 uppercase tracking-wider">Bathrooms</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.guest_count || '12'}</p>
+                                <p className="text-3xl font-bold text-accent">{property.guests_max || '-'}</p>
                                 <p className="text-sm text-slate-500 uppercase tracking-wider">Guests</p>
                             </div>
                         </div>

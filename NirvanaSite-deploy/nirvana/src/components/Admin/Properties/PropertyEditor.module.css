@@ -422,9 +422,16 @@
     font-weight: 700;
 }
 
-.richEditor ul,
+.richEditor ul {
+    margin: 0 0 10px 20px;
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
 .richEditor ol {
     margin: 0 0 10px 20px;
+    list-style-type: decimal;
+    padding-left: 20px;
 }
 
 .richHelpText {
@@ -462,9 +469,16 @@
     margin: 0 0 10px 0;
 }
 
-.richPreviewContent ul,
+.richPreviewContent ul {
+    margin: 0 0 10px 20px;
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
 .richPreviewContent ol {
     margin: 0 0 10px 20px;
+    list-style-type: decimal;
+    padding-left: 20px;
 }
 
 .richPreviewContent h2,

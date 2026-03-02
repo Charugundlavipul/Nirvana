@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import RichTextContent from "../common/RichTextContent";
 
-const LegalPage = () => {
-    const { pageKey } = useParams();
+const LegalPage = ({ pageKey }) => {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [lastUpdated, setLastUpdated] = useState(null);

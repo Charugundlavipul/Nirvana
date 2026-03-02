@@ -1,16 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
+import { getCurrentAdminRole, isSuperAdminRole } from "../../lib/adminApi";
 
 const NAV_ITEMS = [
     { label: "Dashboard", path: "/admin", exact: true, icon: "D" },
     { label: "Properties", path: "/admin/properties", icon: "P" },
-    { label: "Global Content", path: "/admin/global", icon: "G" },
-    { label: "Admins", path: "/admin/admins", icon: "U" },
-    { label: "Approvals", path: "/admin/approvals", icon: "A" },
+    { label: "Global Content", path: "/admin/global", icon: "G", superOnly: true },
+    { label: "Admins", path: "/admin/admins", icon: "U", superOnly: true },
+    { label: "Approvals", path: "/admin/approvals", icon: "A", superOnly: true },
 ];
 
 const Sidebar = ({ isOpen, toggle }) => {
+    const [adminRole, setAdminRole] = useState(null);
+
+    useEffect(() => {
+        getCurrentAdminRole().then(setAdminRole);
+    }, []);
+
+    const isSuperAdmin = isSuperAdminRole(adminRole);
+
+    const visibleItems = NAV_ITEMS.filter(
+        (item) => !item.superOnly || isSuperAdmin
+    );
+
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.closed}`}>
             <div className={styles.logoContainer}>
@@ -21,7 +34,7 @@ const Sidebar = ({ isOpen, toggle }) => {
             </div>
 
             <nav className={styles.nav}>
-                {NAV_ITEMS.map((item) => (
+                {visibleItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
@@ -44,3 +57,4 @@ const Sidebar = ({ isOpen, toggle }) => {
 };
 
 export default Sidebar;
+
