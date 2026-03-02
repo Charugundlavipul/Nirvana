@@ -151,7 +151,127 @@ const resolvePropertyValue = (key, value, propertyNamesById) => {
   return null;
 };
 
-const PropertyPreviewCard = ({ payload }) => {
+const SpaceImageList = ({ space, onPreviewImage }) => {
+  const [visibleCount, setVisibleCount] = useState(6);
+  const images = space.images || [];
+  const remaining = images.length - visibleCount;
+  const canPreview = typeof onPreviewImage === "function";
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px",
+        background: "#fff",
+        padding: "10px",
+      }}
+    >
+      <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", marginBottom: "6px" }}>
+        {space.name}
+        <span style={{ fontWeight: 400, color: "#64748b", marginLeft: "6px", fontSize: "12px" }}>
+          ({images.length} {images.length === 1 ? "image" : "images"})
+        </span>
+      </div>
+      {images.length > 0 ? (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {images.slice(0, visibleCount).map((image, idx) => {
+            const label = image.name || `Image ${idx + 1}`;
+            const content = (
+              <>
+                <img
+                  src={image.url}
+                  alt={label}
+                  style={{
+                    width: "100%",
+                    height: "60px",
+                    objectFit: "cover",
+                    borderRadius: "5px",
+                    border: "1px solid #e2e8f0",
+                  }}
+                />
+                <span
+                  style={{
+                    marginTop: "3px",
+                    fontSize: "10px",
+                    color: "#64748b",
+                    textAlign: "center",
+                    wordBreak: "break-word",
+                    lineHeight: 1.3,
+                    maxWidth: "100%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                  title={label}
+                >
+                  {label}
+                </span>
+              </>
+            );
+
+            if (canPreview) {
+              return (
+                <button
+                  key={image.id || idx}
+                  type="button"
+                  onClick={() => onPreviewImage(image.url)}
+                  style={{
+                    width: "84px",
+                    border: "none",
+                    background: "transparent",
+                    padding: 0,
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  {content}
+                </button>
+              );
+            }
+            return (
+              <div
+                key={image.id || idx}
+                style={{ width: "84px", display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                {content}
+              </div>
+            );
+          })}
+          {remaining > 0 ? (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 5)}
+              style={{
+                minWidth: "84px",
+                height: "60px",
+                borderRadius: "5px",
+                border: "1px dashed #cbd5e1",
+                background: "#fff",
+                color: "#0f766e",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              +{remaining} more
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div style={{ fontSize: "12px", color: "#94a3b8" }}>No images in this space.</div>
+      )}
+    </div>
+  );
+};
+
+const PropertyPreviewCard = ({ payload, onPreviewImage }) => {
   if (!payload || typeof payload !== "object") return null;
   const spaces = normalizePropertySpaces(payload.spaces);
   const previewStyle = {
@@ -191,21 +311,9 @@ const PropertyPreviewCard = ({ payload }) => {
         <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "#94a3b8" }}>Spaces</strong>
         <div style={{ marginTop: "4px", fontWeight: 600, color: "#0f172a" }}>{summarizeSpaces(spaces)}</div>
         {spaces.length ? (
-          <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          <div style={{ marginTop: "8px", display: "grid", gap: "8px" }}>
             {spaces.map((space) => (
-              <span
-                key={space.id}
-                style={{
-                  fontSize: "12px",
-                  padding: "4px 8px",
-                  borderRadius: "999px",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  color: "#334155",
-                }}
-              >
-                {space.name} ({space.images.length})
-              </span>
+              <SpaceImageList key={space.id} space={space} onPreviewImage={onPreviewImage} />
             ))}
           </div>
         ) : (
@@ -1548,7 +1656,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
           <div style={sectionHeadingStyle}>Preview</div>
           {isPropertyRequest ? (
             <>
-              <PropertyPreviewCard payload={req.payload} />
+              <PropertyPreviewCard payload={req.payload} onPreviewImage={onPreviewImage} />
               <PropertyDraftBundleCard bundle={propertyDraftBundle} onPreviewImage={onPreviewImage} />
             </>
           ) : (
@@ -1999,7 +2107,7 @@ const ApprovalQueue = () => {
                   <div style={sectionHeadingStyle}>Preview</div>
                   {isPropertyRequest ? (
                     <>
-                      <PropertyPreviewCard payload={req.payload} />
+                      <PropertyPreviewCard payload={req.payload} onPreviewImage={(url) => setPreviewImageUrl(url)} />
                       <PropertyDraftBundleCard
                         bundle={propertyDraftBundle}
                         onPreviewImage={(url) => setPreviewImageUrl(url)}
