@@ -6,6 +6,7 @@ import { getCurrentAdminRole, isSuperAdminRole } from "../../lib/adminApi";
 const NAV_ITEMS = [
     { label: "Dashboard", path: "/admin", exact: true, icon: "D" },
     { label: "Properties", path: "/admin/properties", icon: "P" },
+    { label: "Subscribers", path: "/admin/subscribers", icon: "S" },
     { label: "Global Content", path: "/admin/global", icon: "G" },
     { label: "Admins", path: "/admin/admins", icon: "U", superOnly: true },
     { label: "Approvals", path: "/admin/approvals", icon: "A", superOnly: true },

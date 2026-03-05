@@ -1310,3 +1310,81 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- 11. Alert Subscribers (Email subscription list)
+CREATE TABLE IF NOT EXISTS alert_subscribers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    unsubscribe_token UUID DEFAULT gen_random_uuid() NOT NULL UNIQUE,
+    privacy_accepted BOOLEAN NOT NULL DEFAULT true,
+    subscribed_at TIMESTAMPTZ DEFAULT now(),
+    is_active BOOLEAN DEFAULT true
+);
+
+ALTER TABLE alert_subscribers ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can subscribe (public insert)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'alert_subscribers'
+        AND policyname = 'Anyone can subscribe'
+    ) THEN
+        CREATE POLICY "Anyone can subscribe"
+        ON alert_subscribers FOR INSERT
+        WITH CHECK (true);
+    END IF;
+END;
+$$;
+
+-- Public can update via unsubscribe token (for unsubscribe flow)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'alert_subscribers'
+        AND policyname = 'Unsubscribe via token'
+    ) THEN
+        CREATE POLICY "Unsubscribe via token"
+        ON alert_subscribers FOR UPDATE
+        USING (true)
+        WITH CHECK (true);
+    END IF;
+END;
+$$;
+
+-- Authenticated admins can read all subscribers
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'alert_subscribers'
+        AND policyname = 'Admins can read all subscribers'
+    ) THEN
+        CREATE POLICY "Admins can read all subscribers"
+        ON alert_subscribers FOR SELECT
+        USING (auth.role() = 'authenticated');
+    END IF;
+END;
+$$;
+
+-- Authenticated admins can delete subscribers
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'alert_subscribers'
+        AND policyname = 'Admins can delete subscribers'
+    ) THEN
+        CREATE POLICY "Admins can delete subscribers"
+        ON alert_subscribers FOR DELETE
+        USING (auth.role() = 'authenticated');
+    END IF;
+END;
+$$;
+

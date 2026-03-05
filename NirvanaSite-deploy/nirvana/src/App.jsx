@@ -22,6 +22,8 @@ import PropertyEditor from "./components/Admin/Properties/PropertyEditor";
 import GlobalContent from "./components/Admin/Global/GlobalContent";
 import ApprovalQueue from "./components/Admin/Approvals/ApprovalQueue";
 import AdminUsersManager from "./components/Admin/Users/AdminUsersManager";
+import SubscribersManager from "./components/Admin/Subscribers/SubscribersManager";
+import Unsubscribe from "./components/Unsubscribe/Unsubscribe";
 import ScrollToTop from "./components/scrolltotop/ScrolltoTop";
 import './App.css';
 
@@ -58,6 +60,9 @@ function AppLayout() {
           <Route path="/terms" element={<LegalPage pageKey="terms_and_conditions" />} />
           <Route path="/privacy" element={<LegalPage pageKey="privacy_policy" />} />
 
+          {/* Unsubscribe (public, token-based) */}
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+
           {/* Dynamic Property Route */}
           <Route path="/:slug" element={<PropertyPage />} />
 
@@ -69,6 +74,7 @@ function AppLayout() {
             <Route path="properties/:slug" element={<PropertyEditor />} />
             <Route path="global" element={<GlobalContent />} />
             <Route path="approvals" element={<ApprovalQueue />} />
+            <Route path="subscribers" element={<SubscribersManager />} />
             <Route path="admins" element={<AdminUsersManager />} />
           </Route>
         </Routes>

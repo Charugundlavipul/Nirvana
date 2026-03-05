@@ -1,10 +1,43 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaYoutube, FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
+import { supabase } from "../../supabaseClient";
 
 const Footer = () => {
+    const [email, setEmail] = useState("");
+    const [privacyAccepted, setPrivacyAccepted] = useState(false);
+    const [status, setStatus] = useState(null); // 'success' | 'error' | 'duplicate' | 'loading'
+    const [statusMsg, setStatusMsg] = useState("");
 
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const canSubmit = isValidEmail && privacyAccepted && status !== "loading";
 
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        if (!canSubmit) return;
+
+        setStatus("loading");
+        setStatusMsg("");
+
+        const { error } = await supabase
+            .from("alert_subscribers")
+            .insert({ email: email.trim().toLowerCase(), privacy_accepted: true });
+
+        if (error) {
+            if (error.code === "23505") {
+                setStatus("duplicate");
+                setStatusMsg("This email is already subscribed.");
+            } else {
+                setStatus("error");
+                setStatusMsg("Something went wrong. Please try again.");
+            }
+        } else {
+            setStatus("success");
+            setStatusMsg("You're subscribed! We'll keep you posted.");
+            setEmail("");
+            setPrivacyAccepted(false);
+        }
+    };
 
     return (
         <footer className="mt-16 font-sans">
@@ -56,6 +89,54 @@ const Footer = () => {
                             <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaInstagram /></a>
                             <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaFacebook /></a>
                         </div>
+                    </section>
+
+                    {/* Subscribe to Alerts */}
+                    <section>
+                        <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Stay Updated</h4>
+                        <p className="mb-4 text-sm text-slate-300">Subscribe to get alerts on new properties and exclusive deals.</p>
+                        <form onSubmit={handleSubscribe} className="space-y-3">
+                            <input
+                                id="footer-subscribe-email"
+                                type="email"
+                                placeholder="Enter your email"
+                                value={email}
+                                onChange={(e) => { setEmail(e.target.value); setStatus(null); }}
+                                className="w-full rounded-lg border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm text-white placeholder-slate-400 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
+                                required
+                            />
+                            <label className="flex items-start gap-2 cursor-pointer select-none">
+                                <input
+                                    id="footer-subscribe-privacy"
+                                    type="checkbox"
+                                    checked={privacyAccepted}
+                                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                                    className="mt-0.5 h-4 w-4 rounded border-slate-500 accent-accent"
+                                />
+                                <span className="text-xs leading-relaxed text-slate-400">
+                                    I agree to the{" "}
+                                    <Link to="/privacy" className="text-accent underline underline-offset-2 hover:text-accent/80">
+                                        Privacy Policy
+                                    </Link>
+                                </span>
+                            </label>
+                            <button
+                                id="footer-subscribe-submit"
+                                type="submit"
+                                disabled={!canSubmit}
+                                className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold uppercase tracking-wider transition ${canSubmit
+                                        ? "bg-accent text-white hover:bg-accent/80 cursor-pointer"
+                                        : "bg-slate-700 text-slate-500 cursor-not-allowed"
+                                    }`}
+                            >
+                                {status === "loading" ? "Subscribing..." : "Subscribe"}
+                            </button>
+                            {statusMsg && (
+                                <p className={`text-xs ${status === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                                    {statusMsg}
+                                </p>
+                            )}
+                        </form>
                     </section>
                 </div>
 
