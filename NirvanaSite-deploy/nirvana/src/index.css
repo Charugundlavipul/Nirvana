@@ -43,6 +43,21 @@
 }
 
 /* Reset / Base overrides */
+html,
+body,
+#root,
+.main-content {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+html.nav-menu-open,
+body.nav-menu-open {
+  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: hidden;
+}
+
 body {
   @apply bg-white text-gray-900 antialiased font-sans;
 }

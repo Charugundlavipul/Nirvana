@@ -21,6 +21,20 @@ function Navbar() {
     return () => window.removeEventListener("resize", closeMenuOnResize);
   }, [isOpen]);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('nav-menu-open', isOpen);
+    document.body.classList.toggle('nav-menu-open', isOpen);
+
+    return () => {
+      document.documentElement.classList.remove('nav-menu-open');
+      document.body.classList.remove('nav-menu-open');
+    };
+  }, [isOpen]);
+
   const isActive = (path) => {
     if (path === '/' && location.pathname === '/') return true;
     return path !== '/' && location.pathname.startsWith(path);
@@ -35,64 +49,73 @@ function Navbar() {
   ];
 
   return (
-    <nav
-      className="fixed top-0 left-0 w-full z-50 transition-all duration-300 font-sans bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 py-2"
-    >
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex-shrink-0 z-50">
-          <Link to="/" onClick={handleLinkClick}>
-            <img
-              src="/assets/nirvana_logo.png"
-              alt="Nirvana Logo"
-              className="h-12 w-auto object-contain"
-            />
-          </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              onClick={handleLinkClick}
-              className={`text-sm font-medium uppercase tracking-widest transition-colors ${isActive(link.path)
-                ? 'text-primary border-b-2 border-accent'
-                : 'text-gray-600 hover:text-primary hover:border-b-2 hover:border-accent/50'
-                }`}
-            >
-              {link.name}
+    <>
+      <nav
+        className="fixed top-0 left-0 w-full z-50 transition-all duration-300 font-sans bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 py-2"
+      >
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex-shrink-0 z-[60]">
+            <Link to="/" onClick={handleLinkClick}>
+              <img
+                src="/assets/nirvana_logo.png"
+                alt="Nirvana Logo"
+                className="h-12 w-auto object-contain"
+              />
             </Link>
-          ))}
-          <Link
-            to="/book"
-            onClick={handleLinkClick}
-            className="px-8 py-3 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-none hover:bg-accent transition-all duration-300 shadow-md"
-          >
-            BOOK NOW
-          </Link>
-        </div>
+          </div>
 
-        {/* Mobile Hamburger */}
-        <div className="md:hidden z-50 flex items-center">
-          <button
-            onClick={toggleMenu}
-            className="focus:outline-none transition-colors text-gray-800"
-            aria-label="Toggle menu"
-          >
-            <div className={`w-6 h-0.5 mb-1.5 transition-all ${isOpen ? 'rotate-45 translate-y-2 bg-gray-800' : 'bg-gray-800'}`}></div>
-            <div className={`w-6 h-0.5 mb-1.5 transition-all ${isOpen ? 'opacity-0' : 'bg-gray-800'}`}></div>
-            <div className={`w-6 h-0.5 transition-all ${isOpen ? '-rotate-45 -translate-y-2 bg-gray-800' : 'bg-gray-800'}`}></div>
-          </button>
-        </div>
-      </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={handleLinkClick}
+                className={`text-sm font-medium uppercase tracking-widest transition-colors ${isActive(link.path)
+                  ? 'text-primary border-b-2 border-accent'
+                  : 'text-gray-600 hover:text-primary hover:border-b-2 hover:border-accent/50'
+                  }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            <Link
+              to="/book"
+              onClick={handleLinkClick}
+              className="px-8 py-3 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-none hover:bg-accent transition-all duration-300 shadow-md"
+            >
+              BOOK NOW
+            </Link>
+          </div>
 
-      {/* Mobile Menu Overlay */}
+          {/* Mobile Hamburger */}
+          <div className="md:hidden z-[60] flex items-center">
+            <button
+              onClick={toggleMenu}
+              className="focus:outline-none transition-colors text-gray-800"
+              aria-controls="mobile-nav-drawer"
+              aria-expanded={isOpen}
+              aria-label="Toggle menu"
+            >
+              <div className={`w-6 h-0.5 mb-1.5 transition-all ${isOpen ? 'rotate-45 translate-y-2 bg-gray-800' : 'bg-gray-800'}`}></div>
+              <div className={`w-6 h-0.5 mb-1.5 transition-all ${isOpen ? 'opacity-0' : 'bg-gray-800'}`}></div>
+              <div className={`w-6 h-0.5 transition-all ${isOpen ? '-rotate-45 -translate-y-2 bg-gray-800' : 'bg-gray-800'}`}></div>
+            </button>
+          </div>
+        </div>
+      </nav>
+
       <div
-        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 transition-transform duration-300 md:hidden pt-20 ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        style={{ background: '#ffffff' }}
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 md:hidden ${isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+        onClick={() => setIsOpen(false)}
+        aria-hidden="true"
+      />
+
+      <aside
+        id="mobile-nav-drawer"
+        className={`fixed top-0 right-0 z-40 flex h-dvh w-[min(18rem,100vw)] max-w-full flex-col justify-center gap-8 border-l border-gray-200 bg-white px-8 pt-20 pb-10 shadow-2xl transition-transform duration-300 md:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        aria-hidden={!isOpen}
       >
         {navLinks.map((link) => (
           <Link
@@ -108,12 +131,12 @@ function Navbar() {
         <Link
           to="/book"
           onClick={handleLinkClick}
-          className="px-8 py-3 bg-primary text-white font-bold rounded-full text-xl shadow-lg"
+          className="px-8 py-3 bg-primary text-white font-bold rounded-full text-xl shadow-lg text-center"
         >
           BOOK NOW
         </Link>
-      </div>
-    </nav>
+      </aside>
+    </>
   );
 }
 
