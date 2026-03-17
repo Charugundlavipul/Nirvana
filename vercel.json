@@ -1,5 +1,0 @@
-{
-    "buildCommand": "cd NirvanaSite-deploy/nirvana && npm install && npm run build",
-    "installCommand": "cd NirvanaSite-deploy/nirvana && npm install",
-    "framework": "nextjs"
-}
