@@ -1,58 +1,42 @@
+'use client';
+
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { fetchPropertyCards } from "../../lib/contentApi";
 import PropertyListingCard from "./PropertyListingCard";
-import { FaSearch, FaMapMarkerAlt, FaCalendarAlt, FaUserFriends, FaBed, FaPaw } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaUserFriends, FaBed, FaPaw } from 'react-icons/fa';
 
-const PropertyOverview = () => {
-  const { pathname } = useLocation();
-  const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
-
-  // Search state
+const PropertyOverview = ({ initialProperties = [] }) => {
+  const [properties, setProperties] = useState(initialProperties);
+  const [filteredProperties, setFilteredProperties] = useState(initialProperties);
   const [searchLocation, setSearchLocation] = useState("");
   const [guests, setGuests] = useState("");
   const [bedrooms, setBedrooms] = useState("");
   const [petFriendly, setPetFriendly] = useState(false);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    setProperties(initialProperties);
+    setFilteredProperties(initialProperties);
+  }, [initialProperties]);
 
-  useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        const data = await fetchPropertyCards();
-        setProperties(data);
-        setFilteredProperties(data);
-      } catch (error) {
-        console.error("Error loading properties:", error);
-      }
-    };
-    loadProperties();
-  }, []);
-
-  // Filter properties based on search criteria
   const handleSearch = () => {
     let results = [...properties];
 
     if (searchLocation) {
-      results = results.filter(p =>
-        p.location?.toLowerCase().includes(searchLocation.toLowerCase()) ||
-        p.title?.toLowerCase().includes(searchLocation.toLowerCase())
+      results = results.filter((property) =>
+        property.location?.toLowerCase().includes(searchLocation.toLowerCase()) ||
+        property.title?.toLowerCase().includes(searchLocation.toLowerCase())
       );
     }
 
     if (guests) {
-      results = results.filter(p => p.guests_max >= parseInt(guests));
+      results = results.filter((property) => property.guests_max >= parseInt(guests, 10));
     }
 
     if (bedrooms) {
-      results = results.filter(p => p.bedroom_count >= parseInt(bedrooms));
+      results = results.filter((property) => property.bedroom_count >= parseInt(bedrooms, 10));
     }
 
     if (petFriendly) {
-      results = results.filter(p => p.pet_friendly);
+      results = results.filter((property) => property.pet_friendly);
     }
 
     setFilteredProperties(results);
@@ -68,12 +52,8 @@ const PropertyOverview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-20 pt-24 font-sans text-slate-800">
-
-      {/* Hero Search Section */}
       <div className="mx-auto mb-8 max-w-7xl px-6 sm:px-8 md:px-12">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-lg">
-
-          {/* Header */}
           <div className="mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent">Nirvana Luxe Collection</p>
             <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
@@ -81,11 +61,8 @@ const PropertyOverview = () => {
             </h1>
           </div>
 
-          {/* Search Bar */}
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
             <div className="flex flex-col lg:flex-row lg:items-center gap-2">
-
-              {/* Location */}
               <div className="flex-1 group">
                 <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 border border-transparent hover:border-accent/30 transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaMapMarkerAlt className="text-accent text-lg flex-shrink-0" />
@@ -102,10 +79,8 @@ const PropertyOverview = () => {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="hidden lg:block w-px h-10 bg-slate-200"></div>
 
-              {/* Guests */}
               <div className="flex-shrink-0 w-full lg:w-40">
                 <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 border border-transparent hover:border-accent/30 transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaUserFriends className="text-accent text-lg flex-shrink-0" />
@@ -127,10 +102,8 @@ const PropertyOverview = () => {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="hidden lg:block w-px h-10 bg-slate-200"></div>
 
-              {/* Bedrooms */}
               <div className="flex-shrink-0 w-full lg:w-40">
                 <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 border border-transparent hover:border-accent/30 transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaBed className="text-accent text-lg flex-shrink-0" />
@@ -151,7 +124,6 @@ const PropertyOverview = () => {
                 </div>
               </div>
 
-              {/* Pet Friendly Toggle */}
               <div className="flex-shrink-0">
                 <button
                   onClick={() => setPetFriendly(!petFriendly)}
@@ -165,7 +137,6 @@ const PropertyOverview = () => {
                 </button>
               </div>
 
-              {/* Search Button */}
               <button
                 onClick={handleSearch}
                 className="flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-4 text-white font-bold shadow-lg hover:bg-accent/90 hover:shadow-xl transition-all active:scale-95"
@@ -176,7 +147,6 @@ const PropertyOverview = () => {
             </div>
           </div>
 
-          {/* Quick Stats */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="rounded-full bg-slate-100 px-3 py-1.5 font-medium">
@@ -196,11 +166,10 @@ const PropertyOverview = () => {
         </div>
       </div>
 
-      {/* Property Grid */}
       <div className="mx-auto max-w-7xl px-6 sm:px-8 md:px-12">
         {filteredProperties.length === 0 ? (
           <div className="flex flex-col h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500">
-            <span className="text-4xl mb-4">🏠</span>
+            <span className="text-4xl mb-4">Home</span>
             <p className="font-medium">No properties match your criteria</p>
             <button onClick={clearFilters} className="mt-2 text-accent hover:underline text-sm font-semibold">
               Clear filters
@@ -219,4 +188,3 @@ const PropertyOverview = () => {
 };
 
 export default PropertyOverview;
-

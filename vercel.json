@@ -1,12 +1,5 @@
 {
     "buildCommand": "cd NirvanaSite-deploy/nirvana && npm install && npm run build",
-    "outputDirectory": "NirvanaSite-deploy/nirvana/dist",
     "installCommand": "cd NirvanaSite-deploy/nirvana && npm install",
-    "framework": "vite",
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
-    ]
+    "framework": "nextjs"
 }

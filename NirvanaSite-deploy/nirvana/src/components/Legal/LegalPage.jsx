@@ -1,60 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "../../supabaseClient";
+'use client';
+
+import React from "react";
 import RichTextContent from "../common/RichTextContent";
 
-const LegalPage = ({ pageKey }) => {
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [lastUpdated, setLastUpdated] = useState(null);
-    const [effectiveDate, setEffectiveDate] = useState(null);
-    const [loading, setLoading] = useState(true);
-
+const LegalPage = ({ pageKey, initialData }) => {
     const fallbackTitle = pageKey === "terms_and_conditions"
         ? "Terms and Conditions"
         : pageKey === "privacy_policy"
             ? "Privacy Policy"
             : "Legal";
 
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from("site_content")
-                    .select("*")
-                    .eq("key", pageKey)
-                    .single();
-
-                if (error && error.code !== "PGRST116") throw error;
-
-                if (data) {
-                    setTitle(data.title || fallbackTitle);
-                    setContent(data.content || "");
-                    setLastUpdated(data.last_updated || null);
-                    setEffectiveDate(data.effective_date || null);
-                } else {
-                    setTitle(fallbackTitle);
-                    setContent("");
-                }
-            } catch (err) {
-                console.error("Error loading legal page:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
-    }, [pageKey]);
+    const title = initialData?.title || fallbackTitle;
+    const content = initialData?.content || "";
+    const lastUpdated = initialData?.lastUpdated || null;
+    const effectiveDate = initialData?.effectiveDate || null;
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800 pb-20">
-            {/* Hero */}
             <div className="relative h-[35vh] w-full overflow-hidden bg-gradient-to-br from-[#0b1324] via-[#0f1b33] to-[#10243f] -mt-[50px] flex items-center justify-center">
                 <div className="text-center px-6 pt-10">
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-4">Legal</p>
                     <h1 className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg">
-                        {loading ? "Loading..." : title}
+                        {title}
                     </h1>
-                    {!loading && (effectiveDate || lastUpdated) && (
+                    {(effectiveDate || lastUpdated) && (
                         <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm text-gray-400">
                             {effectiveDate && (
                                 <span>Effective Date: {new Date(effectiveDate + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
@@ -67,15 +36,8 @@ const LegalPage = ({ pageKey }) => {
                 </div>
             </div>
 
-            {/* Content */}
             <div className="max-w-4xl mx-auto px-6 py-16">
-                {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className="animate-pulse bg-gray-200 rounded-lg h-5" style={{ width: `${90 - i * 10}%` }} />
-                        ))}
-                    </div>
-                ) : content ? (
+                {content ? (
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 md:p-12">
                         <RichTextContent
                             value={content}

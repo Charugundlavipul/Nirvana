@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../supabaseClient";
 
 const maskEmail = (email) => {
@@ -11,10 +14,10 @@ const maskEmail = (email) => {
 };
 
 const Unsubscribe = () => {
-    const [searchParams] = useSearchParams();
+    const searchParams = useSearchParams();
     const token = searchParams.get("token");
 
-    const [state, setState] = useState("loading"); // loading | confirm | success | already | invalid | error
+    const [state, setState] = useState("loading");
     const [email, setEmail] = useState("");
     const [processing, setProcessing] = useState(false);
 
@@ -148,14 +151,14 @@ const Unsubscribe = () => {
                     <>
                         <div style={{ fontSize: "40px", marginBottom: "16px" }}>✅</div>
                         <h2 style={{ fontSize: "22px", fontWeight: 600, color: "#171717", margin: "0 0 12px" }}>
-                            You've Been Unsubscribed
+                            You&apos;ve Been Unsubscribed
                         </h2>
                         <p style={{ color: "#666", fontSize: "15px", margin: "0 0 24px", lineHeight: 1.6 }}>
                             <strong>{maskEmail(email)}</strong> has been removed from our mailing list. You will no
                             longer receive alert emails from us.
                         </p>
                         <Link
-                            to="/"
+                            href="/"
                             style={{
                                 display: "inline-block",
                                 padding: "10px 24px",
@@ -182,7 +185,7 @@ const Unsubscribe = () => {
                             <strong>{maskEmail(email)}</strong> is already unsubscribed from our alerts.
                         </p>
                         <Link
-                            to="/"
+                            href="/"
                             style={{
                                 display: "inline-block",
                                 padding: "10px 24px",
@@ -209,7 +212,7 @@ const Unsubscribe = () => {
                             This unsubscribe link is invalid or has expired. Please contact us if you need help.
                         </p>
                         <Link
-                            to="/contact"
+                            href="/contact"
                             style={{
                                 display: "inline-block",
                                 padding: "10px 24px",
@@ -233,10 +236,10 @@ const Unsubscribe = () => {
                             Something Went Wrong
                         </h2>
                         <p style={{ color: "#666", fontSize: "15px", margin: "0 0 24px", lineHeight: 1.6 }}>
-                            We couldn't process your request. Please try again or contact our support team.
+                            We couldn&apos;t process your request. Please try again or contact our support team.
                         </p>
                         <Link
-                            to="/contact"
+                            href="/contact"
                             style={{
                                 display: "inline-block",
                                 padding: "10px 24px",

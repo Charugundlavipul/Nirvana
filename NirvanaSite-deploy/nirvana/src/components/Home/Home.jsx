@@ -1,21 +1,24 @@
+'use client';
+
 import React, { useRef, useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { fetchProperties, fetchPropertyBundleBySlug, fetchReviews } from "../../lib/contentApi";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft } from 'react-icons/fa';
 
 const oasisImages = [
   "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp",
 ];
 
-const Home = () => {
-  const navigate = useNavigate();
+const Home = ({ initialProperties = [], initialReviews = [] }) => {
+  const router = useRouter();
   const heroRef = useRef(null);
 
   // Dynamic properties state
-  const [properties, setProperties] = useState([]);
+  const [properties, setProperties] = useState(initialProperties);
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
-  const [itemsToShow, setItemsToShow] = useState(window.innerWidth < 1024 ? 1 : 3);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [itemsToShow, setItemsToShow] = useState(3);
+  const [isMobile, setIsMobile] = useState(false);
   const [visibleMobileCount, setVisibleMobileCount] = useState(3);
   const [isPaused, setIsPaused] = useState(false);
   const [imageIndices, setImageIndices] = useState({});
@@ -23,7 +26,7 @@ const Home = () => {
   const [galleryLoadedBySlug, setGalleryLoadedBySlug] = useState({});
   const [galleryLoadingBySlug, setGalleryLoadingBySlug] = useState({});
 
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState(initialReviews);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [selectedSource, setSelectedSource] = useState("all");
 
@@ -31,6 +34,32 @@ const Home = () => {
 
   // Badge assignment based on property order
   const BADGES = ["Most Popular", "Featured", "New"];
+
+  useEffect(() => {
+    const homeProperties = initialProperties || [];
+    setProperties(homeProperties);
+    setCurrentPropertyIndex(0);
+
+    const indices = {};
+    const initialCardImages = {};
+    const initialGalleryLoaded = {};
+    homeProperties.forEach((property) => {
+      indices[property.id] = 0;
+      const primary = property.primary_image || property.image || "";
+      initialCardImages[property.slug] = primary ? [primary] : [];
+      initialGalleryLoaded[property.slug] = false;
+    });
+
+    setImageIndices(indices);
+    setCardImagesBySlug(initialCardImages);
+    setGalleryLoadedBySlug(initialGalleryLoaded);
+    setGalleryLoadingBySlug({});
+  }, [initialProperties]);
+
+  useEffect(() => {
+    setReviews(initialReviews || []);
+    setReviewIndex(0);
+  }, [initialReviews]);
 
   // Handle items to show on resize
   useEffect(() => {
@@ -40,6 +69,7 @@ const Home = () => {
       setIsMobile(mobile);
     };
 
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -53,41 +83,7 @@ const Home = () => {
     }, 7000);
 
     return () => clearInterval(interval);
-  }, [properties.length, isPaused]);
-
-  useEffect(() => {
-    const loadHomeData = async () => {
-      try {
-        const [allProperties, allReviews] = await Promise.all([
-          fetchProperties(),
-          fetchReviews(),
-        ]);
-
-        // Use all properties for the carousel
-        const homeProperties = allProperties || [];
-        setProperties(homeProperties);
-
-        // Initialize image indices for each property
-        const indices = {};
-        const initialCardImages = {};
-        const initialGalleryLoaded = {};
-        homeProperties.forEach((p) => {
-          indices[p.id] = 0;
-          const primary = p.primary_image || p.image || "";
-          initialCardImages[p.slug] = primary ? [primary] : [];
-          initialGalleryLoaded[p.slug] = false;
-        });
-        setImageIndices(indices);
-        setCardImagesBySlug(initialCardImages);
-        setGalleryLoadedBySlug(initialGalleryLoaded);
-
-        setReviews(allReviews || []);
-      } catch (error) {
-        console.error("Error loading home data:", error);
-      }
-    };
-    loadHomeData();
-  }, []);
+  }, [properties.length, isPaused, isMobile]);
 
   const nextProperty = () => {
     setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
@@ -268,7 +264,7 @@ const Home = () => {
             Experience the epitome of luxury with our exclusive vacation rentals in the Smokies & Lake Norman.
           </p>
           <button
-            onClick={() => navigate("/properties")}
+            onClick={() => router.push("/properties")}
             className="bg-accent text-white font-bold py-4 px-10 rounded-none text-lg shadow-lg hover:bg-accent/90 transition-all duration-300 uppercase tracking-widest"
           >
             Explore Properties
@@ -422,7 +418,7 @@ const Home = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/review" className="inline-flex items-center gap-2 text-accent font-semibold hover:underline text-lg">
+            <Link href="/review" className="inline-flex items-center gap-2 text-accent font-semibold hover:underline text-lg">
               View All Reviews <FaChevronRight size={14} />
             </Link>
           </div>
@@ -442,13 +438,13 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate("/book")}
+              onClick={() => router.push("/book")}
               className="bg-accent hover:bg-accent/90 text-white font-bold py-4 px-12 text-lg shadow-2xl transition-all uppercase tracking-widest"
             >
               Book Now
             </button>
             <button
-              onClick={() => navigate("/properties")}
+              onClick={() => router.push("/properties")}
               className="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-4 px-12 text-lg transition-all uppercase tracking-widest"
             >
               View Properties
@@ -530,7 +526,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
           {/* CTA */}
           <Link
-            to={link}
+            href={link}
             className="inline-block w-full text-center bg-white text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-accent hover:text-white transition-all duration-300 text-xs uppercase tracking-wide"
           >
             Explore Property

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useRef } from "react";
 import { FaEnvelope, FaPhone, FaInstagram, FaFacebook, FaYoutube, FaMapMarkerAlt } from "react-icons/fa";
 
@@ -17,7 +19,6 @@ const ContactUs = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800 pb-20">
-            {/* Hero Section */}
             <div
                 ref={heroRef}
                 className="relative h-[50vh] w-full overflow-hidden bg-cover bg-center -mt-[50px]"
@@ -33,10 +34,7 @@ const ContactUs = () => {
             </div>
 
             <div className="max-w-6xl mx-auto px-6 py-16 space-y-20">
-
-                {/* Contact Cards */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {/* Email */}
                     <a
                         href="mailto:vkrvacations@gmail.com"
                         className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
@@ -48,7 +46,6 @@ const ContactUs = () => {
                         <p className="text-sm text-gray-500 break-all">vkrvacations@gmail.com</p>
                     </a>
 
-                    {/* Phone */}
                     <a
                         href="tel:+1-972-835-9376"
                         className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
@@ -60,7 +57,6 @@ const ContactUs = () => {
                         <p className="text-sm text-gray-500">972-835-9376</p>
                     </a>
 
-                    {/* Instagram */}
                     <a
                         href="https://www.instagram.com/nirvanaaluxe/"
                         target="_blank"
@@ -74,7 +70,6 @@ const ContactUs = () => {
                         <p className="text-sm text-gray-500">@nirvanaaluxe</p>
                     </a>
 
-                    {/* Facebook */}
                     <a
                         href="https://www.facebook.com/NirvanaaLuxe"
                         target="_blank"
@@ -89,7 +84,6 @@ const ContactUs = () => {
                     </a>
                 </div>
 
-                {/* Locations */}
                 <div className="max-w-3xl mx-auto space-y-8">
                     <div className="text-center">
                         <h2 className="text-3xl font-bold text-gray-900">Our Locations</h2>
@@ -105,7 +99,7 @@ const ContactUs = () => {
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900">Sevierville, Tennessee</h4>
-                                <p className="text-sm text-gray-500 mt-1">Gateway to the Great Smoky Mountains — perfect for nature lovers and adventure seekers.</p>
+                                <p className="text-sm text-gray-500 mt-1">Gateway to the Great Smoky Mountains, perfect for nature lovers and adventure seekers.</p>
                             </div>
                         </div>
 

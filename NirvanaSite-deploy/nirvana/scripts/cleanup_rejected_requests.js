@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DRY_RUN = !process.argv.includes("--apply");
 const VERBOSE = process.argv.includes("--verbose");
@@ -48,7 +48,7 @@ if (HELP) {
 }
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error("Missing VITE_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY in .env.");
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL (or VITE_SUPABASE_URL) and/or SUPABASE_SERVICE_ROLE_KEY in .env.");
   process.exit(1);
 }
 

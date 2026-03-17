@@ -1,46 +1,23 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import Link from 'next/link';
 import { FaArrowLeft, FaArrowRight, FaTimes, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaStar, FaHiking, FaComments, FaChevronDown, FaPlay } from 'react-icons/fa';
 import { getAmenityIcon } from '../../lib/amenityIcons.jsx';
-import { fetchPropertyBundleBySlug } from '../../lib/contentApi';
 import { createRichTextExcerpt } from '../../lib/richText';
 import RichTextContent from '../common/RichTextContent';
 
-const PropertyPage = () => {
-    const { slug } = useParams();
-    const [loading, setLoading] = useState(true);
-    const [property, setProperty] = useState(null);
+const PropertyPage = ({ slug, initialBundle = null }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
     const heroRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [galleryImages, setGalleryImages] = useState([]);
-    const [amenities, setAmenities] = useState([]);
-    const [curatedImages, setCuratedImages] = useState({ home: '', bg: '', secondary: '' });
+    const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const loadProperty = async () => {
-            setLoading(true);
-            try {
-                const data = await fetchPropertyBundleBySlug(slug);
-                if (data) {
-                    setProperty(data.property);
-                    setGalleryImages(data.galleryImages || []);
-                    setAmenities(data.amenities || []);
-                    setCuratedImages({
-                        home: data.curated?.home || '',
-                        bg: data.curated?.bg || '',
-                        secondary: data.curated?.secondary || '',
-                    });
-                }
-            } catch (error) {
-                console.error(`Error loading property ${slug}:`, error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (slug) loadProperty();
-    }, [slug]);
+    const property = initialBundle?.property || null;
+    const galleryImages = initialBundle?.galleryImages || [];
+    const amenities = initialBundle?.amenities || [];
+    const curatedImages = initialBundle?.curated || { home: '', bg: '', secondary: '' };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -54,7 +31,18 @@ const PropertyPage = () => {
     }, []);
 
     useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
         window.scrollTo(0, 0);
+        setCurrentIndex(0);
     }, [slug]);
 
     const sliderImages = galleryImages;
@@ -70,7 +58,6 @@ const PropertyPage = () => {
         return visible;
     };
 
-    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     const visibleImages = isMobile ? sliderImages : getVisibleImages();
 
     const scrollLeft = () => {
@@ -125,24 +112,13 @@ const PropertyPage = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 font-medium">Loading property...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (!property) {
         return (
             <div className="h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">Property Not Found</h2>
                     <p className="text-slate-500 mb-6">The property you're looking for doesn't exist.</p>
-                    <Link to="/properties" className="inline-block bg-accent text-white font-semibold px-6 py-3 rounded-full hover:bg-accent/90 transition-all">
+                    <Link href="/properties" className="inline-block bg-accent text-white font-semibold px-6 py-3 rounded-full hover:bg-accent/90 transition-all">
                         Browse All Properties
                     </Link>
                 </div>
@@ -198,13 +174,13 @@ const PropertyPage = () => {
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            to={`/book/${slug}`}
+                            href={`/book/${slug}`}
                             className="inline-block px-10 py-4 bg-accent hover:bg-accent/90 text-white text-lg font-bold uppercase tracking-wider transition-all shadow-2xl hover:shadow-accent/30"
                         >
                             Book Your Stay
                         </Link>
                         <Link
-                            to={`/${slug}/gallery`}
+                            href={`/${slug}/gallery`}
                             className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold border border-white/30 transition-all"
                         >
                             <FaPlay size={12} /> View Gallery
@@ -344,7 +320,7 @@ const PropertyPage = () => {
                             <p className="text-slate-300 text-lg leading-relaxed">Discover heartfelt experiences from guests who've stayed here. See why they keep coming back.</p>
                         </div>
                         <Link
-                            to={`/review/${slug}`}
+                            href={`/review/${slug}`}
                             className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-accent hover:text-white transition-all duration-300 group-hover:shadow-lg"
                         >
                             <FaStar className="text-amber-500 group-hover:text-white" />
@@ -364,7 +340,7 @@ const PropertyPage = () => {
                             <p className="text-white/90 text-lg leading-relaxed">From hiking trails to local dining, explore the best activities and hidden gems nearby.</p>
                         </div>
                         <Link
-                            to={`/activities/${slug}`}
+                            href={`/activities/${slug}`}
                             className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-accent font-bold rounded-xl hover:bg-slate-900 hover:text-white transition-all duration-300 group-hover:shadow-lg"
                         >
                             <FaMapMarkerAlt />
@@ -457,13 +433,13 @@ const PropertyPage = () => {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            to={`/book/${slug}`}
+                            href={`/book/${slug}`}
                             className="inline-block px-12 py-5 bg-accent hover:bg-accent/90 text-white text-lg font-bold uppercase tracking-wider transition-all shadow-2xl"
                         >
                             Book Now
                         </Link>
                         <Link
-                            to="/properties"
+                            href="/properties"
                             className="inline-block px-12 py-5 bg-transparent border-2 border-white/30 hover:border-white hover:bg-white/10 text-white text-lg font-semibold transition-all"
                         >
                             View Other Properties

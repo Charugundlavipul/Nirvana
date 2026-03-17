@@ -1,5 +1,6 @@
+'use client';
+
 import React, { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { FaEnvelope, FaInstagram, FaFacebook, FaPhone } from 'react-icons/fa';
 
 const AboutUs = () => {
@@ -19,7 +20,6 @@ const AboutUs = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans text-gray-800 pb-20">
-      {/* Hero Section */}
       <div
         ref={heroRef}
         className="relative h-[60vh] w-full overflow-hidden bg-cover bg-center -mt-[50px]"
@@ -33,7 +33,6 @@ const AboutUs = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-20 space-y-24">
-        {/* Section 1: Our Story */}
         <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
           <div className="w-full md:w-1/2 space-y-6">
             <h3 className="text-3xl font-bold text-gray-900 border-l-4 border-primary pl-4">Our Story</h3>
@@ -50,7 +49,6 @@ const AboutUs = () => {
           </div>
         </div>
 
-        {/* Section 2: The Nirvana Experience (Reversed) */}
         <div className="flex flex-col md:flex-row-reverse items-center gap-12 lg:gap-24">
           <div className="w-full md:w-1/2 space-y-6">
             <h3 className="text-3xl font-bold text-gray-900 border-l-4 border-primary pl-4">The Nirvana Experience</h3>
@@ -58,7 +56,7 @@ const AboutUs = () => {
               At Nirvana Vacations, we redefine luxury getaways. Each property features premium
               amenities, from private hot tubs and gourmet kitchens to breathtaking views and
               outdoor entertainment areas. Our properties are thoughtfully designed to provide
-              the perfect backdrop for memorable moments, whether it's a romantic retreat,
+              the perfect backdrop for memorable moments, whether it&apos;s a romantic retreat,
               family gathering, or peaceful solo escape.
             </p>
           </div>
@@ -67,12 +65,11 @@ const AboutUs = () => {
           </div>
         </div>
 
-        {/* Section 3: Our Commitment */}
         <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
           <div className="w-full md:w-1/2 space-y-6">
             <h3 className="text-3xl font-bold text-gray-900 border-l-4 border-primary pl-4">Our Commitment</h3>
             <p className="text-lg text-gray-600 leading-relaxed">
-              We're dedicated to providing exceptional service and unforgettable experiences.
+              We&apos;re dedicated to providing exceptional service and unforgettable experiences.
               Our team ensures every detail is perfect, from seamless check-ins to personalized
               recommendations for local attractions. We believe in sustainable tourism and actively
               work to minimize our environmental impact while supporting local communities.
@@ -83,7 +80,6 @@ const AboutUs = () => {
           </div>
         </div>
 
-        {/* Section 4: Connect With Us (Reversed) */}
         <div className="flex flex-col md:flex-row-reverse items-center gap-12 lg:gap-24">
           <div className="w-full md:w-1/2 space-y-6">
             <h3 className="text-3xl font-bold text-gray-900 border-l-4 border-primary pl-4">Connect With Us</h3>

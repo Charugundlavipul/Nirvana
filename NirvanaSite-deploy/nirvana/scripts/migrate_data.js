@@ -5,15 +5,18 @@ const path = require('path');
 const mime = require('mime-types');
 
 // --- CONFIGURATION ---
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
 const USING_SERVICE_ROLE_KEY = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const PROPERTY_MEDIA_BUCKET = process.env.SUPABASE_BUCKET || 'property-assets';
 const REVIEW_AVATAR_BUCKET = process.env.SUPABASE_PROFILE_PICTURES_BUCKET || 'profile-pictures';
 const HIGHLIGHT_TABLE_NAME = 'property_highlight_images';
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('Missing VITE_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (fallback: VITE_SUPABASE_ANON_KEY) in .env');
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL (or VITE_SUPABASE_URL) and/or SUPABASE_SERVICE_ROLE_KEY (fallback: NEXT_PUBLIC_SUPABASE_ANON_KEY / VITE_SUPABASE_ANON_KEY) in .env');
     process.exit(1);
 }
 

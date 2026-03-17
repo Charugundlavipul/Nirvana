@@ -1,13 +1,16 @@
-﻿import React, { useState } from "react";
-import { Link } from "react-router-dom";
+'use client';
+
+import React, { useState } from "react";
+import Link from "next/link";
 import { FaYoutube, FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
 import { supabase } from "../../supabaseClient";
 
 const Footer = () => {
     const [email, setEmail] = useState("");
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
-    const [status, setStatus] = useState(null); // 'success' | 'error' | 'duplicate' | 'loading'
+    const [status, setStatus] = useState(null);
     const [statusMsg, setStatusMsg] = useState("");
+    const currentYear = new Date().getFullYear();
 
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const canSubmit = isValidEmail && privacyAccepted && status !== "loading";
@@ -50,7 +53,7 @@ const Footer = () => {
                         </h3>
                     </div>
                     <Link
-                        to="/book"
+                        href="/book"
                         className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-accent/80"
                     >
                         Book Now
@@ -72,12 +75,12 @@ const Footer = () => {
                     <section>
                         <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Explore</h4>
                         <ul className="space-y-2 text-sm text-slate-300">
-                            <li><Link to="/" className="transition hover:text-accent">Home</Link></li>
-                            <li><Link to="/properties" className="transition hover:text-accent">Properties</Link></li>
-                            <li><Link to="/review" className="transition hover:text-accent">Reviews</Link></li>
-                            <li><Link to="/faq" className="transition hover:text-accent">FAQ</Link></li>
-                            <li><Link to="/about" className="transition hover:text-accent">About Us</Link></li>
-                            <li><Link to="/contact" className="transition hover:text-accent">Contact Us</Link></li>
+                            <li><Link href="/" className="transition hover:text-accent">Home</Link></li>
+                            <li><Link href="/properties" className="transition hover:text-accent">Properties</Link></li>
+                            <li><Link href="/review" className="transition hover:text-accent">Reviews</Link></li>
+                            <li><Link href="/faq" className="transition hover:text-accent">FAQ</Link></li>
+                            <li><Link href="/about" className="transition hover:text-accent">About Us</Link></li>
+                            <li><Link href="/contact" className="transition hover:text-accent">Contact Us</Link></li>
                         </ul>
                     </section>
 
@@ -91,7 +94,6 @@ const Footer = () => {
                         </div>
                     </section>
 
-                    {/* Subscribe to Alerts */}
                     <section>
                         <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Stay Updated</h4>
                         <p className="mb-4 text-sm text-slate-300">Subscribe to get alerts on new properties and exclusive deals.</p>
@@ -115,7 +117,7 @@ const Footer = () => {
                                 />
                                 <span className="text-xs leading-relaxed text-slate-400">
                                     I agree to the{" "}
-                                    <Link to="/privacy" className="text-accent underline underline-offset-2 hover:text-accent/80">
+                                    <Link href="/privacy" className="text-accent underline underline-offset-2 hover:text-accent/80">
                                         Privacy Policy
                                     </Link>
                                 </span>
@@ -142,19 +144,19 @@ const Footer = () => {
 
                 <div className="border-t border-slate-700">
                     <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-slate-400">
-                        <span>© 2024 Nirvana Luxe. All rights reserved.</span>
+                        <span>© {currentYear} Nirvana Luxe. All rights reserved.</span>
                         <div className="flex items-center gap-4">
-                            <Link to="/faq" className="transition hover:text-accent">FAQ</Link>
+                            <Link href="/faq" className="transition hover:text-accent">FAQ</Link>
                             <span className="text-slate-600">|</span>
-                            <Link to="/about" className="transition hover:text-accent">About</Link>
+                            <Link href="/about" className="transition hover:text-accent">About</Link>
                             <span className="text-slate-600">|</span>
-                            <Link to="/book" className="transition hover:text-accent">Book</Link>
+                            <Link href="/book" className="transition hover:text-accent">Book</Link>
                             <span className="text-slate-600">|</span>
-                            <Link to="/contact" className="transition hover:text-accent">Contact</Link>
+                            <Link href="/contact" className="transition hover:text-accent">Contact</Link>
                             <span className="text-slate-600">|</span>
-                            <Link to="/terms" className="transition hover:text-accent">Terms</Link>
+                            <Link href="/terms" className="transition hover:text-accent">Terms</Link>
                             <span className="text-slate-600">|</span>
-                            <Link to="/privacy" className="transition hover:text-accent">Privacy</Link>
+                            <Link href="/privacy" className="transition hover:text-accent">Privacy</Link>
                         </div>
                     </div>
                 </div>

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { FaHeart, FaRegHeart, FaStar, FaChevronLeft, FaChevronRight, FaBed, FaBath, FaUsers, FaArrowRight } from "react-icons/fa";
 
 const PropertyListingCard = ({ property }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -29,7 +29,7 @@ const PropertyListingCard = ({ property }) => {
 
   const handleBookNow = (e) => {
     e.stopPropagation();
-    navigate(`/book/${property.slug}`);
+    router.push(`/book/${property.slug}`);
   };
 
   return (
@@ -37,7 +37,7 @@ const PropertyListingCard = ({ property }) => {
       className="group cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => navigate(property.propertyRoute)}
+      onClick={() => router.push(property.propertyRoute)}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
         {images[0] ? (
@@ -142,7 +142,7 @@ const PropertyListingCard = ({ property }) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              navigate(property.propertyRoute);
+              router.push(property.propertyRoute);
             }}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
           >

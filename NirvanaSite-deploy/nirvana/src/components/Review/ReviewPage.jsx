@@ -1,37 +1,21 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import ReviewCard from "./ReviewCard";
-import { fetchPropertyCards, fetchReviews } from "../../lib/contentApi";
 import { FaSearch, FaChevronDown, FaCheck, FaTimes } from 'react-icons/fa';
 
-const ReviewsPage = () => {
-  const navigate = useNavigate();
-  const { slug } = useParams();
-  const [properties, setProperties] = useState([]);
-  const [selectedProperty, setSelectedProperty] = useState("all");
-  const [reviews, setReviews] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ReviewsPage = ({ initialProperties = [], initialReviews = [], initialSlug = null }) => {
+  const router = useRouter();
+  const [properties, setProperties] = useState(initialProperties);
+  const [selectedProperty, setSelectedProperty] = useState(initialSlug || "all");
+  const [reviews, setReviews] = useState(initialReviews);
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 8;
-
-  // Search dropdown state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        const cards = await fetchPropertyCards();
-        setProperties(cards);
-      } catch (error) {
-        console.error("Error loading review properties:", error);
-      }
-    };
-    loadProperties();
-  }, []);
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -44,40 +28,18 @@ const ReviewsPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!slug) {
-      setSelectedProperty("all");
-      return;
-    }
-    setSelectedProperty(slug || "all");
-  }, [slug, properties]);
-
-  useEffect(() => {
-    const loadReviews = async () => {
-      try {
-        setIsLoading(true);
-        if (selectedProperty === "all") {
-          setReviews(await fetchReviews());
-        } else {
-          setReviews(await fetchReviews({ slug: selectedProperty }));
-        }
-      } catch (error) {
-        console.error(`Error loading reviews for ${selectedProperty}:`, error);
-        setReviews([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadReviews();
-  }, [selectedProperty]);
+    setProperties(initialProperties);
+    setSelectedProperty(initialSlug || "all");
+    setReviews(initialReviews);
+  }, [initialProperties, initialReviews, initialSlug]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedProperty]);
 
-  // Filter properties based on search
-  const filteredProperties = properties.filter(p =>
-    p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.location?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProperties = properties.filter((property) =>
+    property.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    property.location?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const indexOfLastReview = currentPage * reviewsPerPage;
@@ -90,9 +52,9 @@ const ReviewsPage = () => {
     setIsDropdownOpen(false);
     setSearchQuery("");
     if (propertySlug === "all") {
-      navigate("/review");
+      router.push("/review");
     } else {
-      navigate(`/review/${propertySlug}`);
+      router.push(`/review/${propertySlug}`);
     }
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -101,7 +63,7 @@ const ReviewsPage = () => {
 
   const getSelectedPropertyName = () => {
     if (selectedProperty === "all") return "All Properties";
-    return properties.find(p => p.slug === selectedProperty)?.title || selectedProperty;
+    return properties.find((property) => property.slug === selectedProperty)?.title || selectedProperty;
   };
 
   const handlePrevPage = () => {
@@ -114,20 +76,17 @@ const ReviewsPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isLoading = false;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-24 md:px-8">
       <div className="mx-auto w-full max-w-7xl">
-
-        {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Guest Reviews</h1>
           <p className="mt-2 text-sm text-slate-600 md:text-base">Verified guest feedback across all properties.</p>
         </div>
 
-        {/* Search/Filter Bar */}
         <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-
-          {/* Searchable Dropdown */}
           <div className="relative w-full sm:w-80" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -146,10 +105,8 @@ const ReviewsPage = () => {
               <FaChevronDown className={`text-slate-400 transition-transform flex-shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
-                {/* Search Input */}
                 <div className="p-3 border-b border-slate-100">
                   <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
                     <FaSearch className="text-slate-400 text-sm" />
@@ -169,7 +126,6 @@ const ReviewsPage = () => {
                   </div>
                 </div>
 
-                {/* Options List */}
                 <div className="max-h-64 overflow-y-auto">
                   <button
                     onClick={() => handlePropertySelect("all")}
@@ -208,7 +164,6 @@ const ReviewsPage = () => {
             )}
           </div>
 
-          {/* Quick Stats Pill */}
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <span className="rounded-full bg-white border border-slate-200 px-4 py-2 shadow-sm">
               <span className="font-bold text-slate-900">{reviews.length}</span> reviews
@@ -216,7 +171,6 @@ const ReviewsPage = () => {
           </div>
         </div>
 
-        {/* Reviews Grid */}
         <div className="mb-5">
           {isLoading ? (
             <p className="py-8 text-center text-base font-medium text-slate-500">Loading reviews...</p>
@@ -229,7 +183,6 @@ const ReviewsPage = () => {
           )}
         </div>
 
-        {/* Pagination */}
         {reviews.length > reviewsPerPage && (
           <div className="flex items-center justify-center gap-3">
             <button

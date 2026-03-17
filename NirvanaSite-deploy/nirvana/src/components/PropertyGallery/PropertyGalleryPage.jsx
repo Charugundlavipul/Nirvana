@@ -1,7 +1,8 @@
+'use client';
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import Link from "next/link";
 import { FaArrowLeft, FaArrowRight, FaExpand, FaSearchMinus, FaTimes } from "react-icons/fa";
-import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
 import { normalizePropertySpaces } from "../../lib/propertySpaces";
 
 const dedupeUrls = (urls = []) => {
@@ -77,45 +78,14 @@ const buildSpaceSections = ({ property, curated, galleryImages, highlightImages 
   ];
 };
 
-const PropertyGalleryPage = () => {
-  const { slug } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [property, setProperty] = useState(null);
-  const [curated, setCurated] = useState({ home: "", bg: "", secondary: "" });
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [highlightImages, setHighlightImages] = useState([]);
+const PropertyGalleryPage = ({ slug, initialBundle = null }) => {
+  const property = initialBundle?.property || null;
+  const curated = initialBundle?.curated || { home: "", bg: "", secondary: "" };
+  const galleryImages = initialBundle?.galleryImages || [];
+  const highlightImages = initialBundle?.highlightImages || [];
   const [activeImageIndex, setActiveImageIndex] = useState(null);
   const [zoomed, setZoomed] = useState(false);
   const sectionRefs = useRef({});
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadProperty = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchPropertyBundleBySlug(slug);
-        if (!isMounted) return;
-        setProperty(data?.property || null);
-        setCurated(data?.curated || { home: "", bg: "", secondary: "" });
-        setGalleryImages(data?.galleryImages || []);
-        setHighlightImages(data?.highlightImages || []);
-      } catch (error) {
-        console.error(`Failed loading gallery page for property "${slug}":`, error);
-        if (!isMounted) return;
-        setProperty(null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    if (slug) {
-      loadProperty();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [slug]);
 
   const sections = useMemo(
     () =>
@@ -184,17 +154,6 @@ const PropertyGalleryPage = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeImageIndex, timeline.length]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 font-medium">Loading gallery...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!property) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
@@ -202,7 +161,7 @@ const PropertyGalleryPage = () => {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Property Not Found</h1>
           <p className="text-slate-600 mb-6">The requested gallery could not be loaded.</p>
           <Link
-            to="/properties"
+            href="/properties"
             className="inline-block rounded-full bg-accent px-6 py-3 text-white font-semibold hover:bg-accent/90 transition-colors"
           >
             Browse Properties
@@ -219,7 +178,7 @@ const PropertyGalleryPage = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
         <div className="mb-8 border-b border-slate-200 pb-6">
           <Link
-            to={`/${slug}`}
+            href={`/${slug}`}
             className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <FaArrowLeft size={12} />

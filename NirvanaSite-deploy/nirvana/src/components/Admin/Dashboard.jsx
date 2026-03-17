@@ -31,18 +31,28 @@ const StatCard = ({ title, value, icon: Icon, color, bgColor, subtitle }) => (
     </div>
 );
 
-const QuickAction = ({ title, description, icon: Icon, to, color }) => (
-    <Link to={to} className={styles.quickAction} style={{ '--action-color': color }}>
-        <div className={styles.actionIcon}>
-            <Icon size={20} />
-        </div>
-        <div className={styles.actionContent}>
-            <h4>{title}</h4>
-            <p>{description}</p>
-        </div>
-        <FaArrowRight className={styles.actionArrow} />
-    </Link>
-);
+const QuickAction = ({ title, description, icon: Icon, to, color }) => {
+    const className = styles.quickAction;
+    const style = { '--action-color': color };
+    const content = (
+        <>
+            <div className={styles.actionIcon}>
+                <Icon size={20} />
+            </div>
+            <div className={styles.actionContent}>
+                <h4>{title}</h4>
+                <p>{description}</p>
+            </div>
+            <FaArrowRight className={styles.actionArrow} />
+        </>
+    );
+
+    if (to.startsWith("/") && !to.startsWith("/admin")) {
+        return <a href={to} className={className} style={style}>{content}</a>;
+    }
+
+    return <Link to={to} className={className} style={style}>{content}</Link>;
+};
 
 const RecentItem = ({ title, type, date }) => (
     <div className={styles.recentItem}>

@@ -1,0 +1,37 @@
+export const SITE_NAME = "Nirvana Luxe";
+export const SITE_TITLE = "Luxury Vacation Rentals in the Smokies and Lake Norman";
+export const SITE_DESCRIPTION =
+  "Book luxury vacation rentals with Nirvana Luxe in Sevierville, Tennessee and Lake Norman, North Carolina.";
+export const DEFAULT_OG_IMAGE = "/logo512.png";
+export const SITE_PHONE = "+1-972-835-9376";
+export const SITE_EMAIL = "vkrvacations@gmail.com";
+export const SOCIAL_LINKS = [
+  "https://www.instagram.com/nirvanaaluxe/",
+  "https://www.facebook.com/NirvanaaLuxe",
+  "https://www.youtube.com/@nirvanaaluxe",
+];
+
+function normalizeUrl(value) {
+  if (!value) return null;
+  return value.startsWith("http://") || value.startsWith("https://")
+    ? value
+    : `https://${value}`;
+}
+
+export function getSiteUrl() {
+  return (
+    normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
+    normalizeUrl(process.env.SITE_URL) ||
+    normalizeUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    normalizeUrl(process.env.VERCEL_URL) ||
+    "http://localhost:3000"
+  );
+}
+
+export function getMetadataBase() {
+  return new URL(getSiteUrl());
+}
+
+export function absoluteUrl(pathname = "/") {
+  return new URL(pathname, getSiteUrl()).toString();
+}

@@ -1,37 +1,20 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import FAQItem from './FAQItem';
-import { fetchFaqsBySlug, fetchPropertyCards } from '../../lib/contentApi';
 import { FaCircleCheck } from 'react-icons/fa6';
 import { FaSearch, FaChevronDown, FaCheck, FaTimes } from 'react-icons/fa';
 
-const FAQ = () => {
-  const navigate = useNavigate();
-  const { slug } = useParams();
-  const [properties, setProperties] = useState([]);
-  const [selectedSlug, setSelectedSlug] = useState(null);
-  const [displayedFaqs, setDisplayedFaqs] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+const FAQ = ({ initialProperties = [], initialSlug = null, initialFaqs = [] }) => {
+  const router = useRouter();
+  const [properties, setProperties] = useState(initialProperties);
+  const [selectedSlug, setSelectedSlug] = useState(initialSlug);
+  const [displayedFaqs, setDisplayedFaqs] = useState(initialFaqs);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        setIsLoading(true);
-        const cards = await fetchPropertyCards();
-        setProperties(cards);
-      } catch (error) {
-        console.error('Error loading FAQ properties:', error);
-        setErrorMessage('Unable to load FAQs right now.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadProperties();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,46 +28,35 @@ const FAQ = () => {
   }, []);
 
   useEffect(() => {
-    if (!properties.length) return;
-    const nextSlug = slug && properties.some((item) => item.slug === slug) ? slug : properties[0]?.slug || null;
-    setSelectedSlug(nextSlug);
-  }, [slug, properties]);
+    setProperties(initialProperties);
+    setSelectedSlug(initialSlug);
+    setDisplayedFaqs(initialFaqs);
+    setErrorMessage('');
+  }, [initialProperties, initialSlug, initialFaqs]);
 
-  useEffect(() => {
-    const loadFaqs = async () => {
-      if (!selectedSlug) return;
-      try {
-        const faqs = await fetchFaqsBySlug(selectedSlug);
-        setDisplayedFaqs(faqs);
-      } catch (error) {
-        console.error('Error loading FAQs:', error);
-        setDisplayedFaqs([]);
-      }
-    };
-    loadFaqs();
-  }, [selectedSlug]);
-
-  const filteredProperties = properties.filter(p => 
-    p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.location?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProperties = properties.filter((property) =>
+    property.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    property.location?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handlePropertySelect = (propertySlug) => {
     setSelectedSlug(propertySlug);
     setIsDropdownOpen(false);
     setSearchQuery('');
-    navigate('/faq/' + propertySlug);
+    router.push(`/faq/${propertySlug}`);
   };
 
   const getSelectedPropertyName = () => {
-    const selected = properties.find(p => p.slug === selectedSlug);
+    const selected = properties.find((property) => property.slug === selectedSlug);
     return selected?.title || 'Select Property';
   };
 
   const getSelectedPropertyImage = () => {
-    const selected = properties.find(p => p.slug === selectedSlug);
+    const selected = properties.find((property) => property.slug === selectedSlug);
     return selected?.image || null;
   };
+
+  const isLoading = false;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-24 font-sans md:px-8">

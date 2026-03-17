@@ -1,72 +1,55 @@
+'use client';
+
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { fetchPropertyCards } from "../../lib/contentApi";
+import { useRouter } from "next/navigation";
 import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 
-const Booking = () => {
-  const navigate = useNavigate();
-  const { slug } = useParams();
-  const [properties, setProperties] = useState([]);
+const Booking = ({ initialProperties = [], initialSlug = null }) => {
+  const router = useRouter();
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        const cards = await fetchPropertyCards();
-        setProperties(cards);
-      } catch (error) {
-        console.error("Error loading booking properties:", error);
-      }
-    };
-    loadProperties();
-  }, []);
-
-  useEffect(() => {
-    if (!properties.length) return;
-    if (!slug) {
+    if (!initialProperties.length) return;
+    if (!initialSlug) {
       setSelectedPropertyId(null);
       return;
     }
-    const matched = properties.find((item) => item.slug === slug);
+    const matched = initialProperties.find((item) => item.slug === initialSlug);
     if (matched) {
       setSelectedPropertyId(matched.bookingPropertyId);
     }
-  }, [slug, properties]);
+  }, [initialSlug, initialProperties]);
 
   const handlePropertySelect = (bookingPropertyId) => {
-    const selected = properties.find((item) => item.bookingPropertyId === bookingPropertyId);
+    const selected = initialProperties.find((item) => item.bookingPropertyId === bookingPropertyId);
     if (!selected) return;
 
     setIsTransitioning(true);
     setTimeout(() => {
-      navigate(`/book/${selected.slug}`);
+      router.push(`/book/${selected.slug}`);
       setSelectedPropertyId(bookingPropertyId);
       setIsTransitioning(false);
     }, 200);
   };
 
   const getBookingUrl = () => {
-    const property = properties.find((p) => p.bookingPropertyId === selectedPropertyId);
+    const property = initialProperties.find((item) => item.bookingPropertyId === selectedPropertyId);
     return property ? property.bookingUrl : "";
   };
 
-  const selectedProperty = properties.find((p) => p.bookingPropertyId === selectedPropertyId);
+  const selectedProperty = initialProperties.find((item) => item.bookingPropertyId === selectedPropertyId);
 
-  const filteredProperties = properties.filter((p) => {
+  const filteredProperties = initialProperties.filter((property) => {
     if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (p.title || "").toLowerCase().includes(q) || (p.location || "").toLowerCase().includes(q);
+    const query = searchQuery.toLowerCase();
+    return (property.title || "").toLowerCase().includes(query) || (property.location || "").toLowerCase().includes(query);
   });
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 lg:flex-row">
-
-      {/* Left Sidebar - Property Selection */}
       <div className="z-20 flex w-full flex-col border-r border-gray-200 bg-white pt-20 shadow-2xl lg:w-[360px] lg:pt-24 xl:w-[400px]">
-
-        {/* Header */}
         <div className="px-6 pb-5 border-b border-gray-100">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Book Your Stay</h1>
           <p className="text-gray-500 mt-1 text-sm">Select your luxury escape below</p>
@@ -82,12 +65,11 @@ const Booking = () => {
           </div>
         </div>
 
-        {/* Property List */}
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-          {properties.length === 0 ? (
+          {initialProperties.length === 0 ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse bg-gray-100 rounded-xl h-24"></div>
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="animate-pulse bg-gray-100 rounded-xl h-24"></div>
               ))}
             </div>
           ) : filteredProperties.length === 0 ? (
@@ -105,7 +87,6 @@ const Booking = () => {
                 `}
               >
                 <div className="flex gap-3 p-3">
-                  {/* Image */}
                   <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
                     <img
                       src={property.image}
@@ -114,7 +95,6 @@ const Booking = () => {
                     />
                   </div>
 
-                  {/* Details */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                     <div>
                       <h3 className={`font-bold text-base truncate transition-colors ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-900 group-hover:text-accent'}`}>
@@ -129,7 +109,6 @@ const Booking = () => {
                     </div>
                   </div>
 
-                  {/* Arrow */}
                   <div className={`flex items-center transition-all duration-300 ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-300 group-hover:text-accent group-hover:translate-x-1'}`}>
                     <FaChevronRight size={14} />
                   </div>
@@ -139,7 +118,6 @@ const Booking = () => {
           )}
         </div>
 
-        {/* Footer CTA */}
         <div className="p-4 border-t border-gray-100 bg-gray-50/80">
           <p className="text-xs text-gray-500 text-center">
             Questions about a property? <a href="/contact" className="text-accent font-semibold hover:underline">Contact us</a>
@@ -147,15 +125,11 @@ const Booking = () => {
         </div>
       </div>
 
-      {/* Right Content - Booking Widget or Hero */}
       <div className={`relative flex min-h-[70vh] flex-1 flex-col transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-
         {!selectedPropertyId ? (
-          /* Empty State - Immersive Hero */
           <div className="h-full w-full relative hidden lg:flex items-center justify-center">
-            {/* Background Collage */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-              {properties.slice(0, 4).map((property, idx) => (
+              {initialProperties.slice(0, 4).map((property) => (
                 <div key={property.slug} className="relative overflow-hidden">
                   <img
                     src={property.image}
@@ -167,7 +141,6 @@ const Booking = () => {
               ))}
             </div>
 
-            {/* Overlay Content */}
             <div className="relative z-10 text-center text-white p-12 max-w-2xl">
               <div className="inline-block px-4 py-2 bg-accent/90 rounded-full text-sm font-bold uppercase tracking-widest mb-6">
                 Luxury Awaits
@@ -185,21 +158,17 @@ const Booking = () => {
             </div>
           </div>
         ) : !getBookingUrl() ? (
-          /* Missing Booking URL */
           <div className="flex items-center justify-center h-full text-white p-8 bg-gray-800">
             <div className="text-center">
               <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl">⚠️</span>
               </div>
               <h3 className="text-2xl font-bold mb-2">Booking Unavailable</h3>
-              <p className="text-gray-400 max-w-md">This property's booking system is currently being configured. Please contact us for assistance.</p>
+              <p className="text-gray-400 max-w-md">This property&apos;s booking system is currently being configured. Please contact us for assistance.</p>
             </div>
           </div>
         ) : (
-          /* Booking Widget with Property Header */
           <div className="w-full bg-gray-50">
-
-            {/* Property Hero Header */}
             <div className="relative h-48 lg:h-56 overflow-hidden flex-shrink-0">
               <img
                 src={selectedProperty?.image}
@@ -221,7 +190,6 @@ const Booking = () => {
               </div>
             </div>
 
-            {/* Booking Widget Container */}
             <div className="w-full overflow-x-auto p-2 sm:p-4 lg:p-6">
               <div className="mx-auto w-fit overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
                 <iframe
@@ -237,7 +205,6 @@ const Booking = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };
