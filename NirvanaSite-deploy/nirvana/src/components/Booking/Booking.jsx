@@ -1,34 +1,65 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 
+const MOBILE_BREAKPOINT = 1024;
+const MOBILE_PROPERTIES_PER_PAGE = 4;
+const DESKTOP_PROPERTIES_PER_PAGE = 5;
+const MOBILE_SCROLL_STORAGE_KEY = "booking-mobile-scroll-target";
+
 const Booking = ({ initialProperties = [], initialSlug = null }) => {
   const router = useRouter();
-  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const getSelectedPropertyIdFromSlug = (slug) => {
+    if (!slug) return null;
+    const matched = initialProperties.find((item) => item.slug === slug);
+    return matched ? matched.bookingPropertyId : null;
+  };
+
+  const [selectedPropertyId, setSelectedPropertyId] = useState(() => getSelectedPropertyIdFromSlug(initialSlug));
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const bookingPanelRef = useRef(null);
+  const shouldScrollToWidgetRef = useRef(false);
 
   useEffect(() => {
-    if (!initialProperties.length) return;
-    if (!initialSlug) {
-      setSelectedPropertyId(null);
-      return;
-    }
-    const matched = initialProperties.find((item) => item.slug === initialSlug);
-    if (matched) {
-      setSelectedPropertyId(matched.bookingPropertyId);
-    }
+    setSelectedPropertyId(getSelectedPropertyIdFromSlug(initialSlug));
   }, [initialSlug, initialProperties]);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
 
   const handlePropertySelect = (bookingPropertyId) => {
     const selected = initialProperties.find((item) => item.bookingPropertyId === bookingPropertyId);
     if (!selected) return;
 
+    if (selectedPropertyId === bookingPropertyId) {
+      if (isMobile) {
+        shouldScrollToWidgetRef.current = true;
+        window.sessionStorage.setItem(MOBILE_SCROLL_STORAGE_KEY, selected.slug);
+        bookingPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
     setIsTransitioning(true);
+    if (isMobile) {
+      shouldScrollToWidgetRef.current = true;
+      window.sessionStorage.setItem(MOBILE_SCROLL_STORAGE_KEY, selected.slug);
+    }
+
     setTimeout(() => {
-      router.push(`/book/${selected.slug}`);
+      router.push(`/book/${selected.slug}`, { scroll: false });
       setSelectedPropertyId(bookingPropertyId);
       setIsTransitioning(false);
     }, 200);
@@ -40,12 +71,61 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
   };
 
   const selectedProperty = initialProperties.find((item) => item.bookingPropertyId === selectedPropertyId);
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const filteredProperties = initialProperties.filter((property) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (property.title || "").toLowerCase().includes(query) || (property.location || "").toLowerCase().includes(query);
+    if (!normalizedSearchQuery) return true;
+    return (property.title || "").toLowerCase().includes(normalizedSearchQuery) || (property.location || "").toLowerCase().includes(normalizedSearchQuery);
   });
+
+  const propertiesPerPage = isMobile ? MOBILE_PROPERTIES_PER_PAGE : DESKTOP_PROPERTIES_PER_PAGE;
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / propertiesPerPage));
+  const visiblePage = Math.min(currentPage, Math.max(totalPages - 1, 0));
+  const pageStart = visiblePage * propertiesPerPage;
+  const visibleProperties = filteredProperties.slice(pageStart, pageStart + propertiesPerPage);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(totalPages - 1, 0)));
+  }, [totalPages]);
+
+  useEffect(() => {
+    if (!selectedPropertyId) return;
+
+    const selectedIndex = initialProperties
+      .filter((property) => {
+        if (!normalizedSearchQuery) return true;
+        return (property.title || "").toLowerCase().includes(normalizedSearchQuery) || (property.location || "").toLowerCase().includes(normalizedSearchQuery);
+      })
+      .findIndex(
+      (property) => property.bookingPropertyId === selectedPropertyId
+    );
+
+    if (selectedIndex === -1) return;
+
+    const nextPage = Math.floor(selectedIndex / propertiesPerPage);
+    setCurrentPage((page) => (page === nextPage ? page : nextPage));
+  }, [initialProperties, normalizedSearchQuery, propertiesPerPage, selectedPropertyId]);
+
+  useEffect(() => {
+    if (!isMobile || !selectedProperty?.slug) return;
+
+    const pendingSlug = window.sessionStorage.getItem(MOBILE_SCROLL_STORAGE_KEY);
+    if (!shouldScrollToWidgetRef.current && pendingSlug !== selectedProperty.slug) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      bookingPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      shouldScrollToWidgetRef.current = false;
+      window.sessionStorage.removeItem(MOBILE_SCROLL_STORAGE_KEY);
+    }, 75);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isMobile, selectedProperty?.slug]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 lg:flex-row">
@@ -65,7 +145,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {initialProperties.length === 0 ? (
             <div className="space-y-3">
               {[1, 2, 3].map((item) => (
@@ -75,46 +155,81 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
           ) : filteredProperties.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">No properties match "{searchQuery}"</div>
           ) : (
-            filteredProperties.map((property) => (
-              <div
-                key={property.slug}
-                onClick={() => handlePropertySelect(property.bookingPropertyId)}
-                className={`
-                  group cursor-pointer rounded-xl border-2 transition-all duration-300 overflow-hidden
-                  ${selectedPropertyId === property.bookingPropertyId
-                    ? 'border-accent bg-accent/5 shadow-lg'
-                    : 'border-gray-100 hover:border-accent/30 hover:shadow-md bg-white'}
-                `}
-              >
-                <div className="flex gap-3 p-3">
-                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                    <img
-                      src={property.image}
-                      alt={property.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                    <div>
-                      <h3 className={`font-bold text-base truncate transition-colors ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-900 group-hover:text-accent'}`}>
-                        {property.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">{property.location}</p>
+            <div className="space-y-3">
+              {visibleProperties.map((property) => (
+                <div
+                  key={property.slug}
+                  onClick={() => handlePropertySelect(property.bookingPropertyId)}
+                  className={`
+                    group cursor-pointer rounded-xl border-2 transition-all duration-300 overflow-hidden
+                    ${selectedPropertyId === property.bookingPropertyId
+                      ? 'border-accent bg-accent/5 shadow-lg'
+                      : 'border-gray-100 hover:border-accent/30 hover:shadow-md bg-white'}
+                  `}
+                >
+                  <div className="flex gap-3 p-3">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                      <img
+                        src={property.image}
+                        alt={property.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                      <span className="flex items-center gap-1"><FaBed /> {property.bedroom_count}</span>
-                      <span className="flex items-center gap-1"><FaBath /> {property.bathroom_count}</span>
-                      <span className="flex items-center gap-1"><FaUsers /> {property.guests_max}</span>
-                    </div>
-                  </div>
 
-                  <div className={`flex items-center transition-all duration-300 ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-300 group-hover:text-accent group-hover:translate-x-1'}`}>
-                    <FaChevronRight size={14} />
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                      <div>
+                        <h3 className={`font-bold text-base truncate transition-colors ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-900 group-hover:text-accent'}`}>
+                          {property.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">{property.location}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        <span className="flex items-center gap-1"><FaBed /> {property.bedroom_count}</span>
+                        <span className="flex items-center gap-1"><FaBath /> {property.bathroom_count}</span>
+                        <span className="flex items-center gap-1"><FaUsers /> {property.guests_max}</span>
+                      </div>
+                    </div>
+
+                    <div className={`flex items-center transition-all duration-300 ${selectedPropertyId === property.bookingPropertyId ? 'text-accent' : 'text-gray-300 group-hover:text-accent group-hover:translate-x-1'}`}>
+                      <FaChevronRight size={14} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+              {totalPages > 1 && (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((page) => Math.max(page - 1, 0))}
+                      disabled={visiblePage === 0}
+                      className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Prev
+                    </button>
+
+                    <div className="text-center">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                        Page {visiblePage + 1} of {totalPages}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Showing {pageStart + 1}-{Math.min(pageStart + propertiesPerPage, filteredProperties.length)} of {filteredProperties.length}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages - 1))}
+                      disabled={visiblePage >= totalPages - 1}
+                      className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -125,7 +240,10 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
         </div>
       </div>
 
-      <div className={`relative flex min-h-[70vh] flex-1 flex-col transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
+      <div
+        ref={bookingPanelRef}
+        className={`relative flex min-h-[70vh] flex-1 scroll-mt-24 flex-col transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
+      >
         {!selectedPropertyId ? (
           <div className="h-full w-full relative hidden lg:flex items-center justify-center">
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
