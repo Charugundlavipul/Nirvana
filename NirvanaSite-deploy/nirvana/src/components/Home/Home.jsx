@@ -527,9 +527,10 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
           {/* CTA */}
           <Link
             href={link}
-            className="inline-block w-full text-center bg-white text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-accent hover:text-white transition-all duration-300 text-xs uppercase tracking-wide"
+            className="inline-flex items-center justify-center gap-2 w-full text-center bg-white/90 backdrop-blur-md text-gray-900 font-bold py-3 px-6 rounded-full border border-white/20 shadow-lg hover:bg-accent hover:text-white hover:scale-[1.02] transition-all duration-300 text-sm uppercase tracking-widest group"
           >
             Explore Property
+            <FaChevronRight className="transition-transform duration-300 group-hover:translate-x-1" size={12} />
           </Link>
         </div>
       </div>
