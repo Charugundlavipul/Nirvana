@@ -15,6 +15,9 @@ export const metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  verification: {
+    google: "zkMdqKWIHLTe8_TrkPvJmoWx-edj8tfAzrji-c81y8U",
+  },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.png",
