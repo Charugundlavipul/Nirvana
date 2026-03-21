@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
-import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft, FaSearch, FaCalendarAlt } from 'react-icons/fa';
 
 const oasisImages = [
   "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp",
@@ -84,6 +84,30 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
     return () => clearInterval(interval);
   }, [properties.length, isPaused, isMobile]);
+
+  // Prefetch top-5 gallery images for ALL properties in the background
+  // after the page has settled, so carousel clicks feel instant everywhere.
+  const prefetchedRef = useRef(false);
+  useEffect(() => {
+    if (!properties.length || prefetchedRef.current) return;
+    prefetchedRef.current = true;
+
+    const PREFETCH_DELAY_MS = 2000; // wait 2s after page load
+
+    const timer = setTimeout(async () => {
+      for (const property of properties) {
+        if (!property.slug || galleryLoadedBySlug[property.slug]) continue;
+        try {
+          await loadGalleryForCard(property);
+        } catch (err) {
+          // Silently ignore — prefetch failures shouldn't disrupt the page
+        }
+      }
+    }, PREFETCH_DELAY_MS);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties]);
 
   const nextProperty = () => {
     setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
@@ -183,7 +207,14 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           if (seen.has(img)) return false;
           seen.add(img);
           return true;
-        });
+        })
+        .slice(0, 5);
+
+      // Force the browser to cache the images in the background
+      merged.forEach((url) => {
+        const img = new window.Image();
+        img.src = url;
+      });
 
       setCardImagesBySlug((prev) => ({
         ...prev,
@@ -208,7 +239,14 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           if (seen.has(img)) return false;
           seen.add(img);
           return true;
-        });
+        })
+        .slice(0, 5);
+
+      // Force the browser to cache the images in the background
+      merged.forEach((url) => {
+        const img = new window.Image();
+        img.src = url;
+      });
 
       if (merged.length > 1) {
         setCardImagesBySlug((prev) => ({ ...prev, [slug]: merged }));
@@ -249,37 +287,41 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     <div className="w-full bg-gray-50 text-gray-800 font-sans">
 
       {/* Hero Section */}
-      <div
-        ref={heroRef}
-        className="relative h-[85vh] flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Luxury Vacation Rentals</p>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-lg tracking-tight">
-            Discover Your <span className="text-accent italic">Dream Escape</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-100 mb-10 font-light drop-shadow-md max-w-2xl mx-auto">
-            Experience the epitome of luxury with our exclusive vacation rentals in the Smokies & Lake Norman.
-          </p>
-          <button
-            onClick={() => router.push("/properties")}
-            className="bg-accent text-white font-bold py-4 px-10 rounded-none text-lg shadow-lg hover:bg-accent/90 transition-all duration-300 uppercase tracking-widest"
-          >
-            Explore Properties
-          </button>
+      <div className="relative">
+        <div
+          ref={heroRef}
+          className="relative h-[75vh] min-h-[500px] flex items-center justify-center bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
+          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mb-16">
+            <p className="text-accent uppercase tracking-[0.3em] text-xs sm:text-sm font-medium mb-4">The Nirvana Luxe Collection</p>
+            <h1 className="text-5xl md:text-6xl lg:text-[4rem] font-bold text-white mb-5 leading-[1.15] drop-shadow-lg">
+              Discover Your <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Dream Escape</span>
+            </h1>
+            <p className="text-xl text-white/90 font-normal max-w-2xl mx-auto leading-relaxed">
+              Experience the pinnacle of luxury with our exclusive curated vacation rentals in the Smokies & Lake Norman.
+            </p>
+          </div>
         </div>
+        <HeroSearch router={router} properties={initialProperties} />
       </div>
 
       {/* Signature Retreats Section */}
-      <section className="py-28 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative pt-36 pb-28 px-6 bg-slate-50 overflow-hidden">
+        {/* Luxury Decorative Background Elements */}
+        {/* Stronger grid pattern */}
+        <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
+        {/* More visible ambient glows */}
+        <div className="absolute top-20 left-0 w-[600px] h-[600px] bg-accent/15 rounded-full blur-[120px] pointer-events-none -translate-x-1/3"></div>
+        <div className="absolute bottom-10 right-0 w-[800px] h-[800px] bg-blue-400/10 rounded-full blur-[120px] pointer-events-none translate-x-1/4"></div>
+
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Handpicked Luxury</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Our Signature Retreats</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 drop-shadow-sm">Our Signature Retreats</h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto font-light">
-              Each property is carefully curated to deliver an unforgettable experience
+              Each property is curated to deliver an unforgettable experience
             </p>
           </div>
 
@@ -362,7 +404,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Real Stories</p>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Original Guest Experiences</h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto font-light mb-8">
-              Hear from guests who've created unforgettable memories at our properties
+              Hear from guests who've made memories at our properties
             </p>
 
             <div className="inline-flex bg-white p-1.5 rounded-full shadow-lg border border-slate-100">
@@ -462,76 +504,94 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
   const currentImage = images[currentIndex] || "";
 
   return (
-    <div
-      className="group relative"
-    >
-      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-slate-200">
-        <img
-          src={currentImage}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
+    <div className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left" onClick={() => window.location.href = link}>
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
+        {images.map((img, idx) => (
+          <img
+            key={`${img}-${idx}`}
+            src={img}
+            alt={`${title} - image ${idx + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+              idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+          />
+        ))}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+        {/* Gradient Header for Badge */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent opacity-60"></div>
 
         {/* Badge */}
         {badge && (
-          <div className="absolute top-4 left-4 bg-accent text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm">
             {badge}
           </div>
         )}
 
-        {/* Carousel Controls */}
-        <div className="pointer-events-none absolute inset-x-0 top-[42%] z-30 flex -translate-y-1/2 justify-between px-3">
+        {/* Carousel Controls - Only visible on hover */}
+        <div className="absolute inset-x-0 top-1/2 z-30 flex -translate-y-1/2 justify-between px-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <button
             type="button"
-            onClick={onPrev}
+            onClick={(e) => { e.stopPropagation(); onPrev(e); }}
             disabled={isGalleryLoading}
-            className="pointer-events-auto rounded-full bg-white/90 p-2 text-slate-800 shadow-lg transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-white/90 p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Previous image"
           >
             <FaChevronLeft size={14} />
           </button>
           <button
             type="button"
-            onClick={onNext}
+            onClick={(e) => { e.stopPropagation(); onNext(e); }}
             disabled={isGalleryLoading}
-            className="pointer-events-auto rounded-full bg-white/90 p-2 text-slate-800 shadow-lg transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-white/90 p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Next image"
           >
             <FaChevronRight size={14} />
           </button>
         </div>
 
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 text-white">
-          <h3 className="text-2xl font-bold mb-2">{title}</h3>
-          <p className="flex items-center gap-1.5 text-sm text-white/80 mb-3">
-            <FaMapMarkerAlt className="text-accent" size={12} />
-            {location}
-          </p>
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-sm text-white/80 mb-4">
-            <span className="flex items-center gap-1.5">
-              <FaBed className="text-accent" /> {stats.beds}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <FaBath className="text-accent" /> {stats.baths}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <FaUsers className="text-accent" /> {stats.guests}
-            </span>
+        {/* Image Indicator Dots */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            {images.slice(0, 5).map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${
+                  idx === currentIndex % 5 ? "w-3 bg-white" : "w-1.5 bg-white/60"
+                }`}
+              />
+            ))}
           </div>
+        )}
+      </div>
 
-          {/* CTA */}
-          <Link
-            href={link}
-            className="inline-flex items-center justify-center gap-2 w-full text-center bg-white/90 backdrop-blur-md text-gray-900 font-bold py-3 px-6 rounded-full border border-white/20 shadow-lg hover:bg-accent hover:text-white hover:scale-[1.02] transition-all duration-300 text-sm uppercase tracking-widest group"
+      <div className="px-2 pb-2 pt-4 text-left">
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <h3 className="truncate text-lg font-bold text-slate-900 transition-colors group-hover:text-accent">{title}</h3>
+        </div>
+
+        <p className="mb-3 text-sm text-slate-500">{location}</p>
+
+        <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+          <span className="flex items-center gap-1.5">
+            <FaBed className="text-accent" /> {stats.beds} beds
+          </span>
+          <span className="flex items-center gap-1.5">
+            <FaBath className="text-accent" /> {stats.baths} baths
+          </span>
+          {stats.guests > 0 && (
+            <span className="flex items-center gap-1.5">
+              <FaUsers className="text-accent" /> {stats.guests} guests
+            </span>
+          )}
+        </div>
+
+        <div className="mt-2 text-center text-sm font-bold text-accent group-hover:underline">
+          <button
+            onClick={(e) => { e.stopPropagation(); window.location.href = link; }}
+            className="w-full rounded-xl bg-slate-50 py-3 text-slate-700 transition-colors hover:bg-accent hover:text-white"
           >
-            Explore Property
-            <FaChevronRight className="transition-transform duration-300 group-hover:translate-x-1" size={12} />
-          </Link>
+            EXPLORE PROPERTY
+          </button>
         </div>
       </div>
     </div>
@@ -613,5 +673,248 @@ const FilterButton = ({ active, onClick, children }) => (
     {children}
   </button>
 );
+
+const HeroSearch = ({ router, properties = [] }) => {
+  const [searchLocation, setSearchLocation] = useState("");
+  const [checkInDate, setCheckInDate] = useState("");
+  const [checkOutDate, setCheckOutDate] = useState("");
+  const [guests, setGuests] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          inputRef.current && !inputRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter properties based on search input
+  const filteredProperties = properties.filter((p) => {
+    if (!searchLocation) return true;
+    const q = searchLocation.toLowerCase();
+    return p.title?.toLowerCase().includes(q) || p.location?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q);
+  });
+
+  const handlePropertySelect = (property) => {
+    setSearchLocation(property.title || property.name || '');
+    setShowDropdown(false);
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchLocation) params.append("location", searchLocation);
+    if (checkInDate) params.append("checkIn", checkInDate);
+    if (checkOutDate) params.append("checkOut", checkOutDate);
+    if (guests) params.append("guests", guests);
+    
+    router.push(`/properties?${params.toString()}`);
+  };
+
+  const todayString = new Date().toISOString().split("T")[0];
+
+  return (
+    <>
+      {/* Desktop Search Bar — positioned to overlap hero bottom edge like VRBO */}
+      <div className="hidden md:block absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-20 w-full max-w-5xl px-6">
+        <div className="bg-white rounded-full shadow-xl border border-gray-200 flex items-stretch">
+          
+          {/* Where */}
+          <div className="flex-[1.3] flex items-center gap-3 pl-6 pr-4 py-4 border-r border-gray-200 rounded-l-full hover:bg-gray-50 transition-colors cursor-pointer relative">
+            <FaMapMarkerAlt className="text-gray-400 text-lg flex-shrink-0" />
+            <input 
+              ref={inputRef}
+              type="text" 
+              placeholder="Where to?" 
+              value={searchLocation}
+              onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
+              onFocus={() => setShowDropdown(true)}
+              className="w-full bg-transparent text-[15px] text-gray-900 font-medium focus:outline-none placeholder-gray-400"
+            />
+            {showDropdown && filteredProperties.length > 0 && (
+              <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-72 overflow-y-auto z-50">
+                {filteredProperties.map((property) => (
+                  <button
+                    key={property.id || property.slug}
+                    onClick={() => handlePropertySelect(property)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                  >
+                    {(property.primary_image || property.image) && (
+                      <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{property.title || property.name}</p>
+                      {property.location && <p className="text-xs text-gray-500 truncate">{property.location}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Dates */}
+          <div className="flex-[1.5] flex items-center gap-3 px-4 py-4 border-r border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
+            <FaCalendarAlt className="text-gray-400 text-base flex-shrink-0" />
+            <div className="flex items-center gap-1 w-full">
+              <div className="flex flex-col flex-1">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check in</span>
+                <input 
+                  type="date"
+                  min={todayString}
+                  value={checkInDate}
+                  onClick={(e) => e.target.showPicker?.()}
+                  onChange={(e) => {
+                    setCheckInDate(e.target.value);
+                    if (checkOutDate && e.target.value && checkOutDate <= e.target.value) setCheckOutDate("");
+                  }}
+                  className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none cursor-pointer w-full"
+                />
+              </div>
+              <span className="text-gray-300 mx-1">—</span>
+              <div className="flex flex-col flex-1">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check out</span>
+                <input 
+                  type="date"
+                  min={checkInDate || todayString}
+                  value={checkOutDate}
+                  onClick={(e) => e.target.showPicker?.()}
+                  onChange={(e) => setCheckOutDate(e.target.value)}
+                  className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none cursor-pointer w-full"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Guests */}
+          <div className="flex-1 flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <FaUsers className="text-gray-400 text-lg flex-shrink-0" />
+            <div className="flex flex-col w-full">
+              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Guests</span>
+              <select 
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+                className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none appearance-none cursor-pointer w-full"
+              >
+                <option value="">Add guests</option>
+                <option value="2">2+ guests</option>
+                <option value="4">4+ guests</option>
+                <option value="6">6+ guests</option>
+                <option value="8">8+ guests</option>
+                <option value="10">10+ guests</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Search Button */}
+          <div className="flex items-center pr-3">
+            <button 
+              onClick={handleSearch}
+              className="bg-accent hover:bg-accent/90 text-white rounded-full px-8 py-3.5 flex items-center gap-2.5 transition-all font-semibold text-[15px] shadow-md hover:shadow-lg"
+            >
+              <FaSearch />
+              Search
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Mobile Search Bar */}
+      <div className="md:hidden absolute left-0 right-0 bottom-0 translate-y-1/2 z-20 px-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 flex flex-col gap-3">
+          
+          <div className="relative flex items-center gap-3 border border-gray-200 rounded-xl p-3">
+            <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
+            <input 
+              type="text" 
+              placeholder="Where to?" 
+              value={searchLocation}
+              onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
+              onFocus={() => setShowDropdown(true)}
+              className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none placeholder-gray-500"
+            />
+            {showDropdown && filteredProperties.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-60 overflow-y-auto z-50">
+                {filteredProperties.map((property) => (
+                  <button
+                    key={property.id || property.slug}
+                    onClick={() => handlePropertySelect(property)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                  >
+                    {(property.primary_image || property.image) && (
+                      <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{property.title || property.name}</p>
+                      {property.location && <p className="text-xs text-gray-500 truncate">{property.location}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-1 border border-gray-200 rounded-xl p-3">
+              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check in</span>
+              <input 
+                type="date"
+                min={todayString}
+                value={checkInDate}
+                onClick={(e) => e.target.showPicker?.()}
+                onChange={(e) => {
+                  setCheckInDate(e.target.value);
+                  if (checkOutDate && e.target.value && checkOutDate <= e.target.value) setCheckOutDate("");
+                }}
+                className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer"
+              />
+            </div>
+            
+            <div className="flex-1 border border-gray-200 rounded-xl p-3">
+              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check out</span>
+              <input 
+                type="date"
+                min={checkInDate || todayString}
+                value={checkOutDate}
+                onClick={(e) => e.target.showPicker?.()}
+                onChange={(e) => setCheckOutDate(e.target.value)}
+                className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div className="border border-gray-200 rounded-xl p-3">
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Guests</span>
+            <select 
+              value={guests}
+              onChange={(e) => setGuests(e.target.value)}
+              className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none appearance-none"
+            >
+              <option value="">Add guests</option>
+              <option value="2">2+ guests</option>
+              <option value="4">4+ guests</option>
+              <option value="6">6+ guests</option>
+              <option value="8">8+ guests</option>
+              <option value="10">10+ guests</option>
+            </select>
+          </div>
+
+          <button 
+            onClick={handleSearch}
+            className="w-full bg-accent text-white rounded-xl py-3.5 font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-transform"
+          >
+            <FaSearch /> Search
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default Home;

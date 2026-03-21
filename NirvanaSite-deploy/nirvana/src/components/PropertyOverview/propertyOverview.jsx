@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import PropertyListingCard from "./PropertyListingCard";
 import {
   FaBed,
@@ -51,12 +51,66 @@ const PropertyOverview = ({ initialProperties = [] }) => {
   const [searchError, setSearchError] = useState("");
   const [searchNotice, setSearchNotice] = useState("");
 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const initialized = useRef(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          inputRef.current && !inputRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter properties for the dropdown based on search input
+  const dropdownSuggestions = properties.filter((p) => {
+    if (!searchLocation) return true;
+    const q = searchLocation.toLowerCase();
+    return p.title?.toLowerCase().includes(q) || p.location?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q);
+  });
+
   useEffect(() => {
     setProperties(initialProperties);
     setFilteredProperties(initialProperties);
     setSearchError("");
     setSearchNotice("");
   }, [initialProperties]);
+
+  useEffect(() => {
+    if (!initialized.current && typeof window !== 'undefined') {
+      initialized.current = true;
+      const params = new URLSearchParams(window.location.search);
+      const pLoc = params.get('location');
+      const pCheckIn = params.get('checkIn');
+      const pCheckOut = params.get('checkOut');
+      const pGuests = params.get('guests');
+
+      if (pLoc || pCheckIn || pCheckOut || pGuests) {
+        if (pLoc) setSearchLocation(pLoc);
+        if (pCheckIn) setCheckInDate(pCheckIn);
+        if (pCheckOut) setCheckOutDate(pCheckOut);
+        if (pGuests) setGuests(pGuests);
+        
+        setTimeout(() => {
+          handleSearch({
+            checkIn: pCheckIn || "",
+            checkOut: pCheckOut || "",
+            guests: pGuests || "",
+            searchLocation: pLoc || "",
+            bedrooms: ""
+          });
+        }, 10);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCheckInChange = (value) => {
     setCheckInDate(value);
@@ -65,12 +119,18 @@ const PropertyOverview = ({ initialProperties = [] }) => {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (overrideParams = null) => {
     setSearchError("");
     setSearchNotice("");
 
-    const hasAnyDate = Boolean(checkInDate || checkOutDate);
-    const hasFullDateRange = Boolean(checkInDate && checkOutDate);
+    const activeCheckIn = overrideParams?.checkIn !== undefined ? overrideParams.checkIn : checkInDate;
+    const activeCheckOut = overrideParams?.checkOut !== undefined ? overrideParams.checkOut : checkOutDate;
+    const activeGuests = overrideParams?.guests !== undefined ? overrideParams.guests : guests;
+    const activeLocation = overrideParams?.searchLocation !== undefined ? overrideParams.searchLocation : searchLocation;
+    const activeBedrooms = overrideParams?.bedrooms !== undefined ? overrideParams.bedrooms : bedrooms;
+
+    const hasAnyDate = Boolean(activeCheckIn || activeCheckOut);
+    const hasFullDateRange = Boolean(activeCheckIn && activeCheckOut);
 
     if (hasAnyDate && !hasFullDateRange) {
       setSearchError("Select both check-in and check-out dates to run availability search.");
@@ -89,9 +149,9 @@ const PropertyOverview = ({ initialProperties = [] }) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            startDate: checkInDate,
-            endDate: checkOutDate,
-            adults: guests || 1,
+            startDate: activeCheckIn,
+            endDate: activeCheckOut,
+            adults: activeGuests || 1,
           }),
         });
 
@@ -121,9 +181,9 @@ const PropertyOverview = ({ initialProperties = [] }) => {
 
     setFilteredProperties(
       applyLocalFilters(sourceProperties, {
-        searchLocation,
-        guests,
-        bedrooms,
+        searchLocation: activeLocation,
+        guests: activeGuests,
+        bedrooms: activeBedrooms,
       })
     );
   };
@@ -165,19 +225,43 @@ const PropertyOverview = ({ initialProperties = [] }) => {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-inner">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr_1fr]">
               <div className="group">
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="relative flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaMapMarkerAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Where
                     </label>
                     <input
+                      ref={inputRef}
                       type="text"
                       placeholder="Search destinations..."
                       value={searchLocation}
-                      onChange={(event) => setSearchLocation(event.target.value)}
+                      onChange={(event) => { setSearchLocation(event.target.value); setShowDropdown(true); }}
+                      onFocus={() => setShowDropdown(true)}
                       className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
                     />
+                    {showDropdown && dropdownSuggestions.length > 0 && (
+                      <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-72 overflow-y-auto z-50">
+                        {dropdownSuggestions.map((property) => (
+                          <button
+                            key={property.id || property.slug}
+                            onClick={() => {
+                              setSearchLocation(property.title || property.name || '');
+                              setShowDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                          >
+                            {(property.primary_image || property.image) && (
+                              <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 truncate">{property.title || property.name}</p>
+                              {property.location && <p className="text-xs text-slate-500 truncate">{property.location}</p>}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

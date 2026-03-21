@@ -13,6 +13,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
     const heroRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(10);
 
     const property = initialBundle?.property || null;
     const galleryImages = initialBundle?.galleryImages || [];
@@ -43,32 +44,21 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
     useEffect(() => {
         window.scrollTo(0, 0);
         setCurrentIndex(0);
+        setVisibleCount(10);
     }, [slug]);
+
+    useEffect(() => {
+        if (galleryImages.length > 0 && visibleCount < galleryImages.length) {
+            const timer = setTimeout(() => {
+                setVisibleCount((prev) => Math.min(prev + 10, galleryImages.length));
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [visibleCount, galleryImages.length]);
 
     const sliderImages = galleryImages;
 
-    const getVisibleImages = () => {
-        const visible = [];
-        const len = sliderImages.length;
-        if (!len) return [];
-        for (let i = currentIndex - 2; i <= currentIndex + 2; i++) {
-            const idx = ((i % len) + len) % len;
-            visible.push(sliderImages[idx]);
-        }
-        return visible;
-    };
-
-    const visibleImages = isMobile ? sliderImages : getVisibleImages();
-
-    const scrollLeft = () => {
-        if (!sliderImages.length) return;
-        setCurrentIndex((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
-    };
-
-    const scrollRight = () => {
-        if (!sliderImages.length) return;
-        setCurrentIndex((prev) => (prev + 1) % sliderImages.length);
-    };
+    // Carousel logic removed for modern gallery grid style
 
     // Manage body scroll lock
     useEffect(() => {
@@ -351,70 +341,94 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                 </div>
             </section>
 
-            {/* Photo Gallery */}
-            <section id="gallery" className="py-24 bg-white overflow-hidden">
-                <div className="text-center mb-16 px-6">
-                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Visual Tour</p>
-                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Property Gallery</h2>
-                    <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light">Take a closer look at your future escape</p>
+            {/* Photo Gallery - Modern Grid Layout */}
+            <section id="gallery" className="py-16 md:py-24 bg-slate-50">
+                <div className="text-center mb-10 md:mb-16 px-6">
+                    <p className="text-accent uppercase tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm font-semibold mb-2 md:mb-3">Visual Tour</p>
+                    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-3 md:mb-4">Property Gallery</h2>
+                    <p className="text-base md:text-xl text-slate-500 max-w-2xl mx-auto font-light">Take a closer look at your future escape</p>
                 </div>
 
-                <div className="relative flex items-center justify-center max-w-[95vw] mx-auto">
-                    <button
-                        className="absolute left-4 z-20 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center text-slate-800 hover:bg-accent hover:text-white hover:scale-110 transition-all hidden md:flex"
-                        onClick={scrollLeft}
-                    >
-                        <FaArrowLeft size={18} />
-                    </button>
+                <div className="max-w-7xl mx-auto px-6">
+                    {/* Modern Grid (Desktop/Tablet) */}
+                    <div className="hidden md:flex gap-4 h-[500px] lg:h-[600px] rounded-[2rem] overflow-hidden shadow-2xl">
+                        {/* Main Image (Left, 50%) */}
+                        <div 
+                            className="w-1/2 relative group cursor-pointer overflow-hidden"
+                            onClick={() => openLightbox(sliderImages[0])}
+                        >
+                            {sliderImages[0] && (
+                                <img src={sliderImages[0]} alt="Property Main" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            )}
+                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
 
-                    <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-8 px-4 w-full md:justify-center md:overflow-visible">
-                        {visibleImages.map((imgSrc, i) => {
-                            if (!imgSrc) return null;
-                            const isCenter = i === 2;
-                            return (
-                                <div
-                                    key={i}
-                                    className={`
-                                        flex-shrink-0 relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 ease-out
-                                        ${isMobile
-                                            ? 'w-[80vw] aspect-video shadow-xl'
-                                            : (isCenter
-                                                ? 'w-[600px] h-[400px] shadow-2xl scale-100 z-10'
-                                                : 'w-[200px] h-[150px] opacity-50 hover:opacity-80 grayscale hover:grayscale-0'
-                                            )
-                                        }
-                                    `}
-                                    onClick={() => openLightbox(imgSrc)}
+                        {/* 4 Grid Images (Right, 50%) */}
+                        {sliderImages.length >= 5 ? (
+                            <div className="w-1/2 grid grid-cols-2 grid-rows-2 gap-4">
+                                {sliderImages.slice(1, 4).map((imgSrc, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className="relative group cursor-pointer overflow-hidden"
+                                        onClick={() => openLightbox(imgSrc)}
+                                    >
+                                        <img src={imgSrc} alt={`Property ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    </div>
+                                ))}
+                                
+                                {/* 5th Image with View All Overlay */}
+                                <div 
+                                    className="relative group cursor-pointer overflow-hidden"
+                                    onClick={() => openLightbox(sliderImages[4])}
                                 >
-                                    <img src={imgSrc} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
-                                    {isCenter && !isMobile && (
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                                            <span className="text-white font-semibold bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm">Click to enlarge</span>
-                                        </div>
-                                    )}
+                                    <img src={sliderImages[4]} alt="Property 4" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-black/40 transition-colors duration-300 group-hover:bg-black/50 flex flex-col items-center justify-center">
+                                        <span className="text-white text-3xl font-bold mb-1">+{sliderImages.length - 5 > 0 ? sliderImages.length - 5 : ''}</span>
+                                        <span className="text-white/90 text-sm font-semibold uppercase tracking-widest">View All Photos</span>
+                                    </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ) : (
+                            <div className="w-1/2 flex flex-col gap-4">
+                                {sliderImages.slice(1).map((imgSrc, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className="flex-1 relative group cursor-pointer overflow-hidden"
+                                        onClick={() => openLightbox(imgSrc)}
+                                    >
+                                        <img src={imgSrc} alt={`Property ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    <button
-                        className="absolute right-4 z-20 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center text-slate-800 hover:bg-accent hover:text-white hover:scale-110 transition-all hidden md:flex"
-                        onClick={scrollRight}
-                    >
-                        <FaArrowRight size={18} />
-                    </button>
-                </div>
+                    {/* Mobile Horizontal Scroll (fallback for small screens) */}
+                    <div className="md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-6 -mx-6 px-6">
+                        {sliderImages.slice(0, visibleCount).map((imgSrc, i) => (
+                            <div
+                                key={i}
+                                className="flex-shrink-0 w-[85vw] h-[60vw] snap-center relative rounded-2xl overflow-hidden shadow-lg cursor-pointer"
+                                onClick={() => openLightbox(imgSrc)}
+                            >
+                                <img src={imgSrc} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
+                                <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                                    {i + 1} / {sliderImages.length}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
-                {/* Gallery Navigation Dots */}
-                <div className="flex justify-center gap-2 mt-8">
-                    {sliderImages.slice(0, 8).map((_, idx) => (
+                    <div className="text-center mt-10 md:hidden">
                         <button
-                            key={idx}
-                            onClick={() => setCurrentIndex(idx)}
-                            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${currentIndex === idx ? 'bg-accent w-8' : 'bg-slate-300 hover:bg-slate-400'
-                                }`}
-                        />
-                    ))}
+                            onClick={() => openLightbox(sliderImages[0])}
+                            className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg text-sm uppercase tracking-widest"
+                        >
+                            View All Photos
+                        </button>
+                    </div>
                 </div>
             </section>
 

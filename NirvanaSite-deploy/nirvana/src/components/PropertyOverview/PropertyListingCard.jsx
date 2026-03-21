@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaHeart, FaRegHeart, FaStar, FaChevronLeft, FaChevronRight, FaBed, FaBath, FaUsers, FaArrowRight } from "react-icons/fa";
 
@@ -11,6 +11,20 @@ const PropertyListingCard = ({ property }) => {
   const images = property.highlightImages && property.highlightImages.length > 0
     ? property.highlightImages.filter(Boolean)
     : [property.image].filter(Boolean);
+
+  // Force the browser to secretly download all carousel images in the background
+  // so that clicking the arrow buttons feels completely instantaneous.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      images.forEach((url) => {
+        if (url) {
+          const img = new window.Image();
+          img.src = url;
+        }
+      });
+    }, 1000); // 1s delay to prioritize the main page load
+    return () => clearTimeout(timer);
+  }, [images]);
 
   const nextImage = (e) => {
     e.stopPropagation();
@@ -41,13 +55,18 @@ const PropertyListingCard = ({ property }) => {
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
         {images[0] ? (
-          <img
-            src={images[currentImageIndex]}
-            alt={property.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          images.map((img, idx) => (
+            <img
+              key={`${img}-${idx}`}
+              src={img}
+              alt={`${property.title} - image ${idx + 1}`}
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-110 ${
+                idx === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            />
+          ))
         ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-200 to-slate-300 text-sm font-medium text-slate-500">
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-200 to-slate-300 text-sm font-medium text-slate-500 z-10 absolute inset-0">
             No Image
           </div>
         )}
