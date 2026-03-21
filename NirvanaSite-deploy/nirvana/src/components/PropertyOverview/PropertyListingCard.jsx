@@ -34,7 +34,7 @@ const PropertyListingCard = ({ property }) => {
 
   return (
     <article
-      className="group cursor-pointer"
+      className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => router.push(property.propertyRoute)}
@@ -108,7 +108,7 @@ const PropertyListingCard = ({ property }) => {
         )}
       </div>
 
-      <div className="px-1 pt-3">
+      <div className="px-2 pb-2 pt-4">
         <div className="mb-1 flex items-start justify-between gap-2">
           <h3 className="truncate text-lg font-bold text-slate-900 transition-colors group-hover:text-accent">{property.title}</h3>
           {property.rating && (
@@ -120,6 +120,19 @@ const PropertyListingCard = ({ property }) => {
         </div>
 
         <p className="mb-2 text-sm text-slate-500">{property.location}</p>
+
+        {property.availability?.searched && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+              Available {property.availability.dateLabel}
+            </span>
+            {property.availability.totalPriceLabel && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                From {property.availability.totalPriceLabel}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="mb-3 flex items-center gap-3 text-sm text-slate-600">
           <span className="flex items-center gap-1.5">

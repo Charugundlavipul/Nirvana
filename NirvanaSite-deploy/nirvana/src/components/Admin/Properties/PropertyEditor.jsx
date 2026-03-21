@@ -8,6 +8,7 @@ import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
 import SpacesManager from "./SpacesManager";
 import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest } from "../../../lib/adminApi";
+import { isValidHospitablePropertyId, normalizeHospitablePropertyId } from "../../../lib/hospitablePropertyId";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 import { normalizePropertySpaces } from "../../../lib/propertySpaces";
@@ -17,6 +18,7 @@ const toFormState = (data = {}) => ({
     name: data.name || "",
     slug: data.slug || "",
     booking_url: data.booking_url || "",
+    hospitable_property_id: normalizeHospitablePropertyId(data.hospitable_property_id),
     video_url: data.video_url || "",
     location: data.location || "",
     description: data.description || "",
@@ -31,6 +33,36 @@ const toFormState = (data = {}) => ({
     spaces: normalizePropertySpaces(data.spaces),
 });
 
+const buildPropertyPayload = (formData) => {
+    const payload = {
+        ...formData,
+        hospitable_property_id: normalizeHospitablePropertyId(formData.hospitable_property_id),
+        spaces: normalizePropertySpaces(formData.spaces),
+    };
+
+    if (!payload.booking_url) delete payload.booking_url;
+    if (!payload.hospitable_property_id) {
+        delete payload.hospitable_property_id;
+    } else if (!isValidHospitablePropertyId(payload.hospitable_property_id)) {
+        throw new Error("Hospitable Property ID must be a valid UUID.");
+    }
+
+    return payload;
+};
+
+const validatePublishRequirements = (payload) => {
+    if (!payload.hospitable_property_id) {
+        throw new Error("Hospitable Property ID is required before a property can be published.");
+    }
+};
+
+const slugifyHospitableName = (value) =>
+    `${value || ""}`
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
 const PropertyEditor = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -44,6 +76,9 @@ const PropertyEditor = () => {
     const [editorNote, setEditorNote] = useState("");
     const [beforeSnapshot, setBeforeSnapshot] = useState(null);
     const [propertyDraftRequest, setPropertyDraftRequest] = useState(null);
+    const [hospitableProperties, setHospitableProperties] = useState([]);
+    const [hospitablePropertiesLoading, setHospitablePropertiesLoading] = useState(true);
+    const [hospitablePropertiesError, setHospitablePropertiesError] = useState("");
     const descriptionRef = useRef(null);
 
     // Form State
@@ -51,6 +86,7 @@ const PropertyEditor = () => {
         name: "",
         slug: "",
         booking_url: "",
+        hospitable_property_id: "",
         video_url: "",
         location: "",
         description: "",
@@ -91,6 +127,50 @@ const PropertyEditor = () => {
             setAdminRole(role);
         };
         loadRole();
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadHospitableProperties = async () => {
+            setHospitablePropertiesLoading(true);
+            setHospitablePropertiesError("");
+
+            try {
+                const response = await fetch("/api/hospitable/properties", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload?.error || "Unable to load Hospitable properties.");
+                }
+
+                if (!cancelled) {
+                    setHospitableProperties(Array.isArray(payload?.properties) ? payload.properties : []);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setHospitableProperties([]);
+                    setHospitablePropertiesError(
+                        error instanceof Error ? error.message : "Unable to load Hospitable properties."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setHospitablePropertiesLoading(false);
+                }
+            }
+        };
+
+        loadHospitableProperties();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     useEffect(() => {
@@ -148,12 +228,40 @@ const PropertyEditor = () => {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         const val = type === "checkbox" ? checked : value;
+        const normalizedValue =
+            name === "hospitable_property_id" ? normalizeHospitablePropertyId(val) : val;
 
         setFormData(prev => {
-            const next = { ...prev, [name]: val };
+            const next = { ...prev, [name]: normalizedValue };
             if (name === "name" && isNew) {
-                next.slug = slugify(val);
+                next.slug = slugify(normalizedValue);
             }
+            return next;
+        });
+    };
+
+    const handleHospitablePropertySelect = (e) => {
+        const selectedId = normalizeHospitablePropertyId(e.target.value);
+        if (!selectedId) {
+            return;
+        }
+
+        const selectedProperty = hospitableProperties.find((property) => property.id === selectedId);
+        if (!selectedProperty) {
+            return;
+        }
+
+        setFormData((prev) => {
+            const next = {
+                ...prev,
+                name: selectedProperty.name,
+                hospitable_property_id: selectedProperty.id,
+            };
+
+            if (isNew) {
+                next.slug = slugifyHospitableName(selectedProperty.name);
+            }
+
             return next;
         });
     };
@@ -214,12 +322,12 @@ const PropertyEditor = () => {
         setSaving(true);
 
         try {
-            const payload = { ...formData, spaces: normalizePropertySpaces(formData.spaces) };
-            if (!payload.booking_url) delete payload.booking_url;
+            const payload = buildPropertyPayload(formData);
 
             if (superAdmin) {
                 // Superadmins save directly and always publish
                 payload.is_published = true;
+                validatePublishRequirements(payload);
                 let result;
                 if (isNew) {
                     const { data, error } = await supabase.from("properties").insert(payload).select().single();
@@ -261,6 +369,7 @@ const PropertyEditor = () => {
             } else {
                 // Editors on published properties: save as a non-live draft request.
                 payload.is_published = isPublished;
+                validatePublishRequirements(payload);
                 const { data: userData } = await supabase.auth.getUser();
                 const existingOpen = await findOpenRequest("property", propertyId, "update");
 
@@ -333,8 +442,8 @@ const PropertyEditor = () => {
         setPublishing(true);
         try {
             const { data: userData } = await supabase.auth.getUser();
-            const payload = { ...formData, spaces: normalizePropertySpaces(formData.spaces), is_published: true };
-            if (!payload.booking_url) delete payload.booking_url;
+            const payload = { ...buildPropertyPayload(formData), is_published: true };
+            validatePublishRequirements(payload);
 
             // Check for an existing revision_requested request to update instead of creating a duplicate
             const existingRevision = await findRevisionRequest("property", propertyId);
@@ -463,6 +572,33 @@ const PropertyEditor = () => {
                             <div className={styles.card}>
                                 <h3>Basic Info</h3>
                                 <div className={styles.fieldGroup}>
+                                    <label>Select Hospitable Property</label>
+                                    <select
+                                        value={formData.hospitable_property_id}
+                                        onChange={handleHospitablePropertySelect}
+                                        disabled={hospitablePropertiesLoading || hospitableProperties.length === 0}
+                                    >
+                                        <option value="">
+                                            {hospitablePropertiesLoading
+                                                ? "Loading Hospitable properties..."
+                                                : "Select Hospitable property"}
+                                        </option>
+                                        {hospitableProperties.map((property) => (
+                                            <option key={property.id} value={property.id}>
+                                                {property.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p style={{ marginTop: "8px", color: "#666", fontSize: "12px" }}>
+                                        Selecting a Hospitable property auto-fills the property name and Hospitable Property ID.
+                                    </p>
+                                    {hospitablePropertiesError && (
+                                        <p style={{ marginTop: "6px", color: "#b91c1c", fontSize: "12px" }}>
+                                            {hospitablePropertiesError}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
                                     <label>Name</label>
                                     <input name="name" value={formData.name} onChange={handleChange} required />
                                 </div>
@@ -477,6 +613,15 @@ const PropertyEditor = () => {
                                 <div className={styles.fieldGroup}>
                                     <label>Booking URL (Hospitable)</label>
                                     <input name="booking_url" value={formData.booking_url} onChange={handleChange} placeholder="https://booking.hospitable.com/..." />
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label>Hospitable Property ID</label>
+                                    <input
+                                        name="hospitable_property_id"
+                                        value={formData.hospitable_property_id}
+                                        onChange={handleChange}
+                                        placeholder="550e8400-e29b-41d4-a716-446655440000"
+                                    />
                                 </div>
                                 <div className={styles.fieldGroup}>
                                     <label>Video URL</label>

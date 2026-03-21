@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS properties (
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
     booking_url TEXT,
+    hospitable_property_id TEXT,
     video_url TEXT,
     is_published BOOLEAN DEFAULT TRUE,
     location TEXT,
@@ -36,11 +37,15 @@ CREATE TABLE IF NOT EXISTS properties (
 );
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS booking_url TEXT;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS hospitable_property_id TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS spaces JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE properties ALTER COLUMN is_published SET DEFAULT TRUE;
 ALTER TABLE properties ALTER COLUMN spaces SET DEFAULT '[]'::jsonb;
+UPDATE properties
+SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
+WHERE hospitable_property_id IS NOT NULL;
 UPDATE properties SET is_published = TRUE WHERE is_published IS DISTINCT FROM TRUE;
 UPDATE properties SET spaces = '[]'::jsonb WHERE spaces IS NULL;
 DO $$
@@ -54,6 +59,22 @@ BEGIN
         AND indexdef ILIKE '%(slug)%'
     ) THEN
         CREATE UNIQUE INDEX properties_slug_uidx ON properties (slug);
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'public'
+        AND tablename = 'properties'
+        AND indexname = 'properties_hospitable_property_id_uidx'
+    ) THEN
+        CREATE UNIQUE INDEX properties_hospitable_property_id_uidx
+            ON properties (LOWER(hospitable_property_id))
+            WHERE hospitable_property_id IS NOT NULL;
     END IF;
 END;
 $$;
@@ -420,13 +441,14 @@ BEGIN
             END LOOP;
 
             INSERT INTO public.properties (
-                slug, name, booking_url, video_url, is_published, location, description,
+                slug, name, booking_url, hospitable_property_id, video_url, is_published, location, description,
                 guests_max, bedroom_count, bed_details, bathroom_count, bath_details,
                 pet_friendly, pet_fee, hot_tub, spaces
             ) VALUES (
                 v_slug,
                 req.payload->>'name',
                 req.payload->>'booking_url',
+                NULLIF(LOWER(BTRIM(req.payload->>'hospitable_property_id')), ''),
                 req.payload->>'video_url',
                 COALESCE((req.payload->>'is_published')::boolean, true),
                 req.payload->>'location',
@@ -447,6 +469,7 @@ BEGIN
                 slug = req.payload->>'slug',
                 name = req.payload->>'name',
                 booking_url = req.payload->>'booking_url',
+                hospitable_property_id = NULLIF(LOWER(BTRIM(req.payload->>'hospitable_property_id')), ''),
                 video_url = req.payload->>'video_url',
                 is_published = COALESCE((req.payload->>'is_published')::boolean, true),
                 location = req.payload->>'location',
@@ -1387,4 +1410,3 @@ BEGIN
     END IF;
 END;
 $$;
-

@@ -104,6 +104,7 @@ const FIELD_LABELS = {
   slug: "URL Slug",
   location: "Location",
   booking_url: "Booking URL",
+  hospitable_property_id: "Hospitable Property ID",
   description: "Description",
   guests_max: "Max Guests",
   bedroom_count: "Bedrooms",
@@ -299,6 +300,11 @@ const PropertyPreviewCard = ({ payload, onPreviewImage }) => {
             {payload.is_published === true && <span style={{ background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: "999px" }}>Published</span>}
           </div>
           {payload.booking_url && <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>🔗 {payload.booking_url}</p>}
+          {payload.hospitable_property_id && (
+            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#334155", wordBreak: "break-all" }}>
+              Hospitable ID: {payload.hospitable_property_id}
+            </p>
+          )}
         </div>
       </div>
       {payload.description && (

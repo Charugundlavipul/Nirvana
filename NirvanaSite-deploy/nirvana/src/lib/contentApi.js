@@ -77,10 +77,15 @@ const normalizeReview = (review, propertyById) => {
 
 async function fetchPropertiesRaw() {
   const baseColumns =
-    "id,slug,name,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
-  const withBookingColumns = `id,slug,name,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+    "id,slug,name,hospitable_property_id,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
+  const withBookingColumns = `id,slug,name,hospitable_property_id,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
   const withBookingAndSpacesColumns = `${withBookingColumns},spaces`;
   const withBookingSpacesAndVideoColumns = `${withBookingAndSpacesColumns},video_url`;
+  const legacyBaseColumns =
+    "id,slug,name,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
+  const legacyWithBookingColumns = `id,slug,name,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+  const legacyWithBookingAndSpacesColumns = `${legacyWithBookingColumns},spaces`;
+  const legacyWithBookingSpacesAndVideoColumns = `${legacyWithBookingAndSpacesColumns},video_url`;
 
   const attempts = [
     {
@@ -97,7 +102,40 @@ async function fetchPropertiesRaw() {
     },
     {
       columns: baseColumns,
-      normalize: (row) => ({ ...row, booking_url: "", spaces: [], video_url: "" }),
+      normalize: (row) => ({
+        ...row,
+        hospitable_property_id: row.hospitable_property_id || "",
+        booking_url: "",
+        spaces: [],
+        video_url: "",
+      }),
+    },
+    {
+      columns: legacyWithBookingSpacesAndVideoColumns,
+      normalize: (row) => ({ ...row, hospitable_property_id: "" }),
+    },
+    {
+      columns: legacyWithBookingAndSpacesColumns,
+      normalize: (row) => ({ ...row, hospitable_property_id: "", video_url: "" }),
+    },
+    {
+      columns: legacyWithBookingColumns,
+      normalize: (row) => ({
+        ...row,
+        hospitable_property_id: "",
+        spaces: [],
+        video_url: "",
+      }),
+    },
+    {
+      columns: legacyBaseColumns,
+      normalize: (row) => ({
+        ...row,
+        hospitable_property_id: "",
+        booking_url: "",
+        spaces: [],
+        video_url: "",
+      }),
     },
   ];
 
@@ -206,6 +244,7 @@ export async function fetchPropertyCards() {
     faqRouteId: property.meta?.faqRouteId || null,
     reviewRouteId: property.meta?.reviewRouteId || null,
     bookingPropertyId: property.id,
+    hospitablePropertyId: property.hospitable_property_id || "",
     propertyRoute: `/${property.slug}`,
     bookingUrl: property.booking_url || "",
     activityRoute: property.meta?.activityRoute || null,
