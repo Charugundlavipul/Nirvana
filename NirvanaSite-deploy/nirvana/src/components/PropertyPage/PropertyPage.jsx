@@ -372,7 +372,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                         className="relative group cursor-pointer overflow-hidden"
                                         onClick={() => openLightbox(imgSrc)}
                                     >
-                                        <img src={imgSrc} alt={`Property ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <img src={imgSrc} alt={`Property ${idx + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </div>
                                 ))}
@@ -382,7 +382,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                     className="relative group cursor-pointer overflow-hidden"
                                     onClick={() => openLightbox(sliderImages[4])}
                                 >
-                                    <img src={sliderImages[4]} alt="Property 4" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <img src={sliderImages[4]} alt="Property 4" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/40 transition-colors duration-300 group-hover:bg-black/50 flex flex-col items-center justify-center">
                                         <span className="text-white text-3xl font-bold mb-1">+{sliderImages.length - 5 > 0 ? sliderImages.length - 5 : ''}</span>
                                         <span className="text-white/90 text-sm font-semibold uppercase tracking-widest">View All Photos</span>
@@ -397,7 +397,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                         className="flex-1 relative group cursor-pointer overflow-hidden"
                                         onClick={() => openLightbox(imgSrc)}
                                     >
-                                        <img src={imgSrc} alt={`Property ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <img src={imgSrc} alt={`Property ${idx + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </div>
                                 ))}
@@ -413,7 +413,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                 className="flex-shrink-0 w-[85vw] h-[60vw] snap-center relative rounded-2xl overflow-hidden shadow-lg cursor-pointer"
                                 onClick={() => openLightbox(imgSrc)}
                             >
-                                <img src={imgSrc} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
+                                <img src={imgSrc} alt={`Gallery ${i}`} loading="lazy" className="w-full h-full object-cover" />
                                 <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full">
                                     {i + 1} / {sliderImages.length}
                                 </div>
@@ -512,11 +512,14 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                 >
                                     <FaArrowLeft size={32} />
                                 </button>
+                                <div className="bg-transparent relative w-full h-[85vh] flex items-center justify-center">
                                 <img
                                     src={lightboxImage}
-                                    alt="Fullscreen"
-                                    className="max-h-[85vh] max-w-full rounded-2xl shadow-2xl object-contain"
+                                    alt="Property Image"
+                                    loading="lazy"
+                                    className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
                                 />
+                                </div>
                                 <button
                                     className="absolute -right-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full"
                                     onClick={nextLightboxImage}
