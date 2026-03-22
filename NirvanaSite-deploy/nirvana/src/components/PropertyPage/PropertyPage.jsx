@@ -125,7 +125,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
         <div className="font-sans text-gray-800 bg-slate-50">
             {/* Hero Section */}
             <section
-                className="h-[85vh] w-full relative overflow-hidden bg-cover bg-center bg-no-repeat"
+                className="mt-[65px] h-[85vh] w-full relative overflow-hidden bg-cover bg-center bg-no-repeat"
                 ref={heroRef}
                 style={{ backgroundImage: `url(${heroImageSrc})` }}
             >

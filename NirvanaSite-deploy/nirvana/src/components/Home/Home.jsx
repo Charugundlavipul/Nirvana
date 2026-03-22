@@ -287,10 +287,10 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     <div className="w-full bg-gray-50 text-gray-800 font-sans">
 
       {/* Hero Section */}
-      <div className="relative">
+      <div className="relative mt-[65px]">
         <div
           ref={heroRef}
-          className="relative h-[75vh] min-h-[500px] flex items-center justify-center bg-cover bg-center"
+          className="relative h-[80vh] min-h-[550px] flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
