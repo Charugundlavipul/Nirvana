@@ -6,7 +6,8 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest
+    submitApprovalRequest,
+    queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
 const MediaManager = ({ propertyId, isDraft = false }) => {
@@ -134,6 +135,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
             if (canEditDirectly) {
                 const { error: insertErr } = await supabase.from("property_images").insert(uploads);
                 if (insertErr) throw insertErr;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 await loadImages();
                 return;
             }
@@ -169,6 +171,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
             if (canEditDirectly) {
                 const { error } = await supabase.from("property_images").delete().eq("id", id);
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 setImages((prev) => prev.filter((img) => img.id !== id));
                 return;
             }

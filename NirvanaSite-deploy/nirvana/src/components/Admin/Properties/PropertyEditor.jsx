@@ -7,7 +7,7 @@ import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
 import SpacesManager from "./SpacesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import { isValidHospitablePropertyId, normalizeHospitablePropertyId } from "../../../lib/hospitablePropertyId";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
@@ -338,6 +338,7 @@ const PropertyEditor = () => {
                     if (error) throw error;
                     result = data;
                 }
+                await queueKnowledgeRefresh({ propertyIds: [result.id] });
                 alert("Property saved successfully!");
                 if (isNew) navigate(`/admin/properties/${result.slug}`);
             } else if (isNew) {
@@ -345,6 +346,7 @@ const PropertyEditor = () => {
                 payload.is_published = false;
                 const { data, error } = await supabase.from("properties").insert(payload).select().single();
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [data.id] });
                 setPropertyId(data.id);
                 setIsPublished(false);
                 setBeforeSnapshot(toFormState(data));
@@ -361,6 +363,7 @@ const PropertyEditor = () => {
                     .select()
                     .single();
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [data.id] });
                 const normalized = toFormState(data);
                 setFormData(normalized);
                 setBeforeSnapshot(normalized);

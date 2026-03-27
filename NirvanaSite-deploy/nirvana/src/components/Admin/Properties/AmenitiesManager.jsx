@@ -7,7 +7,8 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest
+    submitApprovalRequest,
+    queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
 const PAGE_SIZE = 30;
@@ -223,6 +224,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                     .single();
 
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 setAmenities([...amenities, data]);
             } else {
                 const { data: userData } = await supabase.auth.getUser();
@@ -251,6 +253,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
             if (canEditDirectly) {
                 const { error } = await supabase.from("amenities").delete().eq("id", id);
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 setAmenities(amenities.filter((a) => a.id !== id));
                 return;
             }
@@ -305,6 +308,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                     })
                     .eq("id", item.id);
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 setAmenities((prev) =>
                     prev.map((a) => (a.id === item.id ? { ...a, ...payload } : a))
                 );

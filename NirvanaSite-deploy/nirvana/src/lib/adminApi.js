@@ -4,6 +4,32 @@ export const SUPERADMIN_ROLES = ["owner", "superadmin"];
 
 export const isSuperAdminRole = (role) => SUPERADMIN_ROLES.includes((role || "").toLowerCase());
 
+async function adminRequest(path, options = {}) {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session?.access_token) {
+    throw new Error("Admin session is required.");
+  }
+
+  const headers = new Headers(options.headers || {});
+  headers.set("Authorization", `Bearer ${session.access_token}`);
+
+  const response = await fetch(path, {
+    ...options,
+    headers,
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || "Admin request failed.");
+  }
+
+  return payload;
+}
+
 export async function getCurrentAdminRole() {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData?.user?.id) return null;
@@ -136,4 +162,14 @@ export async function resubmitApprovalRequest(requestId, newPayload, beforeSnaps
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
+}
+
+export async function queueKnowledgeRefresh(payload = {}) {
+  return adminRequest("/api/admin/knowledge/refresh", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
 }

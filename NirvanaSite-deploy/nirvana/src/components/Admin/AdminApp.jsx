@@ -11,6 +11,7 @@ import GlobalContent from "./Global/GlobalContent";
 import ApprovalQueue from "./Approvals/ApprovalQueue";
 import AdminUsersManager from "./Users/AdminUsersManager";
 import SubscribersManager from "./Subscribers/SubscribersManager";
+import KnowledgeHubManager from "./Knowledge/KnowledgeHubManager";
 
 const AdminApp = () => {
   return (
@@ -22,6 +23,7 @@ const AdminApp = () => {
           <Route path="properties" element={<PropertyList />} />
           <Route path="properties/:slug" element={<PropertyEditor />} />
           <Route path="global" element={<GlobalContent />} />
+          <Route path="knowledge" element={<KnowledgeHubManager />} />
           <Route path="approvals" element={<ApprovalQueue />} />
           <Route path="subscribers" element={<SubscribersManager />} />
           <Route path="admins" element={<AdminUsersManager />} />

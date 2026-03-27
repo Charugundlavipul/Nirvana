@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -106,7 +106,17 @@ const ActivityManager = () => {
         if (!confirm("Delete this activity?")) return;
         try {
             if (isSuperAdminRole(adminRole)) {
+                const target = activities.find((activity) => activity.id === id) || null;
                 await supabase.from("activities").delete().eq("id", id);
+                await queueKnowledgeRefresh({
+                    request: {
+                        entity_type: "activity",
+                        action: "delete",
+                        entity_id: id,
+                        payload: {},
+                        before_snapshot: target,
+                    },
+                });
                 loadData();
                 return;
             }
@@ -198,6 +208,10 @@ const ActivityManager = () => {
                 link_url: formData.link_url,
                 property_ids: propertyIds
             };
+            const action = formData.id ? "update" : "create";
+            const beforeSnapshot = formData.id
+                ? activities.find((activity) => activity.id === formData.id) || null
+                : null;
 
             if (isSuperAdminRole(adminRole)) {
                 let activityId = formData.id;
@@ -222,15 +236,21 @@ const ActivityManager = () => {
                     await supabase.from("property_activities").insert(links);
                 }
 
+                await queueKnowledgeRefresh({
+                    request: {
+                        entity_type: "activity",
+                        action,
+                        entity_id: activityId,
+                        payload,
+                        before_snapshot: beforeSnapshot,
+                    },
+                });
+
                 setIsEditing(false);
                 loadData();
                 return;
             }
 
-            const action = formData.id ? "update" : "create";
-            const beforeSnapshot = formData.id
-                ? activities.find((activity) => activity.id === formData.id) || null
-                : null;
             const { data: userData } = await supabase.auth.getUser();
             const { error: requestError } = await submitApprovalRequest({
                 entityType: "activity",

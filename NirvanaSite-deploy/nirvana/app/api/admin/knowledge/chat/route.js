@@ -1,0 +1,20 @@
+import { apiErrorResponse, noStoreJson } from "../../../../../src/lib/server/apiResponses";
+import { answerKnowledgeQuestion } from "../../../../../src/lib/server/knowledgeBase";
+import { requireAdminAccess } from "../../../../../src/lib/server/supabaseAdmin";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export async function POST(request) {
+  try {
+    const { adminClient } = await requireAdminAccess(request);
+    const payload = await request.json();
+    const result = await answerKnowledgeQuestion(adminClient, {
+      hubId: payload?.hubId || "",
+      question: `${payload?.question || ""}`.trim(),
+    });
+    return noStoreJson(result);
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}

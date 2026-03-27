@@ -15,7 +15,8 @@ import {
     FaEye,
     FaChartLine,
     FaCalendarAlt,
-    FaArrowRight
+    FaArrowRight,
+    FaBookOpen
 } from "react-icons/fa";
 
 const StatCard = ({ title, value, icon: Icon, color, bgColor, subtitle }) => (
@@ -201,6 +202,13 @@ const Dashboard = () => {
                         icon={FaHiking}
                         to="/admin/global"
                         color="#8b5cf6"
+                    />
+                    <QuickAction
+                        title="Knowledge Hub"
+                        description="Curate AI-ready property knowledge"
+                        icon={FaBookOpen}
+                        to="/admin/knowledge"
+                        color="#425b3d"
                     />
                     <QuickAction
                         title="View Website"

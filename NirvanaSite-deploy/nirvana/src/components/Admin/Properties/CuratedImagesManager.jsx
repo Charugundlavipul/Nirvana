@@ -6,7 +6,8 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest
+    submitApprovalRequest,
+    queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
 const SLOTS = ["home", "bg", "secondary"];
@@ -121,6 +122,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
                     .from("property_curated_images")
                     .upsert(payload, { onConflict: 'property_id, slot' });
                 if (dbErr) throw dbErr;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 await loadImages();
                 return;
             }
@@ -163,6 +165,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
                     .eq("property_id", propertyId)
                     .eq("slot", slot);
                 if (error) throw error;
+                await queueKnowledgeRefresh({ propertyIds: [propertyId] });
                 setImages(prev => ({ ...prev, [slot]: null }));
                 return;
             }

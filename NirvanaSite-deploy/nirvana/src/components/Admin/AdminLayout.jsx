@@ -3,6 +3,7 @@ import styles from "./AdminLayout.module.css";
 import Sidebar from "./Sidebar";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
+import PortfolioChatWidget from "../common/PortfolioChatWidget";
 
 const AdminLayout = ({ children, title, subtitle }) => {
     const navigate = useNavigate();
@@ -31,6 +32,7 @@ const AdminLayout = ({ children, title, subtitle }) => {
                 <div className={styles.contentScrollWrapper}>
                     {children}
                 </div>
+                <PortfolioChatWidget />
             </main>
         </div>
     );

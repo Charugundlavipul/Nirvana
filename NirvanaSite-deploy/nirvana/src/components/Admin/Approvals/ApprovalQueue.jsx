@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
-import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole } from "../../../lib/adminApi";
+import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
 
@@ -1848,6 +1848,13 @@ const ApprovalQueue = () => {
     if (error) {
       alert(`Failed to ${decision}: ${error.message}`);
     } else {
+      if (decision === "approved") {
+        try {
+          await queueKnowledgeRefresh({ request: req });
+        } catch (refreshError) {
+          console.error("Failed to queue knowledge refresh after approval:", refreshError);
+        }
+      }
       if (decision === "rejected") {
         let removedMediaCount = 0;
         try {

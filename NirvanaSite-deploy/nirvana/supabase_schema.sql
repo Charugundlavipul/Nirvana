@@ -1410,3 +1410,704 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- 12. Knowledge Hubs, sources, AI sync state, and RAG storage
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS knowledge_hubs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    scope_type TEXT NOT NULL CHECK (scope_type IN ('general', 'property')),
+    property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    sync_status TEXT NOT NULL DEFAULT 'idle' CHECK (sync_status IN ('idle', 'syncing', 'ready', 'error', 'stale')),
+    source_fingerprint TEXT,
+    last_synced_source_fingerprint TEXT,
+    last_synced_at TIMESTAMPTZ,
+    last_sync_error TEXT,
+    last_sync_model TEXT,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS sync_status TEXT NOT NULL DEFAULT 'idle';
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS source_fingerprint TEXT;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_synced_source_fingerprint TEXT;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_sync_error TEXT;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_sync_model TEXT;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_hubs DROP CONSTRAINT IF EXISTS knowledge_hubs_scope_type_check;
+    ALTER TABLE knowledge_hubs
+        ADD CONSTRAINT knowledge_hubs_scope_type_check
+        CHECK (scope_type IN ('general', 'property'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_hubs DROP CONSTRAINT IF EXISTS knowledge_hubs_sync_status_check;
+    ALTER TABLE knowledge_hubs
+        ADD CONSTRAINT knowledge_hubs_sync_status_check
+        CHECK (sync_status IN ('idle', 'syncing', 'ready', 'error', 'stale'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_hubs'
+        AND indexname = 'knowledge_hubs_general_uidx'
+    ) THEN
+        CREATE UNIQUE INDEX knowledge_hubs_general_uidx
+            ON knowledge_hubs ((scope_type))
+            WHERE scope_type = 'general' AND property_id IS NULL;
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_hubs'
+        AND indexname = 'knowledge_hubs_property_uidx'
+    ) THEN
+        CREATE UNIQUE INDEX knowledge_hubs_property_uidx
+            ON knowledge_hubs (property_id)
+            WHERE scope_type = 'property' AND property_id IS NOT NULL;
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'knowledge_hubs_set_updated_at'
+    ) THEN
+        CREATE TRIGGER knowledge_hubs_set_updated_at
+        BEFORE UPDATE ON knowledge_hubs
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+CREATE TABLE IF NOT EXISTS knowledge_sources (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
+    source_type TEXT NOT NULL CHECK (source_type IN ('system_snapshot', 'manual_note', 'upload')),
+    source_key TEXT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    mime_type TEXT,
+    file_name TEXT,
+    storage_bucket TEXT,
+    storage_path TEXT,
+    content_text TEXT NOT NULL DEFAULT '',
+    checksum TEXT,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'processing', 'archived', 'error')),
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    last_processed_at TIMESTAMPTZ,
+    last_error TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS source_key TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS file_name TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS storage_bucket TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS storage_path TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS content_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS checksum TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS last_processed_at TIMESTAMPTZ;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS last_error TEXT;
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_sources DROP CONSTRAINT IF EXISTS knowledge_sources_source_type_check;
+    ALTER TABLE knowledge_sources
+        ADD CONSTRAINT knowledge_sources_source_type_check
+        CHECK (source_type IN ('system_snapshot', 'manual_note', 'upload'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_sources DROP CONSTRAINT IF EXISTS knowledge_sources_status_check;
+    ALTER TABLE knowledge_sources
+        ADD CONSTRAINT knowledge_sources_status_check
+        CHECK (status IN ('active', 'processing', 'archived', 'error'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS knowledge_sources_hub_status_idx
+    ON knowledge_sources (hub_id, status, created_at DESC);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_sources'
+        AND indexname = 'knowledge_sources_hub_source_key_uidx'
+    ) THEN
+        CREATE UNIQUE INDEX knowledge_sources_hub_source_key_uidx
+            ON knowledge_sources (hub_id, source_key)
+            WHERE source_key IS NOT NULL;
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'knowledge_sources_set_updated_at'
+    ) THEN
+        CREATE TRIGGER knowledge_sources_set_updated_at
+        BEFORE UPDATE ON knowledge_sources
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+CREATE TABLE IF NOT EXISTS knowledge_sections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    content_markdown TEXT NOT NULL DEFAULT '',
+    source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[],
+    section_origin TEXT NOT NULL DEFAULT 'ai' CHECK (section_origin IN ('manual', 'ai', 'hybrid', 'system')),
+    display_order INT NOT NULL DEFAULT 0,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    last_generated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS summary TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS content_markdown TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[];
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS section_origin TEXT NOT NULL DEFAULT 'ai';
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS display_order INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS last_generated_at TIMESTAMPTZ;
+ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_sections DROP CONSTRAINT IF EXISTS knowledge_sections_section_origin_check;
+    ALTER TABLE knowledge_sections
+        ADD CONSTRAINT knowledge_sections_section_origin_check
+        CHECK (section_origin IN ('manual', 'ai', 'hybrid', 'system'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS knowledge_sections_hub_slug_uidx
+    ON knowledge_sections (hub_id, slug);
+CREATE INDEX IF NOT EXISTS knowledge_sections_hub_order_idx
+    ON knowledge_sections (hub_id, is_archived, display_order, created_at DESC);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'knowledge_sections_set_updated_at'
+    ) THEN
+        CREATE TRIGGER knowledge_sections_set_updated_at
+        BEFORE UPDATE ON knowledge_sections
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+CREATE TABLE IF NOT EXISTS knowledge_questions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
+    section_id UUID REFERENCES knowledge_sections(id) ON DELETE SET NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[],
+    question_origin TEXT NOT NULL DEFAULT 'ai' CHECK (question_origin IN ('manual', 'ai', 'hybrid', 'system')),
+    display_order INT NOT NULL DEFAULT 0,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    last_generated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[];
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS question_origin TEXT NOT NULL DEFAULT 'ai';
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS display_order INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS last_generated_at TIMESTAMPTZ;
+ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_questions DROP CONSTRAINT IF EXISTS knowledge_questions_question_origin_check;
+    ALTER TABLE knowledge_questions
+        ADD CONSTRAINT knowledge_questions_question_origin_check
+        CHECK (question_origin IN ('manual', 'ai', 'hybrid', 'system'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS knowledge_questions_hub_section_idx
+    ON knowledge_questions (hub_id, section_id, is_archived, display_order, created_at DESC);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'knowledge_questions_set_updated_at'
+    ) THEN
+        CREATE TRIGGER knowledge_questions_set_updated_at
+        BEFORE UPDATE ON knowledge_questions
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+CREATE TABLE IF NOT EXISTS knowledge_sync_runs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed')),
+    trigger_source_id UUID REFERENCES knowledge_sources(id) ON DELETE SET NULL,
+    source_count INT NOT NULL DEFAULT 0,
+    section_count INT NOT NULL DEFAULT 0,
+    question_count INT NOT NULL DEFAULT 0,
+    chunk_count INT NOT NULL DEFAULT 0,
+    summary JSONB NOT NULL DEFAULT '{}'::jsonb,
+    error_message TEXT,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS trigger_source_id UUID REFERENCES knowledge_sources(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS source_count INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS section_count INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS question_count INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS chunk_count INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS summary JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_sync_runs DROP CONSTRAINT IF EXISTS knowledge_sync_runs_status_check;
+    ALTER TABLE knowledge_sync_runs
+        ADD CONSTRAINT knowledge_sync_runs_status_check
+        CHECK (status IN ('running', 'completed', 'failed'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS knowledge_sync_runs_hub_started_idx
+    ON knowledge_sync_runs (hub_id, started_at DESC);
+
+CREATE TABLE IF NOT EXISTS knowledge_chunks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
+    source_id UUID REFERENCES knowledge_sources(id) ON DELETE CASCADE,
+    section_id UUID REFERENCES knowledge_sections(id) ON DELETE CASCADE,
+    question_id UUID REFERENCES knowledge_questions(id) ON DELETE CASCADE,
+    chunk_type TEXT NOT NULL CHECK (chunk_type IN ('source', 'section', 'question')),
+    chunk_index INT NOT NULL DEFAULT 0,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL,
+    token_estimate INT NOT NULL DEFAULT 0,
+    checksum TEXT,
+    embedding vector(768),
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS source_id UUID REFERENCES knowledge_sources(id) ON DELETE CASCADE;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS section_id UUID REFERENCES knowledge_sections(id) ON DELETE CASCADE;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS question_id UUID REFERENCES knowledge_questions(id) ON DELETE CASCADE;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS token_estimate INT NOT NULL DEFAULT 0;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS checksum TEXT;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+    ALTER TABLE knowledge_chunks DROP CONSTRAINT IF EXISTS knowledge_chunks_chunk_type_check;
+    ALTER TABLE knowledge_chunks
+        ADD CONSTRAINT knowledge_chunks_chunk_type_check
+        CHECK (chunk_type IN ('source', 'section', 'question'));
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS knowledge_chunks_hub_type_idx
+    ON knowledge_chunks (hub_id, chunk_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS knowledge_chunks_source_idx
+    ON knowledge_chunks (source_id, chunk_index);
+CREATE INDEX IF NOT EXISTS knowledge_chunks_section_idx
+    ON knowledge_chunks (section_id, chunk_index);
+CREATE INDEX IF NOT EXISTS knowledge_chunks_question_idx
+    ON knowledge_chunks (question_id, chunk_index);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_chunks'
+        AND indexname = 'knowledge_chunks_embedding_idx'
+    ) THEN
+        CREATE INDEX knowledge_chunks_embedding_idx
+            ON knowledge_chunks
+            USING ivfflat (embedding vector_cosine_ops)
+            WITH (lists = 100);
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'knowledge_chunks_set_updated_at'
+    ) THEN
+        CREATE TRIGGER knowledge_chunks_set_updated_at
+        BEFORE UPDATE ON knowledge_chunks
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION match_knowledge_chunks(
+    query_embedding vector(768),
+    requested_hub_ids UUID[] DEFAULT NULL,
+    match_threshold FLOAT DEFAULT 0.55,
+    match_count INT DEFAULT 12
+)
+RETURNS TABLE (
+    id UUID,
+    hub_id UUID,
+    source_id UUID,
+    section_id UUID,
+    question_id UUID,
+    chunk_type TEXT,
+    title TEXT,
+    content TEXT,
+    metadata JSONB,
+    similarity FLOAT
+)
+LANGUAGE SQL
+STABLE
+AS $$
+    SELECT
+        kc.id,
+        kc.hub_id,
+        kc.source_id,
+        kc.section_id,
+        kc.question_id,
+        kc.chunk_type,
+        kc.title,
+        kc.content,
+        kc.metadata,
+        1 - (kc.embedding <=> query_embedding) AS similarity
+    FROM knowledge_chunks kc
+    WHERE kc.embedding IS NOT NULL
+      AND (requested_hub_ids IS NULL OR kc.hub_id = ANY(requested_hub_ids))
+      AND 1 - (kc.embedding <=> query_embedding) >= match_threshold
+    ORDER BY kc.embedding <=> query_embedding ASC
+    LIMIT LEAST(match_count, 50);
+$$;
+
+ALTER TABLE knowledge_hubs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_sources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_sections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_sync_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_chunks ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_hubs'
+        AND policyname = 'Admins can manage knowledge hubs'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge hubs"
+        ON knowledge_hubs FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_sources'
+        AND policyname = 'Admins can manage knowledge sources'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge sources"
+        ON knowledge_sources FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_sections'
+        AND policyname = 'Admins can manage knowledge sections'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge sections"
+        ON knowledge_sections FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_questions'
+        AND policyname = 'Admins can manage knowledge questions'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge questions"
+        ON knowledge_questions FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_sync_runs'
+        AND policyname = 'Admins can manage knowledge sync runs'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge sync runs"
+        ON knowledge_sync_runs FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename = 'knowledge_chunks'
+        AND policyname = 'Admins can manage knowledge chunks'
+    ) THEN
+        CREATE POLICY "Admins can manage knowledge chunks"
+        ON knowledge_chunks FOR ALL
+        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    END IF;
+END;
+$$;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('knowledge-sources', 'knowledge-sources', false)
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name, public = EXCLUDED.public;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage'
+        AND tablename = 'objects'
+        AND policyname = 'Admins read knowledge source files'
+    ) THEN
+        CREATE POLICY "Admins read knowledge source files"
+        ON storage.objects FOR SELECT
+        USING (
+            bucket_id = 'knowledge-sources'
+            AND (
+                auth.role() = 'service_role'
+                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            )
+        );
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage'
+        AND tablename = 'objects'
+        AND policyname = 'Admins upload knowledge source files'
+    ) THEN
+        CREATE POLICY "Admins upload knowledge source files"
+        ON storage.objects FOR INSERT
+        WITH CHECK (
+            bucket_id = 'knowledge-sources'
+            AND (
+                auth.role() = 'service_role'
+                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            )
+        );
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage'
+        AND tablename = 'objects'
+        AND policyname = 'Admins update knowledge source files'
+    ) THEN
+        CREATE POLICY "Admins update knowledge source files"
+        ON storage.objects FOR UPDATE
+        USING (
+            bucket_id = 'knowledge-sources'
+            AND (
+                auth.role() = 'service_role'
+                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            )
+        )
+        WITH CHECK (
+            bucket_id = 'knowledge-sources'
+            AND (
+                auth.role() = 'service_role'
+                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            )
+        );
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage'
+        AND tablename = 'objects'
+        AND policyname = 'Admins delete knowledge source files'
+    ) THEN
+        CREATE POLICY "Admins delete knowledge source files"
+        ON storage.objects FOR DELETE
+        USING (
+            bucket_id = 'knowledge-sources'
+            AND (
+                auth.role() = 'service_role'
+                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            )
+        );
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM knowledge_hubs
+        WHERE scope_type = 'general'
+        AND property_id IS NULL
+    ) THEN
+        INSERT INTO knowledge_hubs (scope_type, property_id, title, description)
+        VALUES (
+            'general',
+            NULL,
+            'General Knowledge Base',
+            'Shared guidance and context that applies across properties.'
+        );
+    END IF;
+END;
+$$;
+
+UPDATE knowledge_hubs
+SET description = 'Shared guidance and context that applies across properties.'
+WHERE scope_type = 'general'
+  AND property_id IS NULL
+  AND description IS DISTINCT FROM 'Shared guidance and context that applies across properties.';
+
+INSERT INTO knowledge_hubs (scope_type, property_id, title, description)
+SELECT
+    'property',
+    p.id,
+    p.name || ' Knowledge Base',
+    'Operational knowledge specific to ' || p.name || '.'
+FROM properties p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM knowledge_hubs kh
+    WHERE kh.scope_type = 'property'
+      AND kh.property_id = p.id
+);
+
+UPDATE knowledge_hubs kh
+SET title = p.name || ' Knowledge Base'
+FROM properties p
+WHERE kh.scope_type = 'property'
+  AND kh.property_id = p.id
+  AND kh.title IS DISTINCT FROM p.name || ' Knowledge Base';

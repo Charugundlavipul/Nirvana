@@ -1,5 +1,5 @@
-import AdminApp from "../../../src/components/Admin/AdminApp";
+import AdminPageClient from "./AdminPageClient";
 
 export default function AdminPage() {
-  return <AdminApp />;
+  return <AdminPageClient />;
 }
