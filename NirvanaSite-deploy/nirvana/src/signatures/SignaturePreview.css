@@ -1,0 +1,88 @@
+.signature-preview-page {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #111827;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.signature-preview-page .signature-container-box {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.signature-preview-page .preview-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.signature-preview-page .signature-container {
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    overflow: auto;
+}
+
+.signature-preview-page .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.signature-preview-page button {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.signature-preview-page .btn-primary {
+    background-color: #60BD68;
+    color: white;
+}
+
+.signature-preview-page .btn-primary:hover {
+    background-color: #4e9a55;
+    transform: translateY(-1px);
+}
+
+.signature-preview-page .btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.signature-preview-page .btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.signature-preview-page .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: #111827;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 9999px;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+    z-index: 100;
+}
+
+.signature-preview-page .toast.show {
+    transform: translateX(-50%) translateY(0);
+}

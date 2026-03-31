@@ -25,6 +25,7 @@ import AdminUsersManager from "./components/Admin/Users/AdminUsersManager";
 import SubscribersManager from "./components/Admin/Subscribers/SubscribersManager";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe";
 import ScrollToTop from "./components/scrolltotop/ScrolltoTop";
+import SignaturePreview from "./signatures/SignaturePreview";
 import './App.css';
 
 function AppLayout() {
@@ -62,6 +63,9 @@ function AppLayout() {
 
           {/* Unsubscribe (public, token-based) */}
           <Route path="/unsubscribe" element={<Unsubscribe />} />
+
+          {/* Signatures Route */}
+          <Route path="/signatures" element={<SignaturePreview />} />
 
           {/* Dynamic Property Route */}
           <Route path="/:slug" element={<PropertyPage />} />

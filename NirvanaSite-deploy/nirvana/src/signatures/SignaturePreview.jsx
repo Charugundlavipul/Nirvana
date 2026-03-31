@@ -1,108 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+import React, { useState } from 'react';
+import './SignaturePreview.css';
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nirvana Luxe Signature Preview</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f9fafb;
-            color: #111827;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
-
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            max-width: 700px;
-            width: 100%;
-            background: white;
-        }
-
-        .preview-label {
-            font-weight: 600;
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .signature-container {
-            border: 1px solid #e5e7eb;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            overflow: auto;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .btn-primary {
-            background-color: #60BD68;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #4e9a55;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #f3f4f6;
-            color: #374151;
-        }
-
-        .btn-secondary:hover {
-            background-color: #e5e7eb;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: #111827;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 9999px;
-            font-size: 14px;
-            transition: transform 0.3s ease;
-            z-index: 100;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container" style="margin-bottom: 40px;">
-        <div class="preview-label">Generic Signature Preview</div>
-        <div id="signature-generic" class="signature-container">
+const genericHTML = `
             <table cellpadding="0" cellspacing="0" border="0" width="600px"
                 style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
                 <tbody>
@@ -126,7 +25,7 @@
                                         <td width="100" style="vertical-align: middle;"><span
                                                 style="margin-right: 20px; display: block;"><img
                                                     src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
-                                                    role="presentation" width="80" style="max-width: 80px;"></span></td>
+                                                    role="presentation" width="80" style="max-width: 80px;" /></span></td>
                                         <td style="vertical-align: middle;">
                                             <h2
                                                 style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
@@ -160,7 +59,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/phone-icon-dark-2x.png"
                                                                                     alt="mobilePhone" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -181,7 +80,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/email-icon-dark-2x.png"
                                                                                     alt="emailAddress" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -202,7 +101,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png"
                                                                                     alt="website" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -231,7 +130,7 @@
                                     received this email by mistake, please notify the sender immediately and do not
                                     disclose the
                                     contents to anyone or make copies thereof.</p>
-                                <br>
+                                <br/>
                                 <p style="font-size: inherit; margin: 0px;">​ATTN: By law all Real Estate Agents/Brokers
                                     are
                                     required to provide each consumer with the Working With Real Estate Agents Brochure.
@@ -246,18 +145,9 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
+`;
 
-        <div class="actions">
-            <button class="btn-primary" onclick="copyRichText('signature-generic')">Copy for Email (Rich Text)</button>
-            <button class="btn-secondary" onclick="copyHTML('signature-generic')">Copy HTML Code</button>
-        </div>
-    </div>
-
-    <!-- Support Team Signature Preview -->
-    <div class="container">
-        <div class="preview-label">Support Team Signature Preview</div>
-        <div id="signature-support" class="signature-container">
+const supportHTML = `
             <table cellpadding="0" cellspacing="0" border="0" width="600px"
                 style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
                 <tbody>
@@ -281,7 +171,7 @@
                                         <td width="100" style="vertical-align: middle;"><span
                                                 style="margin-right: 20px; display: block;"><img
                                                     src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
-                                                    role="presentation" width="80" style="max-width: 80px;"></span></td>
+                                                    role="presentation" width="80" style="max-width: 80px;" /></span></td>
                                         <td style="vertical-align: middle;">
                                             <h2
                                                 style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
@@ -316,7 +206,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/phone-icon-dark-2x.png"
                                                                                     alt="mobilePhone" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -337,7 +227,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/email-icon-dark-2x.png"
                                                                                     alt="emailAddress" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -358,7 +248,7 @@
                                                                                 style="display: inline-block; background-color: rgb(247, 201, 99);"><img
                                                                                     src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png"
                                                                                     alt="website" width="18"
-                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));"></span>
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -387,7 +277,7 @@
                                     received this email by mistake, please notify the sender immediately and do not
                                     disclose the
                                     contents to anyone or make copies thereof.</p>
-                                <br>
+                                <br/>
                                 <p style="font-size: inherit; margin: 0px;">​ATTN: By law all Real Estate Agents/Brokers
                                     are
                                     required to provide each consumer with the Working With Real Estate Agents Brochure.
@@ -402,52 +292,71 @@
                     </tr>
                 </tbody>
             </table>
+`;
+
+const SignaturePreview = () => {
+    const [toastMessage, setToastMessage] = useState('');
+    const [showToast, setShowToast] = useState(false);
+
+    const displayToast = (message) => {
+        setToastMessage(message);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+        }, 2000);
+    };
+
+    const copyRichText = (id) => {
+        const signature = document.getElementById(id);
+        
+        try {
+            const range = document.createRange();
+            range.selectNode(signature);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            displayToast('Rich text copied! You can now paste it into your email signature settings.');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+    };
+
+    const copyHTML = async (id) => {
+        const signature = document.getElementById(id).innerHTML;
+        try {
+            await navigator.clipboard.writeText(signature.trim());
+            displayToast('HTML code copied! You can now paste it into any website footer.');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+    };
+
+    return (
+        <div className="signature-preview-page">
+            <div className="signature-container-box" style={{ marginBottom: "40px" }}>
+                <div className="preview-label">Generic Signature Preview</div>
+                <div id="signature-generic" className="signature-container" dangerouslySetInnerHTML={{ __html: genericHTML }}></div>
+
+                <div className="actions">
+                    <button className="btn-primary" onClick={() => copyRichText('signature-generic')}>Copy for Email (Rich Text)</button>
+                    <button className="btn-secondary" onClick={() => copyHTML('signature-generic')}>Copy HTML Code</button>
+                </div>
+            </div>
+
+            <div className="signature-container-box">
+                <div className="preview-label">Support Team Signature Preview</div>
+                <div id="signature-support" className="signature-container" dangerouslySetInnerHTML={{ __html: supportHTML }}></div>
+
+                <div className="actions">
+                    <button className="btn-primary" onClick={() => copyRichText('signature-support')}>Copy for Email (Rich Text)</button>
+                    <button className="btn-secondary" onClick={() => copyHTML('signature-support')}>Copy HTML Code</button>
+                </div>
+            </div>
+
+            <div id="toast" className={"toast " + (showToast ? "show" : "")}>{toastMessage}</div>
         </div>
+    );
+};
 
-        <div class="actions">
-            <button class="btn-primary" onclick="copyRichText('signature-support')">Copy for Email (Rich Text)</button>
-            <button class="btn-secondary" onclick="copyHTML('signature-support')">Copy HTML Code</button>
-        </div>
-    </div>
-
-    <div id="toast" class="toast">Signature copied!</div>
-
-    <script>
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
-        }
-
-        async function copyRichText(id) {
-            const signature = document.getElementById(id);
-
-            try {
-                const range = document.createRange();
-                range.selectNode(signature);
-                window.getSelection().removeAllRanges();
-                window.getSelection().addRange(range);
-                document.execCommand('copy');
-                window.getSelection().removeAllRanges();
-                showToast('Rich text copied! You can now paste it into your email signature settings.');
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-            }
-        }
-
-        async function copyHTML(id) {
-            const signature = document.getElementById(id).innerHTML;
-            try {
-                await navigator.clipboard.writeText(signature.trim());
-                showToast('HTML code copied! You can now paste it into any website footer.');
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-            }
-        }
-    </script>
-</body>
-
-</html>
+export default SignaturePreview;
