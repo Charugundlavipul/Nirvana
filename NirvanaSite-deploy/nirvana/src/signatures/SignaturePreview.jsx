@@ -309,11 +309,12 @@ const SignaturePreview = () => {
     };
 
     const copyRichText = (id) => {
-        const signature = document.getElementById(id);
+        const signatureContainer = document.getElementById(id);
+        const signatureToCopy = signatureContainer.querySelector('table');
         
         try {
             const range = document.createRange();
-            range.selectNode(signature);
+            range.selectNode(signatureToCopy || signatureContainer);
             window.getSelection().removeAllRanges();
             window.getSelection().addRange(range);
             document.execCommand('copy');
