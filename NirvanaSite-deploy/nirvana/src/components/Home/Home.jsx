@@ -345,7 +345,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               {/* Desktop Navigation Buttons */}
               <button
                 onClick={prevProperty}
-                className="hidden lg:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
                 aria-label="Previous property"
               >
                 <FaChevronLeft size={24} />
@@ -382,7 +382,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
               <button
                 onClick={nextProperty}
-                className="hidden lg:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
                 aria-label="Next property"
               >
                 <FaChevronRight size={24} />
@@ -645,7 +645,7 @@ const PremiumReviewCard = ({ review }) => {
             <img src={review.img} alt={review.author} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
-              {review.author?.charAt(0) || 'G'}
+              {review.author?.replace(/[^a-zA-Z]/g, '').charAt(0).toUpperCase() || 'G'}
             </div>
           )}
         </div>

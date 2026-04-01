@@ -23,6 +23,13 @@ const toCuratedMap = (rows = []) => {
   return byPropertyId;
 };
 
+const getPreferredPropertyImage = ({ curated = {}, galleryImages = [] } = {}) =>
+  curated.home ||
+  curated.secondary ||
+  curated.bg ||
+  (Array.isArray(galleryImages) ? galleryImages.find(Boolean) : "") ||
+  "";
+
 const normalizeProperty = (property, curatedByPropertyId) => {
   // Instead of static meta, rely on DB columns or sensible defaults
   // If specific meta fields (like fallback images) are critical and not in DB strictly, 
@@ -225,12 +232,16 @@ export async function fetchProperties() {
 
   return properties.map(prop => {
     const galleryImages = galleryByPropertyId[prop.id] || [];
-    const actualPrimaryImage = galleryImages.length > 0 ? galleryImages[0] : prop.curated?.home || "";
+    const actualPrimaryImage = getPreferredPropertyImage({
+      curated: prop.curated,
+      galleryImages,
+    });
     
     return {
       ...prop,
       highlightImages: highlightsByPropertyId[prop.id] || [],
       primary_image: actualPrimaryImage,
+      image: actualPrimaryImage,
       tagline: ""
     };
   });
@@ -246,7 +257,9 @@ export async function fetchPropertyCards() {
   return properties.map((property) => ({
     slug: property.slug,
     title: property.name,
-    image: property.curated.home || property.curated.secondary || "",
+    image: getPreferredPropertyImage({
+      curated: property.curated,
+    }),
     faqRouteId: property.meta?.faqRouteId || null,
     reviewRouteId: property.meta?.reviewRouteId || null,
     bookingPropertyId: property.id,

@@ -8,9 +8,19 @@ const PropertyListingCard = ({ property }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const images = property.highlightImages && property.highlightImages.length > 0
-    ? property.highlightImages.filter(Boolean)
-    : [property.image].filter(Boolean);
+  const highlightCandidate = property.highlightImages && property.highlightImages.length > 0
+    ? property.highlightImages
+    : [];
+  const primaryFallback = property.primary_image || property.image || "";
+  
+  const uniqueImages = new Set();
+  const images = [primaryFallback, ...highlightCandidate]
+    .filter(Boolean)
+    .filter((img) => {
+      if (uniqueImages.has(img)) return false;
+      uniqueImages.add(img);
+      return true;
+    });
 
   // Force the browser to secretly download all carousel images in the background
   // so that clicking the arrow buttons feels completely instantaneous.

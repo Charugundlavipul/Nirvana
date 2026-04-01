@@ -28,7 +28,10 @@ const ReviewCard = ({ review }) => {
   const normalizedSource = source.toLowerCase();
   const text = review.text || "";
   const avatarInitials = name
+    .replace(/[^a-zA-Z\s]/g, '')
+    .trim()
     .split(" ")
+    .filter(Boolean)
     .map((part) => part[0])
     .join("")
     .slice(0, 2)

@@ -36,29 +36,29 @@ const ContactUs = () => {
             <div className="max-w-6xl mx-auto px-6 py-16 space-y-20">
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     <a
-                        href="mailto:vkrvacations@gmail.com"
+                        href="mailto:reservations@vkr-ventures.com"
                         className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
                     >
                         <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
                             <FaEnvelope />
                         </div>
                         <h3 className="font-bold text-gray-900">Email Us</h3>
-                        <p className="text-sm text-gray-500 break-all">vkrvacations@gmail.com</p>
+                        <p className="text-sm text-gray-500 break-all">reservations@vkr-ventures.com</p>
                     </a>
 
                     <a
-                        href="tel:+1-972-835-9376"
+                        href="tel:704-780-1369"
                         className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
                     >
                         <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
                             <FaPhone />
                         </div>
                         <h3 className="font-bold text-gray-900">Call Us</h3>
-                        <p className="text-sm text-gray-500">972-835-9376</p>
+                        <p className="text-sm text-gray-500">704-780-1369</p>
                     </a>
 
                     <a
-                        href="https://www.instagram.com/nirvanaaluxe/"
+                        href="https://www.instagram.com/nirvanaluxevacations/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
@@ -67,7 +67,7 @@ const ContactUs = () => {
                             <FaInstagram />
                         </div>
                         <h3 className="font-bold text-gray-900">Instagram</h3>
-                        <p className="text-sm text-gray-500">@nirvanaaluxe</p>
+                        <p className="text-sm text-gray-500">@nirvanaluxevacations</p>
                     </a>
 
                     <a
@@ -120,7 +120,7 @@ const ContactUs = () => {
                             <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
                                 <FaYoutube size={18} />
                             </a>
-                            <a href="https://www.instagram.com/nirvanaaluxe/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
+                            <a href="https://www.instagram.com/nirvanaluxevacations/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
                                 <FaInstagram size={18} />
                             </a>
                             <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">

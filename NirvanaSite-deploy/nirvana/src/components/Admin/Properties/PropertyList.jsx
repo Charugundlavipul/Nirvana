@@ -17,7 +17,7 @@ const PropertyList = () => {
         try {
             const { data, error } = await supabase
                 .from("properties")
-                .select("*, property_curated_images(url)")
+                .select("*, property_curated_images(slot,url)")
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
@@ -48,7 +48,9 @@ const PropertyList = () => {
 
     const getThumbnail = (p) => {
         const images = p.property_curated_images || [];
-        return images.length > 0 ? images[0].url : "/assets/placeholder-house.png";
+        const homeImage = images.find((image) => image.slot === "home")?.url;
+        const fallbackImage = images[0]?.url;
+        return homeImage || fallbackImage || "/assets/placeholder-house.png";
     };
 
     return (

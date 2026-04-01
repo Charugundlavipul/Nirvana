@@ -88,17 +88,17 @@ const AboutUs = () => {
               or want to share your Nirvana experience, reach out to us through any of these channels:
             </p>
             <div className="flex flex-col gap-4 mt-6">
-              <a href="mailto:vkrvacations@gmail.com" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
-                <FaEnvelope className="text-primary text-xl" /> vkrvacations@gmail.com
+              <a href="mailto:reservations@vkr-ventures.com" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
+                <FaEnvelope className="text-primary text-xl" /> reservations@vkr-ventures.com
               </a>
-              <a href="https://www.instagram.com/nirvanaaluxe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
-                <FaInstagram className="text-primary text-xl" /> @nirvanaaluxe
+              <a href="https://www.instagram.com/nirvanaluxevacations" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
+                <FaInstagram className="text-primary text-xl" /> @nirvanaluxevacations
               </a>
               <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
                 <FaFacebook className="text-primary text-xl" /> Nirvana Luxe
               </a>
-              <a href="tel:+1-972-835-9376" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
-                <FaPhone className="text-primary text-xl" /> 972-835-9376
+              <a href="tel:704-780-1369" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
+                <FaPhone className="text-primary text-xl" /> 704-780-1369
               </a>
             </div>
           </div>
