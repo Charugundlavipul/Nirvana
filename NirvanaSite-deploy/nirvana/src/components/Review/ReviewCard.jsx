@@ -3,6 +3,7 @@ import { FaStar, FaStarHalfAlt, FaRegStar, FaAirbnb } from "react-icons/fa";
 
 const ReviewCard = ({ review }) => {
   const [showFull, setShowFull] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const renderStars = (rating) => {
     const stars = [];
@@ -64,10 +65,15 @@ const ReviewCard = ({ review }) => {
   return (
     <article className="flex min-h-[230px] flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
       <header className="mb-3 flex items-center gap-3">
-        {review.img ? (
-          <img src={review.img} alt={name} className="h-11 w-11 rounded-full border border-slate-200 object-cover" />
+        {review.img && !imgError ? (
+          <img 
+            src={review.img} 
+            alt={name} 
+            className="h-11 w-11 rounded-full border border-slate-200 object-cover" 
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-800">
+          <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border border-slate-200 bg-slate-100 text-sm font-bold tracking-wide text-slate-700">
             {avatarInitials || "G"}
           </div>
         )}

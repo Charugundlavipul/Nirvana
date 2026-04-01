@@ -11,7 +11,7 @@ const KNOWLEDGE_SYNC_MODEL_LABEL = "gemini-3.1-flash-lite-preview + gemini-embed
 const CHUNK_SIZE = 1100;
 const CHUNK_OVERLAP = 180;
 const TEXT_EMBED_DIMENSION = 768;
-const MAX_GENERATED_SECTIONS = 8;
+const MAX_GENERATED_SECTIONS = 20;
 const TARGET_MIN_SECTIONS = 5;
 const MAX_RECOMMENDED_QUESTIONS_PER_SECTION = 3;
 const SOURCE_APPENDIX_SLUG = "canonical-source-details";
@@ -287,6 +287,114 @@ function getQuestionTopicKey(question) {
   return `${question?.metadata?.ai_question_key || normalizeQuestionKey(question?.question || "")}`.trim();
 }
 
+function buildSectionTopicText(section = {}) {
+  return normalizeWhitespace(
+    [
+      section?.title || "",
+      section?.summary || "",
+      section?.content_markdown || section?.contentMarkdown || "",
+    ].join("\n")
+  );
+}
+
+function buildTokenSet(value) {
+  return new Set(tokenizeSearchText(value));
+}
+
+function computeTokenDiceScore(left, right) {
+  const leftValues = left instanceof Set ? Array.from(left) : Array.from(new Set(left || []));
+  const rightValues =
+    right instanceof Set ? Array.from(right) : Array.from(new Set(right || []));
+  if (!leftValues.length || !rightValues.length) return 0;
+
+  const rightSet = new Set(rightValues);
+  let overlap = 0;
+  for (const token of leftValues) {
+    if (rightSet.has(token)) {
+      overlap += 1;
+    }
+  }
+
+  return (2 * overlap) / (leftValues.length + rightValues.length);
+}
+
+function hasSectionTextChanges(existingSection, nextSection) {
+  return (
+    normalizeWhitespace(existingSection?.title || "") !==
+      normalizeWhitespace(nextSection?.title || "") ||
+    normalizeWhitespace(existingSection?.summary || "") !==
+      normalizeWhitespace(nextSection?.summary || "") ||
+    normalizeWhitespace(existingSection?.content_markdown || "") !==
+      normalizeWhitespace(nextSection?.content_markdown || "")
+  );
+}
+
+function clearSuggestedSectionEditMetadata(metadata = {}) {
+  const nextMetadata = { ...(metadata || {}) };
+  delete nextMetadata.ai_suggested_edit;
+  delete nextMetadata.ai_suggested_edit_updated_at;
+  return nextMetadata;
+}
+
+function buildSuggestedSectionEdit(section, rawSection, sourceIds, syncTimestamp) {
+  return {
+    title: normalizeWhitespace(rawSection?.title || section?.title || ""),
+    summary: normalizeWhitespace(rawSection?.summary || ""),
+    content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
+    source_ids: sourceIds,
+    generated_at: syncTimestamp,
+  };
+}
+
+function findMatchingKnowledgeSection(rawSection, existingSectionsByTopicKey, existingSections) {
+  const title = `${rawSection?.title || ""}`.trim();
+  const slug = slugify(title);
+  if (slug) {
+    const exactMatch = existingSectionsByTopicKey.get(slug);
+    if (exactMatch && !isReadOnlySystemSection(exactMatch)) {
+      return exactMatch;
+    }
+  }
+
+  const rawTitleText = normalizeWhitespace(title);
+  const rawBodyText = buildSectionTopicText(rawSection);
+  const rawTitleTokens = buildTokenSet(rawTitleText);
+  const rawBodyTokens = buildTokenSet(rawBodyText);
+  const normalizedRawTitle = rawTitleText.toLowerCase();
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const candidate of existingSections) {
+    if (!candidate || isReadOnlySystemSection(candidate)) continue;
+
+    const candidateTitleText = normalizeWhitespace(candidate.title || "");
+    const candidateBodyText = buildSectionTopicText(candidate);
+    const titleScore = computeTokenDiceScore(rawTitleTokens, buildTokenSet(candidateTitleText));
+    const bodyScore = computeTokenDiceScore(rawBodyTokens, buildTokenSet(candidateBodyText));
+    const normalizedCandidateTitle = candidateTitleText.toLowerCase();
+    const titleContainsMatch =
+      normalizedRawTitle &&
+      normalizedCandidateTitle &&
+      (normalizedRawTitle.includes(normalizedCandidateTitle) ||
+        normalizedCandidateTitle.includes(normalizedRawTitle));
+
+    const score = Math.max(titleScore, titleContainsMatch ? 1 : 0) * 0.35 + bodyScore * 0.65;
+    const isStrongTopicMatch =
+      bodyScore >= 0.7 ||
+      score >= 0.58 ||
+      (titleContainsMatch && bodyScore >= 0.22) ||
+      (titleScore >= 0.34 && bodyScore >= 0.34);
+
+    if (isStrongTopicMatch && score > bestScore) {
+      bestMatch = candidate;
+      bestScore = score;
+    }
+  }
+
+  return bestMatch;
+}
+
 function buildKnowledgePrompt({ hub, sourceCatalog, existingSections, existingQuestions }) {
   const sourceBlocks = sourceCatalog
     .map(
@@ -356,13 +464,14 @@ Return JSON with this exact shape:
 
 Rules:
 - Use only the supplied sources.
-- Keep the final knowledge hub compact. Target 5 to 8 sections total.
+- Keep the final knowledge hub compact, but do not over-club unrelated topics. Aim for focused sections and allow up to 20 when the sources justify it.
 - Focus on categories like check-in, access, rules, safety, troubleshooting, amenities, local guidance, policies, and operations when supported by the sources.
 - Sections and answers must be detailed enough for admins but not verbose.
 - Prefer 1 to 3 recommended questions per section.
 - Do not use markdown headings inside content_markdown; simple bullets or short paragraphs are enough.
 - Every section and question must include at least one source_ref.
 - Prefer updating or enriching an existing topic over creating a duplicate topic with slightly different wording.
+- Create a brand-new section only when the new information is genuinely irrelevant to every existing section.
 - Do not remove existing knowledge unless current sources clearly contradict it.
 - If existing knowledge is still valid but current sources add new detail, merge the new detail into that topic instead of replacing it wholesale.
 - Treat any existing manual or hybrid content as curated editorial knowledge. Do not regenerate the same topic or question in a way that would overwrite that curated content.
@@ -2060,6 +2169,7 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
     let questionCount = 0;
     const generatedSectionIds = new Set();
     const generatedQuestionIds = new Set();
+    const protectedSectionSuggestionIds = new Set();
     const syncTimestamp = new Date().toISOString();
 
     for (const [index, rawSection] of nextSections.entries()) {
@@ -2068,7 +2178,9 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
 
       const slug = slugify(title);
       const sectionTopicKey = slug;
-      const existing = existingSectionsByTopicKey.get(sectionTopicKey);
+      const existing =
+        existingSectionsByTopicKey.get(sectionTopicKey) ||
+        findMatchingKnowledgeSection(rawSection, existingSectionsByTopicKey, llmContinuitySections);
       const sourceIds = mapSourceIds(rawSection?.source_refs, sourceRefToId);
       let sectionId = existing?.id || null;
 
@@ -2087,7 +2199,7 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
           is_archived: false,
           last_generated_at: syncTimestamp,
           metadata: {
-            ...(existing.metadata || {}),
+            ...clearSuggestedSectionEditMetadata(existing.metadata || {}),
             ai_topic_key: sectionTopicKey,
             ai_updated_at: syncTimestamp,
             verification_status: "source_backed",
@@ -2107,6 +2219,37 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
         if (error) throw error;
         sectionId = data.id;
         sectionCount += 1;
+      } else if (existing && ["manual", "hybrid"].includes(existing.section_origin)) {
+        sectionId = existing.id;
+        const suggestedEdit = buildSuggestedSectionEdit(existing, rawSection, sourceIds, syncTimestamp);
+        const nextMetadata = clearSuggestedSectionEditMetadata(existing.metadata || {});
+        const hasChanges = hasSectionTextChanges(existing, suggestedEdit);
+
+        if (hasChanges || existing.metadata?.ai_suggested_edit) {
+          const { error } = await adminClient
+            .from("knowledge_sections")
+            .update({
+              metadata: hasChanges
+                ? {
+                    ...nextMetadata,
+                    ai_topic_key:
+                      existing.metadata?.ai_topic_key || getSectionTopicKey(existing) || sectionTopicKey,
+                    ai_suggested_edit: suggestedEdit,
+                    ai_suggested_edit_updated_at: syncTimestamp,
+                  }
+                : {
+                    ...nextMetadata,
+                    ai_topic_key:
+                      existing.metadata?.ai_topic_key || getSectionTopicKey(existing) || sectionTopicKey,
+                  },
+            })
+            .eq("id", existing.id);
+          if (error) throw error;
+        }
+
+        if (hasChanges) {
+          protectedSectionSuggestionIds.add(existing.id);
+        }
       } else if (!existing) {
         const { data, error } = await adminClient
           .from("knowledge_sections")
@@ -2139,6 +2282,30 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
         if (error) throw error;
         sectionId = data.id;
         sectionCount += 1;
+        llmContinuitySections.push({
+          id: data.id,
+          title,
+          slug,
+          summary: normalizeWhitespace(rawSection?.summary || ""),
+          content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
+          source_ids: sourceIds,
+          section_origin: "ai",
+          metadata: {
+            ai_topic_key: sectionTopicKey,
+          },
+        });
+        existingSectionsByTopicKey.set(sectionTopicKey, {
+          id: data.id,
+          title,
+          slug,
+          summary: normalizeWhitespace(rawSection?.summary || ""),
+          content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
+          source_ids: sourceIds,
+          section_origin: "ai",
+          metadata: {
+            ai_topic_key: sectionTopicKey,
+          },
+        });
       }
 
       if (!sectionId) continue;
@@ -2228,6 +2395,23 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
         generatedQuestionIds.add(data.id);
         questionCount += 1;
       }
+    }
+
+    const staleProtectedSuggestions = llmContinuitySections.filter(
+      (section) =>
+        ["manual", "hybrid"].includes(section.section_origin) &&
+        section.metadata?.ai_suggested_edit &&
+        !protectedSectionSuggestionIds.has(section.id)
+    );
+
+    for (const section of staleProtectedSuggestions) {
+      const { error } = await adminClient
+        .from("knowledge_sections")
+        .update({
+          metadata: clearSuggestedSectionEditMetadata(section.metadata || {}),
+        })
+        .eq("id", section.id);
+      if (error) throw error;
     }
 
     const [auditedSections, auditedQuestions] = await Promise.all([
@@ -2746,7 +2930,7 @@ export async function saveSection(adminClient, input) {
           verification.supportingSourceIds || []
         ),
         metadata: buildVerificationMetadata(
-          {
+          clearSuggestedSectionEditMetadata({
             ...(existing.metadata || {}),
             ai_topic_key: existing.metadata?.ai_topic_key || slugify(existing.title || title),
             manualized_from_ai_at:
@@ -2754,7 +2938,7 @@ export async function saveSection(adminClient, input) {
                 ? new Date().toISOString()
                 : existing.metadata?.manualized_from_ai_at,
             manually_edited_at: new Date().toISOString(),
-          },
+          }),
           verification
         ),
       })
@@ -2793,7 +2977,7 @@ export async function saveSection(adminClient, input) {
           verification.supportingSourceIds || []
         ),
         metadata: buildVerificationMetadata(
-          {
+          clearSuggestedSectionEditMetadata({
             ...(conflicting.metadata || {}),
             ai_topic_key:
               conflicting.metadata?.ai_topic_key || slugify(conflicting.title || title),
@@ -2802,7 +2986,7 @@ export async function saveSection(adminClient, input) {
                 ? new Date().toISOString()
                 : conflicting.metadata?.manualized_from_ai_at,
             manually_edited_at: new Date().toISOString(),
-          },
+          }),
           verification
         ),
       })
@@ -3333,13 +3517,25 @@ export async function getKnowledgeHubPayload(adminClient, hubId) {
   });
 
   const visibleSections = sections.filter((section) => !section.metadata?.hidden_from_ui);
-  const sectionsWithQuestions = visibleSections.map((section) => ({
-    ...section,
-    source_items: (section.source_ids || [])
-      .map((id) => sourceMap.get(id))
-      .filter(Boolean),
-    questions: groupedQuestions.get(section.id) || [],
-  }));
+  const sectionsWithQuestions = visibleSections.map((section) => {
+    const suggestedEdit = parseObjectLike(section.metadata?.ai_suggested_edit);
+    const suggestedSourceIds = normalizeIdList(suggestedEdit.source_ids || []);
+
+    return {
+      ...section,
+      source_items: (section.source_ids || [])
+        .map((id) => sourceMap.get(id))
+        .filter(Boolean),
+      questions: groupedQuestions.get(section.id) || [],
+      suggested_edit:
+        suggestedEdit.title || suggestedEdit.summary || suggestedEdit.content_markdown
+          ? {
+              ...suggestedEdit,
+              source_items: suggestedSourceIds.map((id) => sourceMap.get(id)).filter(Boolean),
+            }
+          : null,
+    };
+  });
 
   return {
     hub,

@@ -193,16 +193,17 @@ export async function fetchProperties() {
   // Fetch highlight images and primary images for all properties
   const propertyIds = properties.map(p => p.id);
 
-  const [highlightsRes, primaryRes] = await Promise.all([
+  const [highlightsRes, galleryRes] = await Promise.all([
     supabase
       .from("property_highlight_images")
       .select("property_id,url,display_order")
       .in("property_id", propertyIds)
       .order("display_order", { ascending: true }),
     supabase
-      .from("properties")
-      .select("id,primary_image,tagline")
-      .in("id", propertyIds)
+      .from("property_images")
+      .select("property_id,url,display_order")
+      .in("property_id", propertyIds)
+      .order("display_order", { ascending: true })
   ]);
 
   // Build lookup maps
@@ -214,20 +215,25 @@ export async function fetchProperties() {
     highlightsByPropertyId[row.property_id].push(row.url);
   });
 
-  const primaryByPropertyId = {};
-  (primaryRes.data || []).forEach(row => {
-    primaryByPropertyId[row.id] = {
-      primary_image: row.primary_image,
-      tagline: row.tagline
-    };
+  const galleryByPropertyId = {};
+  (galleryRes.data || []).forEach(row => {
+    if (!galleryByPropertyId[row.property_id]) {
+      galleryByPropertyId[row.property_id] = [];
+    }
+    galleryByPropertyId[row.property_id].push(row.url);
   });
 
-  return properties.map(prop => ({
-    ...prop,
-    highlightImages: highlightsByPropertyId[prop.id] || [],
-    primary_image: primaryByPropertyId[prop.id]?.primary_image || prop.curated?.home || "",
-    tagline: primaryByPropertyId[prop.id]?.tagline || ""
-  }));
+  return properties.map(prop => {
+    const galleryImages = galleryByPropertyId[prop.id] || [];
+    const actualPrimaryImage = galleryImages.length > 0 ? galleryImages[0] : prop.curated?.home || "";
+    
+    return {
+      ...prop,
+      highlightImages: highlightsByPropertyId[prop.id] || [],
+      primary_image: actualPrimaryImage,
+      tagline: ""
+    };
+  });
 }
 
 export async function fetchPropertyBySlug(slug) {

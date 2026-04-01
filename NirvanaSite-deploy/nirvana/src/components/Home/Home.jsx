@@ -64,9 +64,17 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
   // Handle items to show on resize
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setItemsToShow(mobile ? 1 : 3);
-      setIsMobile(mobile);
+      const width = window.innerWidth;
+      if (width >= 1024) {
+        setItemsToShow(3);
+        setIsMobile(false);
+      } else if (width >= 768) {
+        setItemsToShow(2);
+        setIsMobile(false);
+      } else {
+        setItemsToShow(1);
+        setIsMobile(true);
+      }
     };
 
     handleResize();
@@ -333,50 +341,52 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             onTouchStart={() => setIsPaused(true)}
             onTouchEnd={() => setIsPaused(false)}
           >
-            {/* Desktop Navigation Buttons */}
-            <button
-              onClick={prevProperty}
-              className="hidden lg:flex absolute left-[-60px] top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-              aria-label="Previous property"
-            >
-              <FaChevronLeft size={24} />
-            </button>
+            <div className="flex items-center justify-center gap-4 xl:gap-8">
+              {/* Desktop Navigation Buttons */}
+              <button
+                onClick={prevProperty}
+                className="hidden lg:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                aria-label="Previous property"
+              >
+                <FaChevronLeft size={24} />
+              </button>
 
-            <button
-              onClick={nextProperty}
-              className="hidden lg:flex absolute right-[-60px] top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-              aria-label="Next property"
-            >
-              <FaChevronRight size={24} />
-            </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
+                {getVisibleProperties().map((prop, index) => {
+                  const images = getCardImages(prop);
+                  const currentIndex = imageIndices[prop.id] || 0;
+                  // Calculate the actual index in the full properties array for the badge
+                  const originalIndex = properties.findIndex(p => p.id === prop.id);
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {getVisibleProperties().map((prop, index) => {
-                const images = getCardImages(prop);
-                const currentIndex = imageIndices[prop.id] || 0;
-                // Calculate the actual index in the full properties array for the badge
-                const originalIndex = properties.findIndex(p => p.id === prop.id);
+                  return (
+                    <SignatureCard
+                      key={prop.id}
+                      title={prop.name}
+                      location={prop.location}
+                      images={images}
+                      currentIndex={currentIndex}
+                      onPrev={(e) => handleCardPrev(e, prop)}
+                      onNext={(e) => handleCardNext(e, prop)}
+                      isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
+                      link={`/${prop.slug}`}
+                      stats={{
+                        beds: prop.bedroom_count || 0,
+                        baths: prop.bathroom_count || 0,
+                        guests: prop.guests_max || 0
+                      }}
+                      badge={BADGES[originalIndex] || "Featured"}
+                    />
+                  );
+                })}
+              </div>
 
-                return (
-                  <SignatureCard
-                    key={prop.id}
-                    title={prop.name}
-                    location={prop.location}
-                    images={images}
-                    currentIndex={currentIndex}
-                    onPrev={(e) => handleCardPrev(e, prop)}
-                    onNext={(e) => handleCardNext(e, prop)}
-                    isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
-                    link={`/${prop.slug}`}
-                    stats={{
-                      beds: prop.bedroom_count || 0,
-                      baths: prop.bathroom_count || 0,
-                      guests: prop.guests_max || 0
-                    }}
-                    badge={BADGES[originalIndex] || "Featured"}
-                  />
-                );
-              })}
+              <button
+                onClick={nextProperty}
+                className="hidden lg:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                aria-label="Next property"
+              >
+                <FaChevronRight size={24} />
+              </button>
             </div>
 
             {/* Mobile "Show More" Button */}

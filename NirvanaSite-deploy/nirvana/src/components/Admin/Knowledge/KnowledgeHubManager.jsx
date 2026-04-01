@@ -115,6 +115,15 @@ function isSystemKnowledgeSection(section) {
   );
 }
 
+function getSuggestedSectionEdit(section) {
+  const suggestion = section?.suggested_edit;
+  if (!suggestion) return null;
+  if (!suggestion.title && !suggestion.summary && !suggestion.content_markdown) {
+    return null;
+  }
+  return suggestion;
+}
+
 function getSourceTimestamp(source) {
   if (!source) return { label: "Updated", value: "" };
   if (source.source_type === "system_snapshot") {
@@ -1224,6 +1233,9 @@ const KnowledgeHubManager = () => {
                   const isOpen = openSectionIds.includes(section.id);
                   const sectionVerification = getVerificationStatus(section);
                   const isSystemSection = isSystemKnowledgeSection(section);
+                  const suggestedEdit = getSuggestedSectionEdit(section);
+                  const showSuggestedEdit =
+                    Boolean(suggestedEdit) && ["manual", "hybrid"].includes(section.section_origin);
                   return (
                     <article key={section.id} className={styles.sectionCard}>
                       <button
@@ -1241,6 +1253,9 @@ const KnowledgeHubManager = () => {
                           >
                             {formatVerificationLabel(sectionVerification)}
                           </span>
+                          {showSuggestedEdit ? (
+                            <span className={styles.suggestedEditBadge}>Suggested edits</span>
+                          ) : null}
                           <span>{section.section_origin}</span>
                         </div>
                       </button>
@@ -1330,6 +1345,48 @@ const KnowledgeHubManager = () => {
                                   </div>
                                 ) : null}
                               </div>
+
+                              {showSuggestedEdit ? (
+                                <div className={styles.suggestedEditCard}>
+                                  <div className={styles.sectionBlockHeader}>
+                                    <span className={styles.sectionBlockEyebrow}>
+                                      Suggested edits
+                                    </span>
+                                    <span className={styles.sectionBlockCount}>
+                                      {formatDateLabel(suggestedEdit.generated_at)}
+                                    </span>
+                                  </div>
+                                  <p className={styles.suggestedEditNote}>
+                                    Manual sections are protected from automatic refreshes. Review
+                                    this AI suggestion and apply any parts you want to keep.
+                                  </p>
+                                  {suggestedEdit.title &&
+                                  suggestedEdit.title.trim() !== section.title.trim() ? (
+                                    <p className={styles.suggestedEditTitle}>
+                                      Suggested title: {suggestedEdit.title}
+                                    </p>
+                                  ) : null}
+                                  {suggestedEdit.summary ? (
+                                    <p className={styles.sectionSummaryText}>
+                                      {suggestedEdit.summary}
+                                    </p>
+                                  ) : null}
+                                  {suggestedEdit.content_markdown ? (
+                                    <div className={styles.sectionSummaryContent}>
+                                      {renderKnowledgeContent(suggestedEdit.content_markdown)}
+                                    </div>
+                                  ) : null}
+                                  {(suggestedEdit.source_items || []).length ? (
+                                    <div className={styles.citationRow}>
+                                      {suggestedEdit.source_items.map((item) => (
+                                        <span key={item.id} className={styles.citationChip}>
+                                          {item.title}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
 
                               {!isSystemSection ? (
                                 <div className={styles.inlineActions}>
