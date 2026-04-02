@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft, FaSearch, FaCalendarAlt } from 'react-icons/fa';
@@ -517,11 +518,13 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
     <div className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left" onClick={() => window.location.href = link}>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
         {images.map((img, idx) => (
-          <img
+          <Image
             key={`${img}-${idx}`}
             src={img}
             alt={`${title} - image ${idx + 1}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className={`object-cover transition-all duration-300 group-hover:scale-105 ${
               idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
             }`}
           />
@@ -620,9 +623,11 @@ const PremiumReviewCard = ({ review }) => {
 
     if (source === "vrbo") {
       return (
-        <img
+        <Image
           src="/assets/vrbo.png"
           alt="Vrbo"
+          width={60}
+          height={24}
           className="h-6 w-auto object-contain"
         />
       );
@@ -640,9 +645,9 @@ const PremiumReviewCard = ({ review }) => {
       <FaQuoteLeft className="absolute top-6 right-6 text-4xl text-accent/10" />
 
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-emerald-400 overflow-hidden flex-shrink-0 ring-4 ring-accent/20">
+        <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-accent to-emerald-400 overflow-hidden flex-shrink-0 ring-4 ring-accent/20">
           {review.img ? (
-            <img src={review.img} alt={review.author} className="w-full h-full object-cover" />
+            <Image src={review.img} alt={review.author} fill sizes="56px" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
               {review.author?.replace(/[^a-zA-Z]/g, '').charAt(0).toUpperCase() || 'G'}
@@ -756,7 +761,7 @@ const HeroSearch = ({ router, properties = [] }) => {
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
                   >
                     {(property.primary_image || property.image) && (
-                      <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      <Image src={property.primary_image || property.image} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                     )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{property.title || property.name}</p>
@@ -858,7 +863,7 @@ const HeroSearch = ({ router, properties = [] }) => {
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
                   >
                     {(property.primary_image || property.image) && (
-                      <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      <Image src={property.primary_image || property.image} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                     )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{property.title || property.name}</p>
