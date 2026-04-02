@@ -19,12 +19,13 @@ function normalizeUrl(value) {
 }
 
 export function getSiteUrl() {
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3000";
+  }
   return (
     normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
     normalizeUrl(process.env.SITE_URL) ||
-    normalizeUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-    normalizeUrl(process.env.VERCEL_URL) ||
-    "http://localhost:3000"
+    "https://www.nirvanaluxe.co"
   );
 }
 

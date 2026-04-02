@@ -316,7 +316,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </div>
 
       {/* Signature Retreats Section */}
-      <section className="relative pt-36 pb-28 px-6 bg-slate-50 overflow-hidden">
+      <section className="relative pt-64 md:pt-36 pb-28 px-6 bg-slate-50 overflow-hidden">
         {/* Luxury Decorative Background Elements */}
         {/* Stronger grid pattern */}
         <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
