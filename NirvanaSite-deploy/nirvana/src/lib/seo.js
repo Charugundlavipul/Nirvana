@@ -22,10 +22,12 @@ export function buildMetadata({
   title,
   description = SITE_DESCRIPTION,
   pathname = "/",
+  canonicalPathname = pathname,
   images = [DEFAULT_OG_IMAGE],
   keywords = [],
   type = "website",
   noindex = false,
+  follow = true,
 }) {
   const normalizedImages = (Array.isArray(images) ? images : [images])
     .filter(Boolean)
@@ -38,7 +40,7 @@ export function buildMetadata({
     description,
     keywords,
     alternates: {
-      canonical: pathname,
+      canonical: canonicalPathname,
     },
     openGraph: {
       type,
@@ -57,11 +59,11 @@ export function buildMetadata({
     robots: noindex
       ? {
           index: false,
-          follow: false,
+          follow,
         }
       : {
           index: true,
-          follow: true,
+          follow,
         },
   };
 }

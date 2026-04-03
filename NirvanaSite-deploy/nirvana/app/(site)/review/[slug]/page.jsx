@@ -26,7 +26,10 @@ export async function generateMetadata({ params }) {
     title: `${property.name} Reviews`,
     description: `Read verified guest reviews for ${property.name}.`,
     pathname: `/review/${property.slug}`,
+    canonicalPathname: `/${property.slug}`,
     images: [property.curated?.home || property.curated?.secondary || "/logo512.png"],
+    noindex: true,
+    follow: true,
   });
 }
 

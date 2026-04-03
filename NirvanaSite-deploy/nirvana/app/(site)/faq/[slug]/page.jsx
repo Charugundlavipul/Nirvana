@@ -26,7 +26,10 @@ export async function generateMetadata({ params }) {
     title: `${property.name} FAQ`,
     description: `Answers to common questions about ${property.name}, including amenities, booking, and house rules.`,
     pathname: `/faq/${property.slug}`,
+    canonicalPathname: `/${property.slug}`,
     images: [property.curated?.home || property.curated?.secondary || "/logo512.png"],
+    noindex: true,
+    follow: true,
   });
 }
 

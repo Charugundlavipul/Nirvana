@@ -24,8 +24,6 @@ export default async function sitemap() {
     `/${slug}`,
     `/${slug}/gallery`,
     `/book/${slug}`,
-    `/faq/${slug}`,
-    `/review/${slug}`,
     `/activities/${slug}`,
   ]);
 
