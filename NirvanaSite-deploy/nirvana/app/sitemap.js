@@ -24,6 +24,8 @@ export default async function sitemap() {
     `/${slug}`,
     `/${slug}/gallery`,
     `/book/${slug}`,
+    // Property FAQ/review routes are intentionally omitted to avoid competing with the main property page in Google.
+    // Revert by re-adding `/faq/${slug}` and `/review/${slug}` if those pages should be indexed again.
     `/activities/${slug}`,
   ]);
 
