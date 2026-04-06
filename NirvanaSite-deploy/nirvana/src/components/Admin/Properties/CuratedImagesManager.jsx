@@ -6,7 +6,7 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest,
+    submitOrUpdateApproval,
     queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
@@ -129,7 +129,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
 
             const existing = images[slot];
             const { data: userData } = await supabase.auth.getUser();
-            const { error: requestError } = await submitApprovalRequest({
+            const { error: requestError } = await submitOrUpdateApproval({
                 entityType: "property_curated_image",
                 action: existing ? "update" : "create",
                 entityId: existing?.id || null,
@@ -172,7 +172,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
 
             const target = images[slot];
             const { data: userData } = await supabase.auth.getUser();
-            const { error } = await submitApprovalRequest({
+            const { error } = await submitOrUpdateApproval({
                 entityType: "property_curated_image",
                 action: "delete",
                 entityId: target.id,

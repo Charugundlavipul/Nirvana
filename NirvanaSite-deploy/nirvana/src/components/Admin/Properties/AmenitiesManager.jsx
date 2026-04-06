@@ -7,7 +7,7 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest,
+    submitOrUpdateApproval,
     queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
@@ -228,7 +228,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                 setAmenities([...amenities, data]);
             } else {
                 const { data: userData } = await supabase.auth.getUser();
-                const { error } = await submitApprovalRequest({
+                const { error } = await submitOrUpdateApproval({
                     entityType: "amenity",
                     action: "create",
                     payload,
@@ -260,7 +260,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
 
             const target = amenities.find((a) => a.id === id);
             const { data: userData } = await supabase.auth.getUser();
-            const { error } = await submitApprovalRequest({
+            const { error } = await submitOrUpdateApproval({
                 entityType: "amenity",
                 action: "delete",
                 entityId: id,
@@ -314,7 +314,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                 );
             } else {
                 const { data: userData } = await supabase.auth.getUser();
-                const { error } = await submitApprovalRequest({
+                const { error, updated } = await submitOrUpdateApproval({
                     entityType: "amenity",
                     action: "update",
                     entityId: item.id,
@@ -324,7 +324,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                     comment: "Amenity update request",
                 });
                 if (error) throw error;
-                alert("Amenity update request submitted for approval.");
+                alert(updated ? "Amenity draft updated." : "Amenity update request submitted for approval.");
                 await loadPendingDrafts();
             }
         } catch (error) {

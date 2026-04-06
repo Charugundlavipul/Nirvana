@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 import styles from "../Properties/PropertyEditor.module.css";
@@ -142,7 +142,7 @@ const ReviewManager = () => {
 
             const target = reviews.find((r) => r.id === id);
             const { data: userData } = await supabase.auth.getUser();
-            const { error } = await submitApprovalRequest({
+            const { error } = await submitOrUpdateApproval({
                 entityType: "review",
                 action: "delete",
                 entityId: id,
@@ -260,7 +260,7 @@ const ReviewManager = () => {
             }
 
             const { data: userData } = await supabase.auth.getUser();
-            const { error: requestError } = await submitApprovalRequest({
+            const { error: requestError, updated } = await submitOrUpdateApproval({
                 entityType: "review",
                 action,
                 entityId: formData.id || null,
@@ -271,7 +271,7 @@ const ReviewManager = () => {
             });
             if (requestError) throw requestError;
 
-            alert("Review change request submitted for approval.");
+            alert(updated ? "Review draft updated." : "Review change request submitted for approval.");
             setIsEditing(false);
         } catch (error) {
             alert("Error saving review: " + error.message);

@@ -6,7 +6,7 @@ import {
     getCurrentAdminRole,
     isSuperAdminRole,
     parseApprovalObject,
-    submitApprovalRequest,
+    submitOrUpdateApproval,
     queueKnowledgeRefresh
 } from "../../../lib/adminApi";
 
@@ -143,7 +143,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
             const { data: userData } = await supabase.auth.getUser();
             const submittedBy = userData?.user?.id || null;
             const requests = uploads.map((row) =>
-                submitApprovalRequest({
+                submitOrUpdateApproval({
                     entityType: "property_image",
                     action: "create",
                     payload: row,
@@ -178,7 +178,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
 
             const target = images.find((img) => img.id === id);
             const { data: userData } = await supabase.auth.getUser();
-            const { error } = await submitApprovalRequest({
+            const { error } = await submitOrUpdateApproval({
                 entityType: "property_image",
                 action: "delete",
                 entityId: id,

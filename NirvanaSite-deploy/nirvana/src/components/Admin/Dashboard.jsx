@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import styles from "./Dashboard.module.css";
 import { supabase } from "../../supabaseClient";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     FaHome,
     FaCheckCircle,
@@ -16,8 +16,11 @@ import {
     FaChartLine,
     FaCalendarAlt,
     FaArrowRight,
-    FaBookOpen
+    FaBookOpen,
+    FaClipboardList,
+    FaExclamationTriangle
 } from "react-icons/fa";
+import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, parseApprovalObject } from "../../lib/adminApi";
 
 const StatCard = ({ title, value, icon: Icon, color, bgColor, subtitle }) => (
     <div className={styles.statCard} style={{ '--accent-color': color, '--bg-color': bgColor }}>
@@ -69,7 +72,38 @@ const RecentItem = ({ title, type, date }) => (
     </div>
 );
 
+const DRAFT_ACTION_LABELS = {
+    create: "Create",
+    update: "Update",
+    delete: "Delete",
+};
+
+const DRAFT_ENTITY_LABELS = {
+    property: "Property",
+    review: "Review",
+    faq: "FAQ",
+    activity: "Activity",
+    amenity: "Amenity",
+    property_image: "Gallery Image",
+    property_curated_image: "Curated Image",
+    property_highlight_image: "Highlight Image",
+};
+
+const friendlyEntityType = (type) => DRAFT_ENTITY_LABELS[type] || type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const friendlyAction = (action) => DRAFT_ACTION_LABELS[action] || action;
+const friendlyStatus = (status) => {
+    if (status === "revision_requested") return "Revision Requested";
+    return status?.charAt(0).toUpperCase() + status?.slice(1);
+};
+
+const getDraftSummary = (req) => {
+    const payload = parseApprovalObject(req.payload);
+    const before = parseApprovalObject(req.before_snapshot);
+    return payload.name || payload.title || payload.question || payload.author_name || payload.slot || before.name || before.title || before.question || before.author_name || before.slot || null;
+};
+
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         properties: 0,
         activeListings: 0,
@@ -81,6 +115,26 @@ const Dashboard = () => {
     const [recentProperties, setRecentProperties] = useState([]);
     const [recentReviews, setRecentReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [adminRole, setAdminRole] = useState(null);
+    const [pendingDrafts, setPendingDrafts] = useState([]);
+    const [draftsLoading, setDraftsLoading] = useState(true);
+
+    useEffect(() => {
+        getCurrentAdminRole().then(setAdminRole);
+    }, []);
+
+    useEffect(() => {
+        if (adminRole === null) return;
+        if (!isSuperAdminRole(adminRole)) {
+            setDraftsLoading(true);
+            fetchMyPendingDrafts().then((drafts) => {
+                setPendingDrafts(drafts);
+                setDraftsLoading(false);
+            });
+        } else {
+            setDraftsLoading(false);
+        }
+    }, [adminRole]);
 
     useEffect(() => {
         const loadStats = async () => {
@@ -91,7 +145,7 @@ const Dashboard = () => {
                     supabase.from("activities").select("id", { count: "exact", head: true }),
                     supabase.from("faqs").select("id", { count: "exact", head: true }),
                     supabase.from("amenities").select("id", { count: "exact", head: true }),
-                    supabase.from("properties").select("id, name, created_at").order("created_at", { ascending: false }).limit(5),
+                    supabase.from("properties").select("id, name, slug, created_at").order("created_at", { ascending: false }).limit(5),
                     supabase.from("reviews").select("id, author_name, created_at").order("created_at", { ascending: false }).limit(5)
                 ]);
 
@@ -121,8 +175,144 @@ const Dashboard = () => {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
+    const isSuperAdmin = isSuperAdminRole(adminRole);
+    const revisionDrafts = pendingDrafts.filter(d => d.status === "revision_requested");
+    const pendingCount = pendingDrafts.length;
+
     return (
         <AdminLayout title="Dashboard" subtitle="Welcome back! Here's an overview of your portfolio.">
+            {/* Pending Drafts Banner for Regular Admins */}
+            {!isSuperAdmin && !draftsLoading && pendingCount > 0 && (
+                <section style={{
+                    background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+                    border: "1px solid #7dd3fc",
+                    borderRadius: "16px",
+                    padding: "24px 28px",
+                    marginBottom: "28px",
+                    boxShadow: "0 4px 16px rgba(14,165,233,0.08)",
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
+                        <div style={{
+                            width: "48px",
+                            height: "48px",
+                            borderRadius: "14px",
+                            background: revisionDrafts.length > 0 ? "#fef3c7" : "#dbeafe",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                        }}>
+                            {revisionDrafts.length > 0 ? (
+                                <FaExclamationTriangle size={22} color="#b45309" />
+                            ) : (
+                                <FaClipboardList size={22} color="#2563eb" />
+                            )}
+                        </div>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#0c4a6e" }}>
+                                You have {pendingCount} pending draft{pendingCount !== 1 ? "s" : ""}
+                            </h2>
+                            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#075985" }}>
+                                {revisionDrafts.length > 0
+                                    ? `${revisionDrafts.length} need${revisionDrafts.length !== 1 ? "" : "s"} revision — please review and resubmit.`
+                                    : "Your changes are awaiting superadmin review."}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {pendingDrafts.map((draft) => {
+                            const summary = getDraftSummary(draft);
+                            const isRevision = draft.status === "revision_requested";
+                            const entityType = String(draft.entity_type || "").toLowerCase();
+                            const entityId = draft.entity_id;
+                            const isPropertyDraft = entityType === "property";
+
+                            const handleClick = () => {
+                                if (isPropertyDraft && entityId) {
+                                    // Navigate to the property editor by looking up slug from recent properties
+                                    const payload = parseApprovalObject(draft.payload);
+                                    const slug = payload?.slug;
+                                    if (slug) {
+                                        navigate(`/admin/properties/${slug}`);
+                                    } else {
+                                        navigate("/admin/properties");
+                                    }
+                                } else if (["review", "faq", "activity"].includes(entityType)) {
+                                    navigate("/admin/global");
+                                } else if (["amenity", "property_image", "property_curated_image", "property_highlight_image"].includes(entityType)) {
+                                    navigate("/admin/properties");
+                                }
+                            };
+
+                            return (
+                                <div
+                                    key={draft.id}
+                                    onClick={handleClick}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "12px",
+                                        padding: "12px 16px",
+                                        background: isRevision ? "#fffbeb" : "#ffffff",
+                                        border: isRevision ? "1px solid #fbbf24" : "1px solid #e0f2fe",
+                                        borderRadius: "10px",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s",
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateX(4px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
+                                >
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                padding: "2px 10px",
+                                                borderRadius: "999px",
+                                                background: isRevision ? "#fef3c7" : "#dbeafe",
+                                                color: isRevision ? "#92400e" : "#1d4ed8",
+                                                textTransform: "uppercase",
+                                                letterSpacing: "0.03em",
+                                            }}>
+                                                {friendlyStatus(draft.status)}
+                                            </span>
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 600,
+                                                padding: "2px 8px",
+                                                borderRadius: "999px",
+                                                background: "#f1f5f9",
+                                                color: "#475569",
+                                            }}>
+                                                {friendlyAction(draft.action)}
+                                            </span>
+                                            <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>
+                                                {friendlyEntityType(draft.entity_type)}
+                                            </span>
+                                        </div>
+                                        {summary && (
+                                            <div style={{ marginTop: "4px", fontSize: "12px", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                {summary}
+                                            </div>
+                                        )}
+                                        {draft.comment && (
+                                            <div style={{ marginTop: "3px", fontSize: "11px", color: "#64748b", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                Note: {draft.comment}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ fontSize: "11px", color: "#94a3b8", whiteSpace: "nowrap", textAlign: "right", flexShrink: 0 }}>
+                                        {draft.submitted_at ? new Date(draft.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                                    </div>
+                                    <FaArrowRight size={12} color="#94a3b8" />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
             {/* Stats Grid */}
             <div className={styles.statsGrid}>
                 <StatCard

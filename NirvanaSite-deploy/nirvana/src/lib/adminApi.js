@@ -4,7 +4,7 @@ export const SUPERADMIN_ROLES = ["owner", "superadmin"];
 
 export const isSuperAdminRole = (role) => SUPERADMIN_ROLES.includes((role || "").toLowerCase());
 
-async function adminRequest(path, options = {}) {
+export async function adminRequest(path, options = {}) {
   const {
     data: { session },
     error: sessionError,
@@ -63,6 +63,45 @@ export async function submitApprovalRequest({
     comment,
     status: "pending",
   });
+}
+
+/**
+ * Dedup-safe approval request submit.
+ * If an open request already exists for the same entity_type + entity_id + action,
+ * it updates the existing request instead of creating a duplicate.
+ * Returns { data, error, updated: boolean }.
+ */
+export async function submitOrUpdateApproval({
+  entityType,
+  action,
+  entityId = null,
+  payload,
+  beforeSnapshot = null,
+  submittedBy = null,
+  comment = null,
+}) {
+  try {
+    const response = await adminRequest("/api/admin/drafts/merge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entityType,
+        action,
+        entityId,
+        payload,
+        beforeSnapshot,
+        submittedBy,
+        comment,
+      }),
+    });
+    
+    return { data: response.data, error: null, updated: response.updated };
+  } catch (error) {
+    console.error("Failed to merge approval draft via API:", error);
+    return { data: null, error, updated: false };
+  }
 }
 
 export async function fetchApprovalRequests(status = "pending") {
@@ -152,7 +191,7 @@ export async function findOpenRequest(entityType, entityId, action = null) {
 }
 
 export async function resubmitApprovalRequest(requestId, newPayload, beforeSnapshot = null, comment = null) {
-  return supabase
+  const { data, error } = await supabase
     .from("approval_requests")
     .update({
       payload: newPayload,
@@ -161,7 +200,32 @@ export async function resubmitApprovalRequest(requestId, newPayload, beforeSnaps
       comment: comment,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .select()
+    .maybeSingle();
+      
+  if (!error && !data) {
+      return { data: null, error: new Error("Draft update failed: Check if you have permission to edit this request.") };
+  }
+  return { data, error };
+}
+
+export async function fetchMyPendingDrafts() {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user?.id) return [];
+
+  const { data, error } = await supabase
+    .from("approval_requests")
+    .select("*")
+    .eq("submitted_by", userData.user.id)
+    .in("status", ["pending", "revision_requested"])
+    .order("submitted_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching pending drafts:", error);
+    return [];
+  }
+  return data || [];
 }
 
 export async function queueKnowledgeRefresh(payload = {}) {

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
-import { getCurrentAdminRole, isSuperAdminRole } from "../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts } from "../../lib/adminApi";
 
 const NAV_ITEMS = [
-    { label: "Dashboard", path: "/admin", exact: true, icon: "D" },
+    { label: "Dashboard", path: "/admin", exact: true, icon: "D", draftBadgeKey: "all" },
     { label: "Properties", path: "/admin/properties", icon: "P" },
     { label: "Knowledge Hub", path: "/admin/knowledge", icon: "K" },
     { label: "Subscribers", path: "/admin/subscribers", icon: "S" },
@@ -15,10 +15,20 @@ const NAV_ITEMS = [
 
 const Sidebar = ({ isOpen, toggle }) => {
     const [adminRole, setAdminRole] = useState(null);
+    const [draftCount, setDraftCount] = useState(0);
 
     useEffect(() => {
         getCurrentAdminRole().then(setAdminRole);
     }, []);
+
+    useEffect(() => {
+        if (adminRole === null) return;
+        if (!isSuperAdminRole(adminRole)) {
+            fetchMyPendingDrafts().then((drafts) => {
+                setDraftCount(drafts.length);
+            });
+        }
+    }, [adminRole]);
 
     const isSuperAdmin = isSuperAdminRole(adminRole);
 
@@ -47,6 +57,25 @@ const Sidebar = ({ isOpen, toggle }) => {
                     >
                         <span className={styles.icon}>{item.icon}</span>
                         {isOpen && <span className={styles.label}>{item.label}</span>}
+                        {!isSuperAdmin && item.draftBadgeKey === "all" && draftCount > 0 && (
+                            <span style={{
+                                marginLeft: "auto",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                minWidth: "20px",
+                                height: "20px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: "999px",
+                                background: "#ef4444",
+                                color: "#fff",
+                                lineHeight: 1,
+                                padding: "0 6px",
+                            }}>
+                                {draftCount}
+                            </span>
+                        )}
                     </NavLink>
                 ))}
             </nav>

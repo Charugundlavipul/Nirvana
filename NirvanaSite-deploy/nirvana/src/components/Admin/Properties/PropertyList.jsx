@@ -3,15 +3,36 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import styles from "./PropertyList.module.css";
 import { supabase } from "../../../supabaseClient";
+import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, getApprovalRequestPropertyId } from "../../../lib/adminApi";
 
 const PropertyList = () => {
     const navigate = useNavigate();
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [adminRole, setAdminRole] = useState(null);
+    const [draftsPerProperty, setDraftsPerProperty] = useState({});
 
     useEffect(() => {
         loadProperties();
+        getCurrentAdminRole().then(setAdminRole);
     }, []);
+
+    useEffect(() => {
+        if (adminRole === null) return;
+        if (!isSuperAdminRole(adminRole)) {
+            fetchMyPendingDrafts().then((drafts) => {
+                const byProperty = {};
+                for (const draft of drafts) {
+                    const propId = getApprovalRequestPropertyId(draft);
+                    if (propId) {
+                        if (!byProperty[propId]) byProperty[propId] = [];
+                        byProperty[propId].push(draft);
+                    }
+                }
+                setDraftsPerProperty(byProperty);
+            });
+        }
+    }, [adminRole]);
 
     const loadProperties = async () => {
         try {
@@ -95,6 +116,24 @@ const PropertyList = () => {
                                                 textTransform: "uppercase",
                                                 verticalAlign: "middle"
                                             }}>Draft</span>
+                                        )}
+                                        {draftsPerProperty[p.id] && (
+                                            <span style={{
+                                                marginLeft: "8px",
+                                                fontSize: "10px",
+                                                fontWeight: 700,
+                                                padding: "3px 10px",
+                                                borderRadius: "999px",
+                                                background: draftsPerProperty[p.id].some(d => d.status === "revision_requested") ? "#fef3c7" : "#dbeafe",
+                                                color: draftsPerProperty[p.id].some(d => d.status === "revision_requested") ? "#92400e" : "#1d4ed8",
+                                                textTransform: "uppercase",
+                                                verticalAlign: "middle",
+                                                letterSpacing: "0.02em",
+                                            }}>
+                                                {draftsPerProperty[p.id].some(d => d.status === "revision_requested")
+                                                    ? `⚠ ${draftsPerProperty[p.id].length} Revision${draftsPerProperty[p.id].length !== 1 ? "s" : ""}`
+                                                    : `${draftsPerProperty[p.id].length} Draft${draftsPerProperty[p.id].length !== 1 ? "s" : ""} Pending`}
+                                            </span>
                                         )}
                                     </h3>
                                     <p className={styles.cardLocation}>{p.location || "No location set"}</p>

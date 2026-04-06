@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -120,7 +120,7 @@ const FaqManager = () => {
 
             const target = faqs.find((faq) => faq.id === id);
             const { data: userData } = await supabase.auth.getUser();
-            const { error } = await submitApprovalRequest({
+            const { error } = await submitOrUpdateApproval({
                 entityType: "faq",
                 action: "delete",
                 entityId: id,
@@ -220,7 +220,7 @@ const FaqManager = () => {
             }
 
             const { data: userData } = await supabase.auth.getUser();
-            const { error: requestError } = await submitApprovalRequest({
+            const { error: requestError, updated } = await submitOrUpdateApproval({
                 entityType: "faq",
                 action,
                 entityId: formData.id || null,
@@ -231,7 +231,7 @@ const FaqManager = () => {
             });
             if (requestError) throw requestError;
 
-            alert("FAQ change request submitted for approval.");
+            alert(updated ? "FAQ draft updated." : "FAQ change request submitted for approval.");
             setIsEditing(false);
         } catch (error) {
             alert("Error saving FAQ: " + error.message);

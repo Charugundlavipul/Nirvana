@@ -7,7 +7,7 @@ import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
 import SpacesManager from "./SpacesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitApprovalRequest, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest, queueKnowledgeRefresh, adminRequest } from "../../../lib/adminApi";
 import { isValidHospitablePropertyId, normalizeHospitablePropertyId } from "../../../lib/hospitablePropertyId";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
@@ -374,49 +374,27 @@ const PropertyEditor = () => {
                 payload.is_published = isPublished;
                 validatePublishRequirements(payload);
                 const { data: userData } = await supabase.auth.getUser();
-                const existingOpen = await findOpenRequest("property", propertyId, "update");
 
-                if (existingOpen) {
-                    const mergedPayload = {
-                        ...(existingOpen.payload || {}),
-                        ...payload,
-                        spaces: normalizePropertySpaces(payload.spaces),
-                    };
-                    const { error: updateError } = await resubmitApprovalRequest(
-                        existingOpen.id,
-                        mergedPayload,
-                        beforeSnapshot,
-                        editorNote || "Draft property update request."
-                    );
-                    if (updateError) {
-                        // Fallback: keep editing flow usable even if update policy blocks edits on requests.
-                        const { error: requestError } = await submitApprovalRequest({
-                            entityType: "property",
-                            action: "update",
-                            entityId: propertyId,
-                            payload: mergedPayload,
-                            beforeSnapshot,
-                            submittedBy: userData?.user?.id || null,
-                            comment: editorNote || "Property update request.",
-                        });
-                        if (requestError) throw requestError;
-                        alert("Draft update saved as a new approval request.");
-                    } else {
-                        alert("Draft changes updated.");
-                    }
-                } else {
-                    const { error: requestError } = await submitApprovalRequest({
-                        entityType: "property",
-                        action: "update",
-                        entityId: propertyId,
-                        payload,
-                        beforeSnapshot,
-                        submittedBy: userData?.user?.id || null,
-                        comment: editorNote || "Property update request.",
-                    });
-                    if (requestError) throw requestError;
-                    alert("Draft changes saved for review.");
-                }
+                // Use dedup-safe submit: if an open request already exists for this property,
+                // it will be updated in-place instead of creating a duplicate.
+                const normalizedPayload = {
+                    ...payload,
+                    spaces: normalizePropertySpaces(payload.spaces),
+                };
+
+                const { error: requestError, updated } = await submitOrUpdateApproval({
+                    entityType: "property",
+                    action: "update",
+                    entityId: propertyId,
+                    payload: normalizedPayload,
+                    beforeSnapshot,
+                    submittedBy: userData?.user?.id || null,
+                    comment: editorNote || "Property update request.",
+                });
+                if (requestError) throw requestError;
+
+                alert(updated ? "Draft changes updated." : "Draft changes saved for review.");
+
                 const refreshedOpen = await findOpenRequest("property", propertyId, "update");
                 setPropertyDraftRequest(refreshedOpen || null);
             }
@@ -448,28 +426,18 @@ const PropertyEditor = () => {
             const payload = { ...buildPropertyPayload(formData), is_published: true };
             validatePublishRequirements(payload);
 
-            // Check for an existing revision_requested request to update instead of creating a duplicate
-            const existingRevision = await findRevisionRequest("property", propertyId);
-            if (existingRevision) {
-                const { error: updateError } = await resubmitApprovalRequest(
-                    existingRevision.id,
-                    payload,
-                    beforeSnapshot,
-                    editorNote || "Revised and resubmitted for publish."
-                );
-                if (updateError) throw updateError;
-            } else {
-                const { error: requestError } = await submitApprovalRequest({
-                    entityType: "property",
-                    action: "update",
-                    entityId: propertyId,
-                    payload,
-                    beforeSnapshot,
-                    submittedBy: userData?.user?.id || null,
-                    comment: editorNote || "Request to publish draft property.",
-                });
-                if (requestError) throw requestError;
-            }
+            // Use dedup-safe submit to prevent duplicate publish requests
+            const { error: requestError } = await submitOrUpdateApproval({
+                entityType: "property",
+                action: "update",
+                entityId: propertyId,
+                payload,
+                beforeSnapshot,
+                submittedBy: userData?.user?.id || null,
+                comment: editorNote || "Request to publish draft property.",
+            });
+            if (requestError) throw requestError;
+
             alert("Publish request submitted to superadmin for approval.");
             navigate("/admin/properties");
         } catch (error) {
@@ -487,6 +455,28 @@ const PropertyEditor = () => {
             : isPublished
                 ? "Save Draft Changes"
                 : "Save Draft";
+
+    const handleDiscardDraft = async () => {
+        if (!propertyDraftRequest) return;
+        if (!window.confirm("Are you sure you want to discard your pending draft changes? This cannot be undone.")) return;
+        
+        try {
+            const response = await adminRequest("/api/admin/drafts/discard", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId: propertyDraftRequest.id }),
+            });
+            
+            alert("Draft changes discarded.");
+            // Reset form back to live beforeSnapshot
+            setFormData(beforeSnapshot);
+            setPropertyDraftRequest(null);
+            setEditorNote("");
+        } catch (error) {
+            console.error("Error discarding draft:", error);
+            alert("Failed to discard draft: " + error.message);
+        }
+    };
 
     if (loading) return <div className={styles.loading}>Loading editor...</div>;
 
@@ -544,10 +534,22 @@ const PropertyEditor = () => {
                             )}
                             {!superAdmin && isPublished && propertyDraftRequest && (
                                 <div className={styles.card} style={{ borderLeft: "4px solid #0ea5e9", background: "#f0f9ff" }}>
-                                    <h3 style={{ color: "#0c4a6e" }}>Draft Changes Pending Review</h3>
-                                    <p style={{ marginTop: "8px", color: "#075985" }}>
-                                        Live property is unchanged. Only the fields below are currently in draft:
-                                    </p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                                        <div>
+                                            <h3 style={{ color: "#0c4a6e" }}>Draft Changes Pending Review</h3>
+                                            <p style={{ marginTop: "8px", color: "#075985" }}>
+                                                Live property is unchanged. Only the fields below are currently in draft:
+                                            </p>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            className={styles.cancelBtn} 
+                                            style={{ color: "#b91c1c", borderColor: "#fecaca", padding: "6px 12px", fontSize: "12px", background: "#fee2e2" }}
+                                            onClick={handleDiscardDraft}
+                                        >
+                                            Discard Draft
+                                        </button>
+                                    </div>
                                     <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                                         {draftChangedFields.length ? (
                                             draftChangedFields.map((field) => (
