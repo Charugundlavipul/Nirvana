@@ -7,10 +7,27 @@ import { SITE_NAME, SITE_TITLE, absoluteUrl } from "../../src/lib/siteConfig";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: SITE_TITLE,
-  description: "Explore luxury vacation rentals in Sevierville, Tennessee and Lake Norman, North Carolina with Nirvana Luxe.",
+  title: "Nirvana Luxe | NirvanaLuxe Luxury Vacation Rentals",
+  description:
+    "Nirvana Luxe offers direct booking for luxury vacation rentals in the Smoky Mountains, Sevierville, Tennessee, and Lake Norman, North Carolina.",
   pathname: "/",
-  keywords: ["Nirvana Luxe", "Nirvanaluxe", "luxury vacation rentals", "Sevierville cabins", "Lake Norman rentals", "Smoky Mountains vacation homes", "shoreside oasis", "nirvana", "halftime hideaway", "grandprix getaway"],
+  keywords: [
+    "Nirvana Luxe",
+    "NirvanaLuxe",
+    "nirvana luxe",
+    "nirvanaluxe",
+    "Nirvana Luxe vacation rentals",
+    "NirvanaLuxe vacation rentals",
+    "luxury vacation rentals",
+    "direct booking vacation rentals",
+    "Sevierville cabins",
+    "Lake Norman rentals",
+    "Smoky Mountains vacation homes",
+    "shoreside oasis",
+    "nirvana",
+    "halftime hideaway",
+    "grandprix getaway",
+  ],
 });
 
 export default async function HomePage() {
@@ -20,7 +37,40 @@ export default async function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
+    alternateName: ["NirvanaLuxe", "Nirvana Luxe Vacation Rentals"],
     url: absoluteUrl("/"),
+  };
+
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_NAME,
+    alternateName: ["NirvanaLuxe", "Nirvana Luxe Vacation Rentals"],
+    url: absoluteUrl("/"),
+    logo: absoluteUrl("/logo512.png"),
+    sameAs: [
+      "https://www.instagram.com/nirvanaluxevacations/",
+      "https://www.facebook.com/NirvanaaLuxe",
+      "https://www.youtube.com/@nirvanaaluxe",
+    ],
+  };
+
+  const webpageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Nirvana Luxe | NirvanaLuxe Luxury Vacation Rentals",
+    url: absoluteUrl("/"),
+    description:
+      "Official Nirvana Luxe homepage for luxury vacation rentals, direct booking, guest reviews, and premium stays in the Smokies and Lake Norman.",
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
+    },
+    about: {
+      "@type": "Organization",
+      name: SITE_NAME,
+    },
   };
 
   const propertyListJsonLd = {
@@ -37,7 +87,9 @@ export default async function HomePage() {
 
   return (
     <>
+      <StructuredData data={organizationJsonLd} />
       <StructuredData data={websiteJsonLd} />
+      <StructuredData data={webpageJsonLd} />
       <StructuredData data={propertyListJsonLd} />
       <Home initialProperties={properties} initialReviews={reviews} />
     </>

@@ -307,10 +307,13 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mb-16">
             <p className="text-accent uppercase tracking-[0.3em] text-xs sm:text-sm font-medium mb-4">The Nirvana Luxe Collection</p>
             <h1 className="text-5xl md:text-6xl lg:text-[4rem] font-bold text-white mb-5 leading-[1.15] drop-shadow-lg">
-              Discover Your <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Dream Escape</span>
+              Nirvana Luxe <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
             <p className="text-xl text-white/90 font-normal max-w-2xl mx-auto leading-relaxed">
-              Experience the pinnacle of luxury with our exclusive curated vacation rentals in the Smokies & Lake Norman.
+              Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
+            </p>
+            <p className="mx-auto mt-4 max-w-3xl text-sm text-white/75">
+              Browse the official Nirvana Luxe collection of premium cabins, lakefront homes, and large-group vacation rentals.
             </p>
           </div>
         </div>
@@ -329,9 +332,9 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Handpicked Luxury</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 drop-shadow-sm">Our Signature Retreats</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 drop-shadow-sm">Nirvana Luxe Signature Retreats</h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto font-light">
-              Each property is curated to deliver an unforgettable experience
+              Each Nirvana Luxe property is curated for high-end stays, direct booking, and memorable group travel.
             </p>
           </div>
 
