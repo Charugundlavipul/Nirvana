@@ -76,7 +76,7 @@ const AboutUs = () => {
             </p>
           </div>
           <div className="w-full md:w-1/2 rounded-2xl overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500">
-            <img src="/assets/aboutUs-indoor.avif" alt="Guest services" className="w-full h-auto object-cover" />
+            <img src="/assets/aboutUs-serviceV2.png" alt="Guest services" className="w-full h-auto object-cover" />
           </div>
         </div>
 
@@ -103,7 +103,7 @@ const AboutUs = () => {
             </div>
           </div>
           <div className="w-full md:w-1/2 rounded-2xl overflow-hidden shadow-2xl transform -rotate-2 hover:rotate-0 transition-all duration-500">
-            <img src="/assets/aboutUs-indoor.avif" alt="Connect with us" className="w-full h-auto object-cover" />
+            <img src="/assets/aboutUs-connect.png" alt="Connect with us" className="w-full h-auto object-cover" />
           </div>
         </div>
       </div>

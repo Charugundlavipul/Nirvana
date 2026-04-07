@@ -6,6 +6,7 @@ import {
   generateJson,
   generateText,
 } from "./geminiApi";
+import { getBathroomSummary } from "../bathrooms";
 
 const KNOWLEDGE_SYNC_MODEL_LABEL = "gemini-3.1-flash-lite-preview + gemini-embedding-001";
 const CHUNK_SIZE = 1100;
@@ -1417,7 +1418,7 @@ async function fetchPropertyKnowledgeData(adminClient, propertyId) {
     adminClient
       .from("properties")
       .select(
-        "id,name,slug,location,description,booking_url,hospitable_property_id,video_url,is_published,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub,spaces"
+        "id,name,slug,location,description,booking_url,hospitable_property_id,video_url,is_published,guests_max,bedroom_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub,spaces"
       )
       .eq("id", propertyId)
       .single(),
@@ -1479,6 +1480,7 @@ async function fetchPropertyKnowledgeData(adminClient, propertyId) {
 
 function buildPropertySnapshotText(data) {
   const { property, amenities, propertyFaqs, activities, reviews } = data;
+  const bathroomSummary = getBathroomSummary(property);
   return normalizeWhitespace(
     [
       `# ${property.name} property snapshot`,
@@ -1491,7 +1493,7 @@ function buildPropertySnapshotText(data) {
         : "",
       `Guests max: ${property.guests_max || "Unknown"}`,
       `Bedrooms: ${property.bedroom_count || "Unknown"}`,
-      `Bathrooms: ${property.bathroom_count || "Unknown"}`,
+      `Bathrooms: ${bathroomSummary || "Unknown"}`,
       property.bed_details ? `Bed details: ${property.bed_details}` : "",
       property.bath_details ? `Bath details: ${property.bath_details}` : "",
       `Pet friendly: ${property.pet_friendly ? "Yes" : "No"}`,

@@ -6,8 +6,13 @@ import { FaArrowLeft, FaArrowRight, FaTimes, FaBed, FaBath, FaUsers, FaMapMarker
 import { getAmenityIcon } from '../../lib/amenityIcons.jsx';
 import { createRichTextExcerpt } from '../../lib/richText';
 import RichTextContent from '../common/RichTextContent';
+import AvailabilityCalendar from '../common/AvailabilityCalendar';
+import InlineReviews from './InlineReviews';
+import InlineActivities from './InlineActivities';
+import ContactForm from '../Contact/ContactForm';
+import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
 
-const PropertyPage = ({ slug, initialBundle = null }) => {
+const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [] }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
     const heroRef = useRef(null);
@@ -120,6 +125,8 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
     const introImageSrc = curatedImages.secondary || curatedImages.home;
     const descriptionPreview = createRichTextExcerpt(property.description, 2000, true);
     const videoUrl = `${property.video_url || ''}`.trim();
+    const bathroomSummary = getBathroomSummary(property);
+    const { fullBathCount, halfBathCount } = normalizeBathroomCounts(property);
 
     return (
         <div className="font-sans text-gray-800 bg-slate-50">
@@ -148,10 +155,10 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                                 <span>{property.bedroom_count} Bedrooms</span>
                             </div>
                         )}
-                        {property.bathroom_count && (
+                        {bathroomSummary && (
                             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
                                 <FaBath className="text-accent" />
-                                <span>{property.bathroom_count} Bathrooms</span>
+                                <span>{bathroomSummary}</span>
                             </div>
                         )}
                         {property.guests_max && (
@@ -218,14 +225,18 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-200">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-slate-200">
                             <div className="text-center">
                                 <p className="text-3xl font-bold text-accent">{property.bedroom_count || '-'}</p>
                                 <p className="text-sm text-slate-500 uppercase tracking-wider">Bedrooms</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.bathroom_count || '-'}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-wider">Bathrooms</p>
+                                <p className="text-3xl font-bold text-accent">{fullBathCount || '-'}</p>
+                                <p className="text-sm text-slate-500 uppercase tracking-wider">Full Baths</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-3xl font-bold text-accent">{halfBathCount || '-'}</p>
+                                <p className="text-sm text-slate-500 uppercase tracking-wider">Half Baths</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-3xl font-bold text-accent">{property.guests_max || '-'}</p>
@@ -256,7 +267,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
             </section>
 
             {/* Amenities Section */}
-            <section className="py-24 bg-white">
+            <section className="py-24 bg-white relative">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">What We Offer</p>
@@ -268,7 +279,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                         {amenities.slice(0, 12).map((amenity) => (
                             <div
                                 key={amenity.id}
-                                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer"
+                                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-slate-100 hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer"
                             >
                                 <div className="text-4xl text-accent group-hover:text-white transition-colors duration-300">
                                     {getAmenityIcon(amenity.title, amenity.icon_key)}
@@ -291,58 +302,23 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                 </div>
             </section>
 
-            {/* Experience Cards */}
-            <section className="py-24 px-6 max-w-7xl mx-auto">
-                <div className="text-center mb-16">
-                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Explore More</p>
-                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900">Make The Most of Your Stay</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Reviews Card */}
-                    <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-white min-h-[340px] flex flex-col justify-between">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-accent/20 rounded-full blur-3xl"></div>
-                        <div className="relative z-10">
-                            <div className="w-16 h-16 bg-accent/20 rounded-2xl flex items-center justify-center mb-6">
-                                <FaComments className="text-accent text-2xl" />
-                            </div>
-                            <h3 className="text-3xl font-bold mb-4">Guest Reviews</h3>
-                            <p className="text-slate-300 text-lg leading-relaxed">Discover heartfelt experiences from guests who've stayed here. See why they keep coming back.</p>
-                        </div>
-                        <Link
-                            href={`/review/${slug}`}
-                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-accent hover:text-white transition-all duration-300 group-hover:shadow-lg"
-                        >
-                            <FaStar className="text-amber-500 group-hover:text-white" />
-                            Read Reviews
-                            <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Link>
+            {/* Interactive Availability Calendar */}
+            {property.hospitable_property_id && (
+                <section className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Plan Your Stay</p>
+                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-b-2 border-accent/20 pb-4 inline-block mx-auto">Availability Calendar</h2>
                     </div>
+                    <AvailabilityCalendar propertyId={property.hospitable_property_id} maxGuests={property.guests_max || 12} />
+                </section>
+            )}
 
-                    {/* Activities Card */}
-                    <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent to-emerald-600 p-10 text-white min-h-[340px] flex flex-col justify-between">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-                        <div className="relative z-10">
-                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-                                <FaHiking className="text-white text-2xl" />
-                            </div>
-                            <h3 className="text-3xl font-bold mb-4">Nearby Activities</h3>
-                            <p className="text-white/90 text-lg leading-relaxed">From hiking trails to local dining, explore the best activities and hidden gems nearby.</p>
-                        </div>
-                        <Link
-                            href={`/activities/${slug}`}
-                            className="relative z-10 inline-flex items-center justify-center gap-2 w-full mt-5 px-6 py-4 bg-white text-accent font-bold rounded-xl hover:bg-slate-900 hover:text-white transition-all duration-300 group-hover:shadow-lg"
-                        >
-                            <FaMapMarkerAlt />
-                            Explore Activities
-                            <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    </div>
-                </div>
-            </section>
+            {/* Custom Review & Activity Sections */}
+            <InlineReviews reviews={initialReviews} />
+            <InlineActivities activities={initialActivities} slug={slug} />
 
             {/* Photo Gallery - Modern Grid Layout */}
-            <section id="gallery" className="py-16 md:py-24 bg-slate-50">
+            <section id="gallery" className="py-16 md:py-24 bg-white">
                 <div className="text-center mb-10 md:mb-16 px-6">
                     <p className="text-accent uppercase tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm font-semibold mb-2 md:mb-3">Visual Tour</p>
                     <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-3 md:mb-4">Property Gallery</h2>
@@ -351,7 +327,7 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
 
                 <div className="max-w-7xl mx-auto px-6">
                     {/* Modern Grid (Desktop/Tablet) */}
-                    <div className="hidden md:flex gap-4 h-[500px] lg:h-[600px] rounded-[2rem] overflow-hidden shadow-2xl">
+                    <div className="hidden md:flex gap-4 h-[350px] lg:h-[420px] rounded-[2rem] overflow-hidden shadow-2xl">
                         {/* Main Image (Left, 50%) */}
                         <div 
                             className="w-1/2 relative group cursor-pointer overflow-hidden"
@@ -430,6 +406,15 @@ const PropertyPage = ({ slug, initialBundle = null }) => {
                         </button>
                     </div>
                 </div>
+            </section>
+
+            {/* Inquire / Contact Section */}
+            <section className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-200 bg-slate-50">
+                <div className="text-center mb-16">
+                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Still have questions?</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-accent/20 pb-4 inline-block mx-auto mb-4">Inquire About {property.name}</h2>
+                </div>
+                <ContactForm />
             </section>
 
             {/* CTA Section */}

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft, FaSearch, FaCalendarAlt } from 'react-icons/fa';
+import { getCompactBathroomSummary } from "../../lib/bathrooms";
 
 const oasisImages = [
   "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp",
@@ -317,7 +318,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </div>
 
       {/* Signature Retreats Section */}
-      <section className="relative pt-64 md:pt-36 pb-28 px-6 bg-slate-50 overflow-hidden">
+      <section className="relative pt-64 md:pt-36 pb-16 px-6 bg-slate-50 overflow-hidden">
         {/* Luxury Decorative Background Elements */}
         {/* Stronger grid pattern */}
         <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
@@ -346,7 +347,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               {/* Desktop Navigation Buttons */}
               <button
                 onClick={prevProperty}
-                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white/60 backdrop-blur-md shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
                 aria-label="Previous property"
               >
                 <FaChevronLeft size={24} />
@@ -372,7 +373,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
                       link={`/${prop.slug}`}
                       stats={{
                         beds: prop.bedroom_count || 0,
-                        baths: prop.bathroom_count || 0,
+                        baths: getCompactBathroomSummary(prop) || 0,
                         guests: prop.guests_max || 0
                       }}
                       badge={BADGES[originalIndex] || "Featured"}
@@ -383,7 +384,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
               <button
                 onClick={nextProperty}
-                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white/60 backdrop-blur-md shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
                 aria-label="Next property"
               >
                 <FaChevronRight size={24} />
@@ -406,7 +407,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Original Guest Experiences Section */}
-      <section className="py-28 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
+      <section className="pt-16 pb-28 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
 
@@ -546,7 +547,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
             type="button"
             onClick={(e) => { e.stopPropagation(); onPrev(e); }}
             disabled={isGalleryLoading}
-            className="rounded-full bg-white/90 p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Previous image"
           >
             <FaChevronLeft size={14} />
@@ -555,7 +556,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
             type="button"
             onClick={(e) => { e.stopPropagation(); onNext(e); }}
             disabled={isGalleryLoading}
-            className="rounded-full bg-white/90 p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Next image"
           >
             <FaChevronRight size={14} />
@@ -589,7 +590,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
             <FaBed className="text-accent" /> {stats.beds} beds
           </span>
           <span className="flex items-center gap-1.5">
-            <FaBath className="text-accent" /> {stats.baths} baths
+            <FaBath className="text-accent" /> {stats.baths}
           </span>
           {stats.guests > 0 && (
             <span className="flex items-center gap-1.5">

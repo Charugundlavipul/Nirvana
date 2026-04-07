@@ -167,6 +167,37 @@ export async function searchHospitableAvailability({
   return Array.isArray(payload?.data) ? payload.data : [];
 }
 
+export async function fetchPropertyCalendar(propertyId, startDate, endDate) {
+  const token = getHospitableToken();
+  if (!token) {
+    throw new Error("Missing Hospitable API token.");
+  }
+
+  const url = new URL(`${HOSPITABLE_API_BASE_URL}/properties/${propertyId}/calendar`);
+  url.searchParams.set("start_date", startDate);
+  url.searchParams.set("end_date", endDate);
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Hospitable calendar failed (${response.status}): ${errorText || "Unknown error"}`);
+  }
+
+  const payload = await response.json();
+  if (payload?.data?.days && Array.isArray(payload.data.days)) {
+    return payload.data.days;
+  }
+  return Array.isArray(payload?.data) ? payload.data : [];
+}
 export async function fetchHospitableProperties() {
   const token = getHospitableToken();
   if (!token) {

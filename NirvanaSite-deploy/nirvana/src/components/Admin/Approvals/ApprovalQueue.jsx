@@ -5,6 +5,7 @@ import { supabase } from "../../../supabaseClient";
 import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
+import { getBathroomSummary, normalizeBathroomCounts } from "../../../lib/bathrooms";
 
 const cardStyle = {
   border: "1px solid #e5e7eb",
@@ -108,7 +109,8 @@ const FIELD_LABELS = {
   description: "Description",
   guests_max: "Max Guests",
   bedroom_count: "Bedrooms",
-  bathroom_count: "Bathrooms",
+  full_bath_count: "Full Baths",
+  half_bath_count: "Half Baths",
   bed_details: "Bed Details",
   bath_details: "Bath Details",
   pet_friendly: "Pet Friendly",
@@ -275,6 +277,8 @@ const SpaceImageList = ({ space, onPreviewImage }) => {
 const PropertyPreviewCard = ({ payload, onPreviewImage }) => {
   if (!payload || typeof payload !== "object") return null;
   const spaces = normalizePropertySpaces(payload.spaces);
+  const bathroomSummary = getBathroomSummary(payload);
+  const { fullBathCount, halfBathCount } = normalizeBathroomCounts(payload);
   const previewStyle = {
     border: "1px solid #e2e8f0",
     borderRadius: "10px",
@@ -291,8 +295,14 @@ const PropertyPreviewCard = ({ payload, onPreviewImage }) => {
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "13px", color: "#475569", marginTop: "8px" }}>
             {payload.guests_max && <span>👥 {payload.guests_max} Guests</span>}
             {payload.bedroom_count && <span>🛏️ {payload.bedroom_count} Bedrooms</span>}
-            {payload.bathroom_count && <span>🚿 {payload.bathroom_count} Bathrooms</span>}
+            {bathroomSummary && <span>🚿 {bathroomSummary}</span>}
           </div>
+          {(fullBathCount || halfBathCount) ? (
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "12px", color: "#64748b", marginTop: "8px" }}>
+              <span>Full Baths: {fullBathCount}</span>
+              <span>Half Baths: {halfBathCount}</span>
+            </div>
+          ) : null}
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "12px", marginTop: "8px" }}>
             {payload.pet_friendly && <span style={{ background: "#dcfce7", color: "#166534", padding: "2px 8px", borderRadius: "999px" }}>🐾 Pet Friendly</span>}
             {payload.hot_tub && <span style={{ background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "999px" }}>♨️ Hot Tub</span>}

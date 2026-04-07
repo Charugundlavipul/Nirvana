@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { FaEnvelope, FaPhone, FaInstagram, FaFacebook, FaYoutube, FaMapMarkerAlt } from "react-icons/fa";
+import ContactForm from "./ContactForm";
 
 const ContactUs = () => {
     const heroRef = useRef(null);
@@ -82,6 +83,11 @@ const ContactUs = () => {
                         <h3 className="font-bold text-gray-900">Facebook</h3>
                         <p className="text-sm text-gray-500">Nirvana Luxe</p>
                     </a>
+                </div>
+
+                {/* Form Section injected right below the quick links */}
+                <div className="py-8">
+                    <ContactForm />
                 </div>
 
                 <div className="max-w-3xl mx-auto space-y-8">

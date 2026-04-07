@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import PropertyPage from "../../../src/components/PropertyPage/PropertyPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs, getReviews } from "../../../src/lib/serverContentApi";
+import { getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
 import { buildMetadata, buildPropertyJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 
 export const revalidate = 1800;
@@ -33,9 +33,10 @@ export async function generateMetadata({ params }) {
 
 export default async function PropertyDetailPage({ params }) {
   const { slug } = await params;
-  const [bundle, reviews] = await Promise.all([
+  const [bundle, reviews, activities] = await Promise.all([
     getPropertyBundleBySlug(slug),
     getReviews({ slug }),
+    getActivitiesBySlug(slug),
   ]);
 
   if (!bundle?.property) notFound();
@@ -43,7 +44,7 @@ export default async function PropertyDetailPage({ params }) {
   return (
     <>
       <StructuredData data={buildPropertyJsonLd(bundle.property, bundle, reviews)} />
-      <PropertyPage slug={slug} initialBundle={bundle} />
+      <PropertyPage slug={slug} initialBundle={bundle} initialReviews={reviews} initialActivities={activities} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaHeart, FaRegHeart, FaStar, FaChevronLeft, FaChevronRight, FaBed, FaBath, FaUsers, FaArrowRight } from "react-icons/fa";
+import { getCompactBathroomSummary } from "../../lib/bathrooms";
 
 const PropertyListingCard = ({ property }) => {
   const router = useRouter();
@@ -14,6 +15,7 @@ const PropertyListingCard = ({ property }) => {
   const primaryFallback = property.primary_image || property.image || "";
   
   const uniqueImages = new Set();
+  const compactBathroomSummary = getCompactBathroomSummary(property);
   const images = [primaryFallback, ...highlightCandidate]
     .filter(Boolean)
     .filter((img) => {
@@ -170,7 +172,7 @@ const PropertyListingCard = ({ property }) => {
           </span>
           <span className="flex items-center gap-1.5">
             <FaBath className="text-accent" />
-            {property.bathroom_count} baths
+            {compactBathroomSummary || "No baths listed"}
           </span>
           {(property.guests_max || property.guest_count) && (
             <span className="flex items-center gap-1.5">

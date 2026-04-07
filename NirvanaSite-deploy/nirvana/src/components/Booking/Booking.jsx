@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
+import AvailabilityCalendar from '../common/AvailabilityCalendar';
+import { getCompactBathroomSummary } from '../../lib/bathrooms';
 
 const MOBILE_BREAKPOINT = 1024;
 const MOBILE_PROPERTIES_PER_PAGE = 4;
@@ -63,11 +65,6 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
       setSelectedPropertyId(bookingPropertyId);
       setIsTransitioning(false);
     }, 200);
-  };
-
-  const getBookingUrl = () => {
-    const property = initialProperties.find((item) => item.bookingPropertyId === selectedPropertyId);
-    return property ? property.bookingUrl : "";
   };
 
   const selectedProperty = initialProperties.find((item) => item.bookingPropertyId === selectedPropertyId);
@@ -156,7 +153,9 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
             <div className="text-center py-8 text-gray-400 text-sm">No properties match "{searchQuery}"</div>
           ) : (
             <div className="space-y-3">
-              {visibleProperties.map((property) => (
+              {visibleProperties.map((property) => {
+                const compactBathroomSummary = getCompactBathroomSummary(property);
+                return (
                 <div
                   key={property.slug}
                   onClick={() => handlePropertySelect(property.bookingPropertyId)}
@@ -185,7 +184,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                       </div>
                       <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
                         <span className="flex items-center gap-1"><FaBed /> {property.bedroom_count}</span>
-                        <span className="flex items-center gap-1"><FaBath /> {property.bathroom_count}</span>
+                        <span className="flex items-center gap-1"><FaBath /> {compactBathroomSummary || "-"}</span>
                         <span className="flex items-center gap-1"><FaUsers /> {property.guests_max}</span>
                       </div>
                     </div>
@@ -195,7 +194,8 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {totalPages > 1 && (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -275,7 +275,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
               </div>
             </div>
           </div>
-        ) : !getBookingUrl() ? (
+        ) : !selectedProperty?.hospitablePropertyId ? (
           <div className="flex items-center justify-center h-full text-white p-8 bg-gray-800">
             <div className="text-center">
               <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -286,7 +286,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
             </div>
           </div>
         ) : (
-          <div className="w-full bg-gray-50">
+          <div className="w-full bg-gray-50 flex-1 overflow-y-auto">
             <div className="relative h-48 lg:h-56 overflow-hidden flex-shrink-0">
               <img
                 src={selectedProperty?.image}
@@ -302,21 +302,17 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                 <h2 className="text-3xl font-bold">{selectedProperty?.title}</h2>
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-300">
                   <span className="flex items-center gap-1"><FaBed /> {selectedProperty?.bedroom_count} beds</span>
-                  <span className="flex items-center gap-1"><FaBath /> {selectedProperty?.bathroom_count} baths</span>
+                  <span className="flex items-center gap-1"><FaBath /> {getCompactBathroomSummary(selectedProperty) || "-"}</span>
                   <span className="flex items-center gap-1"><FaUsers /> Up to {selectedProperty?.guests_max} guests</span>
                 </div>
               </div>
             </div>
 
-            <div className="w-full overflow-x-auto p-2 sm:p-4 lg:p-6">
-              <div className="mx-auto w-fit overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
-                <iframe
-                  src={getBookingUrl()}
-                  title="Booking Widget"
-                  className="block border-0"
-                  style={{ width: "320px", height: "680px" }}
-                  referrerPolicy="origin"
-                  sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-target-blank"
+            <div className="w-full p-4 lg:p-8 pb-32">
+              <div className="mx-auto w-full max-w-6xl">
+                <AvailabilityCalendar
+                  propertyId={selectedProperty.hospitablePropertyId}
+                  maxGuests={selectedProperty.guests_max}
                 />
               </div>
             </div>

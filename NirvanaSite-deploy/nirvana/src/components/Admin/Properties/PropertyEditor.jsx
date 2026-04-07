@@ -12,26 +12,32 @@ import { isValidHospitablePropertyId, normalizeHospitablePropertyId } from "../.
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 import { normalizePropertySpaces } from "../../../lib/propertySpaces";
+import { normalizeBathroomCounts } from "../../../lib/bathrooms";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const toFormState = (data = {}) => ({
-    name: data.name || "",
-    slug: data.slug || "",
-    booking_url: data.booking_url || "",
-    hospitable_property_id: normalizeHospitablePropertyId(data.hospitable_property_id),
-    video_url: data.video_url || "",
-    location: data.location || "",
-    description: data.description || "",
-    guests_max: data.guests_max || "",
-    bedroom_count: data.bedroom_count || "",
-    bathroom_count: data.bathroom_count || "",
-    bed_details: data.bed_details || "",
-    bath_details: data.bath_details || "",
-    pet_friendly: data.pet_friendly || false,
-    pet_fee: data.pet_fee || 0,
-    hot_tub: data.hot_tub || false,
-    spaces: normalizePropertySpaces(data.spaces),
-});
+const toFormState = (data = {}) => {
+    const { fullBathCount, halfBathCount } = normalizeBathroomCounts(data);
+
+    return {
+        name: data.name || "",
+        slug: data.slug || "",
+        booking_url: data.booking_url || "",
+        hospitable_property_id: normalizeHospitablePropertyId(data.hospitable_property_id),
+        video_url: data.video_url || "",
+        location: data.location || "",
+        description: data.description || "",
+        guests_max: data.guests_max || "",
+        bedroom_count: data.bedroom_count || "",
+        full_bath_count: fullBathCount || "",
+        half_bath_count: halfBathCount || "",
+        bed_details: data.bed_details || "",
+        bath_details: data.bath_details || "",
+        pet_friendly: data.pet_friendly || false,
+        pet_fee: data.pet_fee || 0,
+        hot_tub: data.hot_tub || false,
+        spaces: normalizePropertySpaces(data.spaces),
+    };
+};
 
 const buildPropertyPayload = (formData) => {
     const payload = {
@@ -39,6 +45,8 @@ const buildPropertyPayload = (formData) => {
         hospitable_property_id: normalizeHospitablePropertyId(formData.hospitable_property_id),
         spaces: normalizePropertySpaces(formData.spaces),
     };
+
+    delete payload.bathroom_count;
 
     if (!payload.booking_url) delete payload.booking_url;
     if (!payload.hospitable_property_id) {
@@ -92,7 +100,8 @@ const PropertyEditor = () => {
         description: "",
         guests_max: "",
         bedroom_count: "",
-        bathroom_count: "",
+        full_bath_count: "",
+        half_bath_count: "",
         bed_details: "",
         bath_details: "",
         pet_friendly: false,
@@ -651,8 +660,12 @@ const PropertyEditor = () => {
                                         <input type="number" name="bedroom_count" value={formData.bedroom_count} onChange={handleChange} />
                                     </div>
                                     <div className={styles.fieldGroup}>
-                                        <label>Bathrooms</label>
-                                        <input type="number" step="0.5" name="bathroom_count" value={formData.bathroom_count} onChange={handleChange} />
+                                        <label>Full Baths</label>
+                                        <input type="number" name="full_bath_count" value={formData.full_bath_count} onChange={handleChange} min="0" />
+                                    </div>
+                                    <div className={styles.fieldGroup}>
+                                        <label>Half Baths</label>
+                                        <input type="number" name="half_bath_count" value={formData.half_bath_count} onChange={handleChange} min="0" />
                                     </div>
                                 </div>
                                 <div className={styles.fieldGroup}>

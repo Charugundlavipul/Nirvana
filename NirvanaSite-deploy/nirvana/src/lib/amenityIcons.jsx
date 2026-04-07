@@ -124,6 +124,7 @@ export const PREDEFINED_AMENITIES = {
     'Shampoo': 'FaPumpSoap',
     'Hot Water': 'FaHotTub',
     'Multiple Bathrooms': 'FaBath', // Restored
+    'Full & Half Baths': 'FaBath',
 
     // Bedroom and Laundry
     'Washer': 'MdLocalLaundryService',

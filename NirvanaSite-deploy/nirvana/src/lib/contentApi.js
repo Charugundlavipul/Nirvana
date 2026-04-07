@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
 import { normalizePropertySpaces } from "./propertySpaces";
+import { getBathroomSummary, normalizeBathroomCounts } from "./bathrooms";
 
 // Define fallback metadata directly or fetch from DB if needed
 // For now, removing the static MAP reliance
@@ -36,8 +37,15 @@ const normalizeProperty = (property, curatedByPropertyId) => {
   // we might need to migrate them or keep a simplified local constant. 
   // Assuming for now we can default safely or use what's in curated.
   const curated = curatedByPropertyId[property.id] || {};
+  const { fullBathCount, halfBathCount } = normalizeBathroomCounts(property);
   return {
     ...property,
+    full_bath_count: fullBathCount,
+    half_bath_count: halfBathCount,
+    bathroom_summary: getBathroomSummary({
+      full_bath_count: fullBathCount,
+      half_bath_count: halfBathCount,
+    }),
     spaces: normalizePropertySpaces(property.spaces),
     curated: {
       home: curated.home || "", // Fallback empty if not in DB
@@ -84,8 +92,8 @@ const normalizeReview = (review, propertyById) => {
 
 async function fetchPropertiesRaw() {
   const baseColumns =
-    "id,slug,name,hospitable_property_id,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
-  const withBookingColumns = `id,slug,name,hospitable_property_id,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+    "id,slug,name,hospitable_property_id,location,description,guests_max,bedroom_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
+  const withBookingColumns = `id,slug,name,hospitable_property_id,booking_url,location,description,guests_max,bedroom_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
   const withBookingAndSpacesColumns = `${withBookingColumns},spaces`;
   const withBookingSpacesAndVideoColumns = `${withBookingAndSpacesColumns},video_url`;
   const legacyBaseColumns =
@@ -271,7 +279,10 @@ export async function fetchPropertyCards() {
     description: property.description || "",
     guests_max: property.guests_max,
     bedroom_count: property.bedroom_count,
+    full_bath_count: property.full_bath_count,
+    half_bath_count: property.half_bath_count,
     bathroom_count: property.bathroom_count,
+    bathroom_summary: property.bathroom_summary,
     bed_details: property.bed_details,
     bath_details: property.bath_details,
     hot_tub: property.hot_tub,
