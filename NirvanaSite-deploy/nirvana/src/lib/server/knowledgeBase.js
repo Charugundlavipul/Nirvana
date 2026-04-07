@@ -33,8 +33,48 @@ function checksum(value) {
   return createHash("sha256").update(`${value || ""}`).digest("hex");
 }
 
+function sanitizeUnicodeScalars(value) {
+  const input = `${value || ""}`;
+  let output = "";
+
+  for (let index = 0; index < input.length; index += 1) {
+    const code = input.charCodeAt(index);
+
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const nextCode = input.charCodeAt(index + 1);
+      if (nextCode >= 0xdc00 && nextCode <= 0xdfff) {
+        output += input[index] + input[index + 1];
+        index += 1;
+      } else {
+        output += "\uFFFD";
+      }
+      continue;
+    }
+
+    if (code >= 0xdc00 && code <= 0xdfff) {
+      output += "\uFFFD";
+      continue;
+    }
+
+    output += input[index];
+  }
+
+  return output;
+}
+
+function sanitizeJsonLike(value) {
+  if (typeof value === "string") return sanitizeUnicodeScalars(value);
+  if (Array.isArray(value)) return value.map((item) => sanitizeJsonLike(item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entryValue]) => [key, sanitizeJsonLike(entryValue)])
+    );
+  }
+  return value;
+}
+
 function normalizeWhitespace(value) {
-  return `${value || ""}`
+  return sanitizeUnicodeScalars(`${value || ""}`)
     .replace(/\r\n/g, "\n")
     .replace(/\u00a0/g, " ")
     .replace(/[ \t]+\n/g, "\n")
@@ -1524,16 +1564,16 @@ async function upsertSystemSource(adminClient, payload) {
     hub_id: payload.hubId,
     source_type: "system_snapshot",
     source_key: payload.sourceKey,
-    title: payload.title,
-    description: payload.description || "",
+    title: sanitizeUnicodeScalars(payload.title),
+    description: sanitizeUnicodeScalars(payload.description || ""),
     mime_type: "text/markdown",
     content_text: contentText,
     checksum: checksum(contentText),
     status: "active",
-    metadata: {
+    metadata: sanitizeJsonLike({
       ...(payload.metadata || {}),
       system_updated_at: processedAt,
-    },
+    }),
     created_by: payload.userId || null,
     last_processed_at: processedAt,
     last_error: null,
@@ -1563,11 +1603,11 @@ async function upsertSystemSource(adminClient, payload) {
         .update({
           last_processed_at: processedAt,
           last_error: null,
-          metadata: {
+          metadata: sanitizeJsonLike({
             ...(existing.metadata || {}),
             ...(payload.metadata || {}),
             system_updated_at: processedAt,
-          },
+          }),
         })
         .eq("id", existing.id)
         .select("*")
@@ -1580,11 +1620,11 @@ async function upsertSystemSource(adminClient, payload) {
       .from("knowledge_sources")
       .update({
         ...sourcePayload,
-        metadata: {
+        metadata: sanitizeJsonLike({
           ...(existing.metadata || {}),
           ...(payload.metadata || {}),
           system_updated_at: processedAt,
-        },
+        }),
       })
       .eq("id", existing.id)
       .select("*")
@@ -1682,7 +1722,10 @@ function computeSourceFingerprint(sources) {
 
 async function updateSyncRun(adminClient, runId, updates) {
   if (!runId) return;
-  await adminClient.from("knowledge_sync_runs").update(updates).eq("id", runId);
+  await adminClient
+    .from("knowledge_sync_runs")
+    .update(sanitizeJsonLike(updates))
+    .eq("id", runId);
 }
 
 function buildSectionChunkPayloads(hub, section) {
@@ -1948,7 +1991,7 @@ async function markHubSyncStatus(adminClient, hubId, syncStatus, extra = {}) {
     .from("knowledge_hubs")
     .update({
       sync_status: syncStatus,
-      ...extra,
+      ...sanitizeJsonLike(extra),
     })
     .eq("id", hubId);
 
@@ -1969,7 +2012,7 @@ async function upsertSourceCoverageSection(adminClient, hubId, sources, userId =
     .maybeSingle();
   if (existingError) throw existingError;
 
-  const payload = {
+  const payload = sanitizeJsonLike({
     hub_id: hubId,
     title: "Canonical Source Details",
     slug: SOURCE_APPENDIX_SLUG,
@@ -1993,7 +2036,7 @@ async function upsertSourceCoverageSection(adminClient, hubId, sources, userId =
       needs_review: false,
       system_updated_at: new Date().toISOString(),
     },
-  };
+  });
 
   if (existing?.id) {
     const { data, error } = await adminClient
@@ -2567,7 +2610,9 @@ export async function scheduleKnowledgeHubSync(adminClient, hubId, options = {})
   await markHubSyncStatus(adminClient, hubId, "stale", {
     last_sync_error: null,
   });
-  void queueKnowledgeSync(adminClient, hubId, options);
+  void queueKnowledgeSync(adminClient, hubId, options).catch((error) => {
+    console.error(`Background knowledge sync failed for hub ${hubId}:`, error);
+  });
   return { queued: true };
 }
 

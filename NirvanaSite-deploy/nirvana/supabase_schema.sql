@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS properties (
     guests_max INT,
     bedroom_count INT,
     bed_details TEXT,
-    full_bath_count INT,
-    half_bath_count INT,
+    full_bath_count INT DEFAULT 0,
+    half_bath_count INT DEFAULT 0,
     bath_details TEXT,
     pet_friendly BOOLEAN DEFAULT FALSE,
     pet_fee NUMERIC(10,2) DEFAULT 0,
@@ -42,11 +42,13 @@ ALTER TABLE properties ADD COLUMN IF NOT EXISTS hospitable_property_id TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS spaces JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS full_bath_count INT;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS half_bath_count INT;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS full_bath_count INT DEFAULT 0;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS half_bath_count INT DEFAULT 0;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathroom_count NUMERIC(3,1);
 ALTER TABLE properties ALTER COLUMN is_published SET DEFAULT TRUE;
 ALTER TABLE properties ALTER COLUMN spaces SET DEFAULT '[]'::jsonb;
+ALTER TABLE properties ALTER COLUMN full_bath_count SET DEFAULT 0;
+ALTER TABLE properties ALTER COLUMN half_bath_count SET DEFAULT 0;
 UPDATE properties
 SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
 WHERE hospitable_property_id IS NOT NULL;
@@ -65,6 +67,11 @@ SET
     )
 WHERE bathroom_count IS NOT NULL
   AND (full_bath_count IS NULL OR half_bath_count IS NULL);
+UPDATE properties
+SET
+    full_bath_count = COALESCE(full_bath_count, 0),
+    half_bath_count = COALESCE(half_bath_count, 0)
+WHERE full_bath_count IS NULL OR half_bath_count IS NULL;
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -475,7 +482,8 @@ BEGIN
                 req.payload->>'bed_details',
                 COALESCE(
                     NULLIF(req.payload->>'full_bath_count', '')::int,
-                    FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric)::int
+                    FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric)::int,
+                    0
                 ),
                 COALESCE(
                     NULLIF(req.payload->>'half_bath_count', '')::int,
@@ -483,7 +491,8 @@ BEGIN
                         WHEN NULLIF(req.payload->>'bathroom_count', '') IS NULL THEN NULL
                         WHEN NULLIF(req.payload->>'bathroom_count', '')::numeric - FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric) >= 0.5 THEN 1
                         ELSE 0
-                    END
+                    END,
+                    0
                 ),
                 req.payload->>'bath_details',
                 COALESCE((req.payload->>'pet_friendly')::boolean, false),
@@ -507,7 +516,8 @@ BEGIN
                 bed_details = req.payload->>'bed_details',
                 full_bath_count = COALESCE(
                     NULLIF(req.payload->>'full_bath_count', '')::int,
-                    FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric)::int
+                    FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric)::int,
+                    0
                 ),
                 half_bath_count = COALESCE(
                     NULLIF(req.payload->>'half_bath_count', '')::int,
@@ -515,7 +525,8 @@ BEGIN
                         WHEN NULLIF(req.payload->>'bathroom_count', '') IS NULL THEN NULL
                         WHEN NULLIF(req.payload->>'bathroom_count', '')::numeric - FLOOR(NULLIF(req.payload->>'bathroom_count', '')::numeric) >= 0.5 THEN 1
                         ELSE 0
-                    END
+                    END,
+                    0
                 ),
                 bath_details = req.payload->>'bath_details',
                 pet_friendly = COALESCE((req.payload->>'pet_friendly')::boolean, false),
