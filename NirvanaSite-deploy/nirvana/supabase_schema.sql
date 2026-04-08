@@ -816,65 +816,45 @@ ALTER TABLE approval_requests ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'properties'
-        AND policyname = 'Public properties are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public properties are viewable by everyone"
-        ON properties FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public properties are viewable by everyone" ON properties;
+    CREATE POLICY "Public properties are viewable by everyone"
+    ON properties FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'approval_requests'
-        AND policyname = 'Editors can submit approval requests'
-    ) THEN
-        CREATE POLICY "Editors can submit approval requests"
-        ON approval_requests FOR INSERT
+    DROP POLICY IF EXISTS "Editors can submit approval requests" ON approval_requests;
+    CREATE POLICY "Editors can submit approval requests"
+    ON approval_requests FOR INSERT
         WITH CHECK (
             auth.role() = 'service_role'
             OR current_admin_role() IN ('owner', 'superadmin', 'editor')
         );
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'approval_requests'
-        AND policyname = 'Users can view own approval requests and superadmins see all'
-    ) THEN
-        CREATE POLICY "Users can view own approval requests and superadmins see all"
-        ON approval_requests FOR SELECT
+    DROP POLICY IF EXISTS "Users can view own approval requests and superadmins see all" ON approval_requests;
+    CREATE POLICY "Users can view own approval requests and superadmins see all"
+    ON approval_requests FOR SELECT
         USING (
             auth.role() = 'service_role'
             OR submitted_by = auth.uid()
             OR current_admin_role() IN ('owner', 'superadmin')
         );
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'approval_requests'
-        AND policyname = 'Superadmins can update approval requests'
-    ) THEN
-        CREATE POLICY "Superadmins can update approval requests"
-        ON approval_requests FOR UPDATE
+    DROP POLICY IF EXISTS "Superadmins can update approval requests" ON approval_requests;
+    CREATE POLICY "Superadmins can update approval requests"
+    ON approval_requests FOR UPDATE
         USING (
             auth.role() = 'service_role'
             OR current_admin_role() IN ('owner', 'superadmin')
@@ -883,247 +863,171 @@ BEGIN
             auth.role() = 'service_role'
             OR current_admin_role() IN ('owner', 'superadmin')
         );
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'admin_users'
-        AND policyname = 'Admins can view own role'
-    ) THEN
-        CREATE POLICY "Admins can view own role"
-        ON admin_users FOR SELECT
+    DROP POLICY IF EXISTS "Admins can view own role" ON admin_users;
+    CREATE POLICY "Admins can view own role"
+    ON admin_users FOR SELECT
         USING (
             auth.role() = 'service_role'
             OR user_id = auth.uid()
             OR current_admin_role() IN ('owner', 'superadmin')
         );
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'admin_users'
-        AND policyname = 'Owners can manage admin users'
-    ) THEN
-        CREATE POLICY "Owners can manage admin users"
-        ON admin_users FOR ALL
+    DROP POLICY IF EXISTS "Owners can manage admin users" ON admin_users;
+    CREATE POLICY "Owners can manage admin users"
+    ON admin_users FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'properties'
-        AND policyname = 'Admins can manage properties'
-    ) THEN
-        CREATE POLICY "Admins can manage properties"
-        ON properties FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    DROP POLICY IF EXISTS "Admins can manage properties" ON properties;
+    CREATE POLICY "Admins can manage properties"
+    ON properties FOR ALL
+    USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+    WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_curated_images'
-        AND policyname = 'Admins can manage curated images'
-    ) THEN
-        CREATE POLICY "Admins can manage curated images"
-        ON property_curated_images FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage curated images" ON property_curated_images;
+    CREATE POLICY "Admins can manage curated images"
+    ON property_curated_images FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_images'
-        AND policyname = 'Admins can manage gallery images'
-    ) THEN
-        CREATE POLICY "Admins can manage gallery images"
-        ON property_images FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage gallery images" ON property_images;
+    CREATE POLICY "Admins can manage gallery images"
+    ON property_images FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_highlight_images'
-        AND policyname = 'Admins can manage highlight images'
-    ) THEN
-        CREATE POLICY "Admins can manage highlight images"
-        ON property_highlight_images FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage highlight images" ON property_highlight_images;
+    CREATE POLICY "Admins can manage highlight images"
+    ON property_highlight_images FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'reviews'
-        AND policyname = 'Admins can manage reviews'
-    ) THEN
-        CREATE POLICY "Admins can manage reviews"
-        ON reviews FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage reviews" ON reviews;
+    CREATE POLICY "Admins can manage reviews"
+    ON reviews FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'faqs'
-        AND policyname = 'Admins can manage faqs'
-    ) THEN
-        CREATE POLICY "Admins can manage faqs"
-        ON faqs FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage faqs" ON faqs;
+    CREATE POLICY "Admins can manage faqs"
+    ON faqs FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'amenities'
-        AND policyname = 'Admins can manage amenities'
-    ) THEN
-        CREATE POLICY "Admins can manage amenities"
-        ON amenities FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage amenities" ON amenities;
+    CREATE POLICY "Admins can manage amenities"
+    ON amenities FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'activities'
-        AND policyname = 'Admins can manage activities'
-    ) THEN
-        CREATE POLICY "Admins can manage activities"
-        ON activities FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage activities" ON activities;
+    CREATE POLICY "Admins can manage activities"
+    ON activities FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_activities'
-        AND policyname = 'Admins can manage property activities'
-    ) THEN
-        CREATE POLICY "Admins can manage property activities"
-        ON property_activities FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage property activities" ON property_activities;
+    CREATE POLICY "Admins can manage property activities"
+    ON property_activities FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 -- FIX: Add policies for property_reviews and property_faqs which were missing
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_reviews'
-        AND policyname = 'Public property reviews are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public property reviews are viewable by everyone"
-        ON property_reviews FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public property reviews are viewable by everyone" ON property_reviews;
+    CREATE POLICY "Public property reviews are viewable by everyone"
+    ON property_reviews FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_reviews'
-        AND policyname = 'Admins can manage property reviews'
-    ) THEN
-        CREATE POLICY "Admins can manage property reviews"
-        ON property_reviews FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage property reviews" ON property_reviews;
+    CREATE POLICY "Admins can manage property reviews"
+    ON property_reviews FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_faqs'
-        AND policyname = 'Public property faqs are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public property faqs are viewable by everyone"
-        ON property_faqs FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public property faqs are viewable by everyone" ON property_faqs;
+    CREATE POLICY "Public property faqs are viewable by everyone"
+    ON property_faqs FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_faqs'
-        AND policyname = 'Admins can manage property faqs'
-    ) THEN
-        CREATE POLICY "Admins can manage property faqs"
-        ON property_faqs FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage property faqs" ON property_faqs;
+    CREATE POLICY "Admins can manage property faqs"
+    ON property_faqs FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
@@ -1225,113 +1129,73 @@ $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_curated_images'
-        AND policyname = 'Public curated images are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public curated images are viewable by everyone"
-        ON property_curated_images FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public curated images are viewable by everyone" ON property_curated_images;
+    CREATE POLICY "Public curated images are viewable by everyone"
+    ON property_curated_images FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_images'
-        AND policyname = 'Public gallery images are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public gallery images are viewable by everyone"
-        ON property_images FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public gallery images are viewable by everyone" ON property_images;
+    CREATE POLICY "Public gallery images are viewable by everyone"
+    ON property_images FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_highlight_images'
-        AND policyname = 'Public highlight images are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public highlight images are viewable by everyone"
-        ON property_highlight_images FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public highlight images are viewable by everyone" ON property_highlight_images;
+    CREATE POLICY "Public highlight images are viewable by everyone"
+    ON property_highlight_images FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'reviews'
-        AND policyname = 'Public reviews are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public reviews are viewable by everyone"
-        ON reviews FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public reviews are viewable by everyone" ON reviews;
+    CREATE POLICY "Public reviews are viewable by everyone"
+    ON reviews FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'faqs'
-        AND policyname = 'Public faqs are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public faqs are viewable by everyone"
-        ON faqs FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public faqs are viewable by everyone" ON faqs;
+    CREATE POLICY "Public faqs are viewable by everyone"
+    ON faqs FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'amenities'
-        AND policyname = 'Public amenities are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public amenities are viewable by everyone"
-        ON amenities FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public amenities are viewable by everyone" ON amenities;
+    CREATE POLICY "Public amenities are viewable by everyone"
+    ON amenities FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'activities'
-        AND policyname = 'Public activities are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public activities are viewable by everyone"
-        ON activities FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public activities are viewable by everyone" ON activities;
+    CREATE POLICY "Public activities are viewable by everyone"
+    ON activities FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'property_activities'
-        AND policyname = 'Public property activities are viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public property activities are viewable by everyone"
-        ON property_activities FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public property activities are viewable by everyone" ON property_activities;
+    CREATE POLICY "Public property activities are viewable by everyone"
+    ON property_activities FOR SELECT USING (true);
+    
 END;
 $$;
 
@@ -1357,30 +1221,20 @@ ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'site_content'
-        AND policyname = 'Public site content is viewable by everyone'
-    ) THEN
-        CREATE POLICY "Public site content is viewable by everyone"
-        ON site_content FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Public site content is viewable by everyone" ON site_content;
+    CREATE POLICY "Public site content is viewable by everyone"
+    ON site_content FOR SELECT USING (true);
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'site_content'
-        AND policyname = 'Admins can manage site content'
-    ) THEN
-        CREATE POLICY "Admins can manage site content"
-        ON site_content FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage site content" ON site_content;
+    CREATE POLICY "Admins can manage site content"
+    ON site_content FOR ALL
         USING (current_admin_role() IN ('owner', 'superadmin'));
-    END IF;
+    
 END;
 $$;
 
@@ -1399,65 +1253,45 @@ ALTER TABLE alert_subscribers ENABLE ROW LEVEL SECURITY;
 -- Anyone can subscribe (public insert)
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'alert_subscribers'
-        AND policyname = 'Anyone can subscribe'
-    ) THEN
-        CREATE POLICY "Anyone can subscribe"
-        ON alert_subscribers FOR INSERT
+    DROP POLICY IF EXISTS "Anyone can subscribe" ON alert_subscribers;
+    CREATE POLICY "Anyone can subscribe"
+    ON alert_subscribers FOR INSERT
         WITH CHECK (true);
-    END IF;
+    
 END;
 $$;
 
 -- Public can update via unsubscribe token (for unsubscribe flow)
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'alert_subscribers'
-        AND policyname = 'Unsubscribe via token'
-    ) THEN
-        CREATE POLICY "Unsubscribe via token"
-        ON alert_subscribers FOR UPDATE
+    DROP POLICY IF EXISTS "Unsubscribe via token" ON alert_subscribers;
+    CREATE POLICY "Unsubscribe via token"
+    ON alert_subscribers FOR UPDATE
         USING (true)
         WITH CHECK (true);
-    END IF;
+    
 END;
 $$;
 
 -- Authenticated admins can read all subscribers
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'alert_subscribers'
-        AND policyname = 'Admins can read all subscribers'
-    ) THEN
-        CREATE POLICY "Admins can read all subscribers"
-        ON alert_subscribers FOR SELECT
+    DROP POLICY IF EXISTS "Admins can read all subscribers" ON alert_subscribers;
+    CREATE POLICY "Admins can read all subscribers"
+    ON alert_subscribers FOR SELECT
         USING (auth.role() = 'authenticated');
-    END IF;
+    
 END;
 $$;
 
 -- Authenticated admins can delete subscribers
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'alert_subscribers'
-        AND policyname = 'Admins can delete subscribers'
-    ) THEN
-        CREATE POLICY "Admins can delete subscribers"
-        ON alert_subscribers FOR DELETE
+    DROP POLICY IF EXISTS "Admins can delete subscribers" ON alert_subscribers;
+    CREATE POLICY "Admins can delete subscribers"
+    ON alert_subscribers FOR DELETE
         USING (auth.role() = 'authenticated');
-    END IF;
+    
 END;
 $$;
 
@@ -1927,97 +1761,67 @@ ALTER TABLE knowledge_chunks ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_hubs'
-        AND policyname = 'Admins can manage knowledge hubs'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge hubs"
-        ON knowledge_hubs FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge hubs" ON knowledge_hubs;
+    CREATE POLICY "Admins can manage knowledge hubs"
+    ON knowledge_hubs FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_sources'
-        AND policyname = 'Admins can manage knowledge sources'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge sources"
-        ON knowledge_sources FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge sources" ON knowledge_sources;
+    CREATE POLICY "Admins can manage knowledge sources"
+    ON knowledge_sources FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_sections'
-        AND policyname = 'Admins can manage knowledge sections'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge sections"
-        ON knowledge_sections FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge sections" ON knowledge_sections;
+    CREATE POLICY "Admins can manage knowledge sections"
+    ON knowledge_sections FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_questions'
-        AND policyname = 'Admins can manage knowledge questions'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge questions"
-        ON knowledge_questions FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge questions" ON knowledge_questions;
+    CREATE POLICY "Admins can manage knowledge questions"
+    ON knowledge_questions FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_sync_runs'
-        AND policyname = 'Admins can manage knowledge sync runs'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge sync runs"
-        ON knowledge_sync_runs FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge sync runs" ON knowledge_sync_runs;
+    CREATE POLICY "Admins can manage knowledge sync runs"
+    ON knowledge_sync_runs FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public'
-        AND tablename = 'knowledge_chunks'
-        AND policyname = 'Admins can manage knowledge chunks'
-    ) THEN
-        CREATE POLICY "Admins can manage knowledge chunks"
-        ON knowledge_chunks FOR ALL
+    DROP POLICY IF EXISTS "Admins can manage knowledge chunks" ON knowledge_chunks;
+    CREATE POLICY "Admins can manage knowledge chunks"
+    ON knowledge_chunks FOR ALL
         USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    END IF;
+    
 END;
 $$;
 
