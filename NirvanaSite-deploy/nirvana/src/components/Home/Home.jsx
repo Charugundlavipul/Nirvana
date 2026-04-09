@@ -309,10 +309,10 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <h1 className="text-5xl md:text-6xl lg:text-[4rem] font-bold text-white mb-5 leading-[1.15] drop-shadow-lg">
               Nirvana Luxe <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
-            <p className="text-xl text-white/90 font-normal max-w-2xl mx-auto leading-relaxed">
+            <p className="sr-only">
               Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
             </p>
-            <p className="mx-auto mt-4 max-w-3xl text-sm text-white/75">
+            <p className="text-xl text-white/90 font-normal max-w-2xl mx-auto leading-relaxed mt-4">
               Browse the official Nirvana Luxe collection of premium cabins, lakefront homes, and large-group vacation rentals.
             </p>
           </div>
