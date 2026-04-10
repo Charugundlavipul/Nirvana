@@ -830,9 +830,8 @@ BEGIN
     ON approval_requests FOR INSERT
         WITH CHECK (
             auth.role() = 'service_role'
-            OR current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
         );
-    
 END;
 $$;
 
@@ -844,9 +843,8 @@ BEGIN
         USING (
             auth.role() = 'service_role'
             OR submitted_by = auth.uid()
-            OR current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'superadmin')
         );
-    
 END;
 $$;
 
@@ -857,13 +855,12 @@ BEGIN
     ON approval_requests FOR UPDATE
         USING (
             auth.role() = 'service_role'
-            OR current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'superadmin')
         )
         WITH CHECK (
             auth.role() = 'service_role'
-            OR current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'superadmin')
         );
-    
 END;
 $$;
 
@@ -875,20 +872,47 @@ BEGIN
         USING (
             auth.role() = 'service_role'
             OR user_id = auth.uid()
-            OR current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'superadmin')
         );
-    
 END;
 $$;
 
 DO $$
 BEGIN
     DROP POLICY IF EXISTS "Owners can manage admin users" ON admin_users;
+    DROP POLICY IF EXISTS "Superadmins can view all admin users" ON admin_users;
+    DROP POLICY IF EXISTS "Superadmins can add admin users" ON admin_users;
+    DROP POLICY IF EXISTS "Superadmins can delete admin users" ON admin_users;
+
+    -- 1. Owners have full control over all admin users
     CREATE POLICY "Owners can manage admin users"
     ON admin_users FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin'));
-    
+        USING (auth.role() = 'service_role' OR public.current_admin_role() = 'owner')
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() = 'owner');
+
+    -- 2. Superadmins can view all admin users
+    CREATE POLICY "Superadmins can view all admin users"
+    ON admin_users FOR SELECT
+        USING (public.current_admin_role() = 'superadmin');
+
+    -- 3. Superadmins can add editors or other superadmins (but never owners)
+    CREATE POLICY "Superadmins can add admin users"
+    ON admin_users FOR INSERT
+        WITH CHECK (
+            public.current_admin_role() = 'superadmin' 
+            AND role IN ('editor', 'superadmin')
+        );
+
+    -- 4. Superadmins can remove editors or other superadmins (but never owners)
+    CREATE POLICY "Superadmins can delete admin users"
+    ON admin_users FOR DELETE
+        USING (
+            public.current_admin_role() = 'superadmin' 
+            AND role IN ('editor', 'superadmin')
+        );
+
+    -- Note: Superadmins explicitly lack UPDATE permission to prevent role changes,
+    -- and their INSERT/DELETE policies prevent them from touching owner accounts.
 END;
 $$;
 
@@ -897,8 +921,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage properties" ON properties;
     CREATE POLICY "Admins can manage properties"
     ON properties FOR ALL
-    USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-    WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+    WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
 END;
 $$;
 
@@ -907,8 +931,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage curated images" ON property_curated_images;
     CREATE POLICY "Admins can manage curated images"
     ON property_curated_images FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -918,8 +942,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage gallery images" ON property_images;
     CREATE POLICY "Admins can manage gallery images"
     ON property_images FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -929,8 +953,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage highlight images" ON property_highlight_images;
     CREATE POLICY "Admins can manage highlight images"
     ON property_highlight_images FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -940,8 +964,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage reviews" ON reviews;
     CREATE POLICY "Admins can manage reviews"
     ON reviews FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -951,8 +975,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage faqs" ON faqs;
     CREATE POLICY "Admins can manage faqs"
     ON faqs FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -962,8 +986,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage amenities" ON amenities;
     CREATE POLICY "Admins can manage amenities"
     ON amenities FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -973,8 +997,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage activities" ON activities;
     CREATE POLICY "Admins can manage activities"
     ON activities FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -984,8 +1008,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property activities" ON property_activities;
     CREATE POLICY "Admins can manage property activities"
     ON property_activities FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1005,7 +1029,7 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property reviews" ON property_reviews;
     CREATE POLICY "Admins can manage property reviews"
     ON property_reviews FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
         WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
@@ -1025,9 +1049,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property faqs" ON property_faqs;
     CREATE POLICY "Admins can manage property faqs"
     ON property_faqs FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
-    
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
 END;
 $$;
 
@@ -1044,86 +1067,62 @@ SET name = EXCLUDED.name, public = EXCLUDED.public;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Public read property and profile images'
-    ) THEN
-        CREATE POLICY "Public read property and profile images"
-        ON storage.objects FOR SELECT
-        USING (bucket_id IN ('property-assets', 'profile-pictures'));
-    END IF;
+    DROP POLICY IF EXISTS "Public read property and profile images" ON storage.objects;
+    CREATE POLICY "Public read property and profile images"
+    ON storage.objects FOR SELECT
+    USING (bucket_id IN ('property-assets', 'profile-pictures'));
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins upload property and profile images'
-    ) THEN
-        CREATE POLICY "Admins upload property and profile images"
-        ON storage.objects FOR INSERT
-        WITH CHECK (
-            bucket_id IN ('property-assets', 'profile-pictures')
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
-END;
-$$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins update property and profile images'
-    ) THEN
-        CREATE POLICY "Admins update property and profile images"
-        ON storage.objects FOR UPDATE
-        USING (
-            bucket_id IN ('property-assets', 'profile-pictures')
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
+    DROP POLICY IF EXISTS "Admins upload property and profile images" ON storage.objects;
+    CREATE POLICY "Admins upload property and profile images"
+    ON storage.objects FOR INSERT
+    WITH CHECK (
+        bucket_id IN ('property-assets', 'profile-pictures')
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
         )
-        WITH CHECK (
-            bucket_id IN ('property-assets', 'profile-pictures')
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
+    );
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins delete property and profile images'
-    ) THEN
-        CREATE POLICY "Admins delete property and profile images"
-        ON storage.objects FOR DELETE
-        USING (
-            bucket_id IN ('property-assets', 'profile-pictures')
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
+    DROP POLICY IF EXISTS "Admins update property and profile images" ON storage.objects;
+    CREATE POLICY "Admins update property and profile images"
+    ON storage.objects FOR UPDATE
+    USING (
+        bucket_id IN ('property-assets', 'profile-pictures')
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    )
+    WITH CHECK (
+        bucket_id IN ('property-assets', 'profile-pictures')
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    );
+END;
+$$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Admins delete property and profile images" ON storage.objects;
+    CREATE POLICY "Admins delete property and profile images"
+    ON storage.objects FOR DELETE
+    USING (
+        bucket_id IN ('property-assets', 'profile-pictures')
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    );
 END;
 $$;
 
@@ -1233,8 +1232,7 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage site content" ON site_content;
     CREATE POLICY "Admins can manage site content"
     ON site_content FOR ALL
-        USING (current_admin_role() IN ('owner', 'superadmin'));
-    
+        USING (public.current_admin_role() IN ('owner', 'superadmin'));
 END;
 $$;
 
@@ -1764,8 +1762,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge hubs" ON knowledge_hubs;
     CREATE POLICY "Admins can manage knowledge hubs"
     ON knowledge_hubs FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1775,8 +1773,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sources" ON knowledge_sources;
     CREATE POLICY "Admins can manage knowledge sources"
     ON knowledge_sources FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1786,8 +1784,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sections" ON knowledge_sections;
     CREATE POLICY "Admins can manage knowledge sections"
     ON knowledge_sections FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1797,8 +1795,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge questions" ON knowledge_questions;
     CREATE POLICY "Admins can manage knowledge questions"
     ON knowledge_questions FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1808,8 +1806,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sync runs" ON knowledge_sync_runs;
     CREATE POLICY "Admins can manage knowledge sync runs"
     ON knowledge_sync_runs FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1819,8 +1817,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge chunks" ON knowledge_chunks;
     CREATE POLICY "Admins can manage knowledge chunks"
     ON knowledge_chunks FOR ALL
-        USING (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
     
 END;
 $$;
@@ -1832,92 +1830,68 @@ SET name = EXCLUDED.name, public = EXCLUDED.public;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins read knowledge source files'
-    ) THEN
-        CREATE POLICY "Admins read knowledge source files"
-        ON storage.objects FOR SELECT
-        USING (
-            bucket_id = 'knowledge-sources'
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
-END;
-$$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins upload knowledge source files'
-    ) THEN
-        CREATE POLICY "Admins upload knowledge source files"
-        ON storage.objects FOR INSERT
-        WITH CHECK (
-            bucket_id = 'knowledge-sources'
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
-END;
-$$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins update knowledge source files'
-    ) THEN
-        CREATE POLICY "Admins update knowledge source files"
-        ON storage.objects FOR UPDATE
-        USING (
-            bucket_id = 'knowledge-sources'
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
+    DROP POLICY IF EXISTS "Admins read knowledge source files" ON storage.objects;
+    CREATE POLICY "Admins read knowledge source files"
+    ON storage.objects FOR SELECT
+    USING (
+        bucket_id = 'knowledge-sources'
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
         )
-        WITH CHECK (
-            bucket_id = 'knowledge-sources'
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
+    );
 END;
 $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'storage'
-        AND tablename = 'objects'
-        AND policyname = 'Admins delete knowledge source files'
-    ) THEN
-        CREATE POLICY "Admins delete knowledge source files"
-        ON storage.objects FOR DELETE
-        USING (
-            bucket_id = 'knowledge-sources'
-            AND (
-                auth.role() = 'service_role'
-                OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
-            )
-        );
-    END IF;
+    DROP POLICY IF EXISTS "Admins upload knowledge source files" ON storage.objects;
+    CREATE POLICY "Admins upload knowledge source files"
+    ON storage.objects FOR INSERT
+    WITH CHECK (
+        bucket_id = 'knowledge-sources'
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    );
+END;
+$$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Admins update knowledge source files" ON storage.objects;
+    CREATE POLICY "Admins update knowledge source files"
+    ON storage.objects FOR UPDATE
+    USING (
+        bucket_id = 'knowledge-sources'
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    )
+    WITH CHECK (
+        bucket_id = 'knowledge-sources'
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    );
+END;
+$$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Admins delete knowledge source files" ON storage.objects;
+    CREATE POLICY "Admins delete knowledge source files"
+    ON storage.objects FOR DELETE
+    USING (
+        bucket_id = 'knowledge-sources'
+        AND (
+            auth.role() = 'service_role'
+            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+        )
+    );
 END;
 $$;
 
