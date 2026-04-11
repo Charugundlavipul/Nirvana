@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes, FaCalendarAlt, FaUser } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaCalendarAlt, FaUser, FaClock, FaArrowRight } from 'react-icons/fa';
 
 function formatDisplayDate(dateStr) {
     if (!dateStr) return '';
@@ -9,7 +9,7 @@ function formatDisplayDate(dateStr) {
     return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
-const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
+const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 PM', checkOutTime = '10:00 AM' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -152,9 +152,20 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
   const isDateUnavailable = (dateStr) => {
       const status = calendarData[dateStr];
       if (!status) return false; 
-      if (!checkInDate && status === 'check-out') return true;
-      if (checkInDate && !checkOutDate && status === 'check-in') return true;
-      return status === 'unavailable';
+      // Middle of an existing booking — always blocked
+      if (status === 'unavailable') return true;
+      // check-in = someone else's stay starts this night (night is booked)
+      // → You CAN check out here (same-day turnover — you leave morning, they arrive afternoon)
+      // → You CANNOT check in here (the night is taken)
+      if (status === 'check-in') {
+          // If user is picking a checkout date, allow same-day turnover
+          if (checkInDate && !checkOutDate) return false;
+          // Otherwise treat as unavailable (can't start a stay on a booked night)
+          return true;
+      }
+      // check-out = previous guest leaves (night is free)
+      // → Always available for check-in (same-day turnover)
+      return false;
   };
 
   const handleDateClick = (dateStr) => {
@@ -179,7 +190,8 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
             current.setDate(current.getDate() + 1);
             while (current < dOut) {
                 const s = current.toISOString().split('T')[0];
-                if (calendarData[s] !== 'available') {
+                const dayStatus = calendarData[s];
+                if (dayStatus !== 'available' && dayStatus !== 'check-out') {
                     valid = false;
                     break;
                 }
@@ -256,41 +268,44 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
                   isBetween = dateStr > checkInDate && dateStr <= hoverDate && status !== 'unavailable' && status !== 'past';
               }
 
-              let wrapperClass = "aspect-square flex items-center justify-center p-0.5";
-              let bgClass = "bg-white text-slate-700 hover:bg-slate-50 cursor-pointer ring-1 ring-inset ring-transparent hover:ring-slate-200 transition-all rounded-lg"; 
-              let innerClass = "w-full h-full flex flex-col items-center justify-center font-medium text-sm rounded-lg transition-all";
-              
+              const isUnavailableDate = isDateUnavailable(dateStr);
+              let wrapperClass = "aspect-square flex items-center justify-center";
+              let cellClass = "w-full h-full flex items-center justify-center text-sm transition-colors duration-150 rounded-full";
+
+              // Blocked — either truly unavailable, or contextually blocked (e.g. check-in day when user already picked check-in)
+              if (isPast) {
+                  cellClass += " text-slate-300 cursor-default";
+              } else if (isUnavailableDate) {
+                  cellClass += " text-slate-300 cursor-default line-through decoration-slate-300/70";
+              }
+              // Available (includes transition days that are currently clickable)
+              else {
+                  cellClass += " text-slate-900 font-medium cursor-pointer hover:bg-slate-900 hover:text-white";
+              }
+
+              // Today
               if (isToday && !isSelected && !isBetween) {
-                  bgClass = "bg-accent/5 text-accent font-bold rounded-lg ring-1 ring-accent/20";
+                  cellClass += " font-bold underline underline-offset-4 decoration-2 decoration-slate-900";
               }
 
-              if (status === "unavailable" && !isPast) {
-                  bgClass = "bg-[#f8fafc] text-slate-300 cursor-not-allowed rounded-lg overflow-hidden";
-                  innerClass += " relative";
-                  bgClass += " bg-[linear-gradient(to_top_right,var(--tw-gradient-stops))] from-slate-50 via-slate-100 to-slate-50 line-through decoration-slate-300";
-              } else if (status === "check-in" && !isPast && !isSelected && !isBetween) {
-                  bgClass = "bg-[linear-gradient(135deg,_#FFFFFF_50%,_#f1f5f9_50%)] text-slate-700 cursor-pointer shadow-sm rounded-lg border border-slate-100";
-              } else if (status === "check-out" && !isPast && !isSelected && !isBetween) {
-                  bgClass = "bg-[linear-gradient(135deg,_#f1f5f9_50%,_#FFFFFF_50%)] text-slate-700 cursor-pointer shadow-sm rounded-lg border border-slate-100";
-              } else if (status === "past") {
-                  bgClass = "bg-white text-slate-300 cursor-default rounded-lg";
+              // In-range
+              if (isBetween && !isSelected && !isUnavailableDate) {
+                  cellClass = "w-full h-full flex items-center justify-center text-sm transition-colors duration-150 rounded-none text-accent font-medium cursor-pointer bg-accent/10";
               }
 
-              if (isBetween && !isSelected && !isDateUnavailable(dateStr)) {
-                  bgClass = "bg-accent/10 text-accent rounded-none cursor-pointer";
-              }
+              // Selected
               if (isSelected) {
-                  bgClass = "bg-accent text-white rounded-lg shadow-md font-bold scale-105 z-10 cursor-pointer";
+                  cellClass = "w-full h-full flex items-center justify-center text-sm rounded-full bg-slate-900 text-white font-bold cursor-pointer shadow-sm";
               }
 
               return (
                 <div key={dateStr} className={wrapperClass}>
-                  <div 
-                    className={`${innerClass} ${bgClass} w-full h-full`}
+                  <div
+                    className={cellClass}
                     onClick={() => handleDateClick(dateStr)}
                     onMouseEnter={() => handleDateHover(dateStr)}
                   >
-                    <span>{day}</span>
+                    {day}
                   </div>
                 </div>
               );
@@ -311,20 +326,9 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
             
             {/* Calendar Section */}
             <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200/60 p-6 md:p-8 flex-1 transition-all w-full">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div className="mb-6">
                     <h3 className="text-2xl text-slate-800 font-sans font-semibold tracking-tight">Select Dates</h3>
-                    
-                    {/* Elegant Legend */}
-                    <div className="flex flex-wrap items-center gap-4 text-[11px] uppercase tracking-wider text-slate-500 font-semibold font-sans">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-white border-2 border-slate-200"></div>
-                            <span>Available</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-slate-100 border border-slate-200"></div>
-                            <span>Unavailable</span>
-                        </div>
-                    </div>
+                    <p className="text-sm text-slate-400 mt-1">Greyed out dates are not available</p>
                 </div>
 
                 <div className="relative min-h-[300px]">
@@ -363,6 +367,42 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12 }) => {
                             <FaChevronRight size={14}/>
                         </button>
                     </div>
+
+                    {/* Selection Info Bar */}
+                    {(checkInDate || checkOutDate) && (
+                      <div className="mt-6 bg-accent/5 border border-accent/15 rounded-xl p-4 transition-all animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-accent/70 mb-2">
+                          <FaClock size={10} />
+                          <span>Your Selected Stay</span>
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-800">
+                              {checkInDate ? formatDisplayDate(checkInDate) : '—'}
+                            </span>
+                            <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                              {checkInTime} check-in
+                            </span>
+                          </div>
+                          {checkOutDate && (
+                            <>
+                              <FaArrowRight size={10} className="text-accent/40" />
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-slate-800">
+                                  {formatDisplayDate(checkOutDate)}
+                                </span>
+                                <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                                  {checkOutTime} check-out
+                                </span>
+                              </div>
+                            </>
+                          )}
+                          {checkInDate && !checkOutDate && (
+                            <span className="text-xs text-slate-400 italic">← now pick your check-out date</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                 </div>
             </div>
 
