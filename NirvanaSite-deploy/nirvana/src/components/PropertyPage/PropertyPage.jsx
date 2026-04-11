@@ -10,6 +10,7 @@ import AvailabilityCalendar from '../common/AvailabilityCalendar';
 import InlineReviews from './InlineReviews';
 import InlineActivities from './InlineActivities';
 import ContactForm from '../Contact/ContactForm';
+import HospitableWidget from '../common/HospitableWidget';
 import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
 
 const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [] }) => {
@@ -416,6 +417,11 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
                 <ContactForm />
             </section>
+
+            {/* Hospitable Direct Widget (for Google Vacation Rentals listing) */}
+            {property.booking_url && (
+                <HospitableWidget bookingUrl={property.booking_url} />
+            )}
 
             {/* CTA Section */}
             <section className="relative py-32 bg-slate-900 overflow-hidden">

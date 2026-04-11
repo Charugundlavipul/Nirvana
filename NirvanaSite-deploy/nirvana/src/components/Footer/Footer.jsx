@@ -44,24 +44,6 @@ const Footer = () => {
 
     return (
         <footer className="mt-16 font-sans">
-            <div className="bg-gradient-to-r from-[#0b1324] via-[#0f1b33] to-[#10243f] text-white">
-                <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 px-6 py-8 md:flex-row md:items-center">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Plan Your Escape</p>
-                        <h3 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
-                            Ready to book your next luxury stay?
-                        </h3>
-                    </div>
-                    <Link
-                        href="/book"
-                        className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-accent/80"
-                    >
-                        Book Now
-                        <FaArrowRight size={12} />
-                    </Link>
-                </div>
-            </div>
-
             <div className="bg-[#0a1222] text-white">
                 <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-14 md:grid-cols-2 lg:grid-cols-4">
                     <section className="space-y-4">
