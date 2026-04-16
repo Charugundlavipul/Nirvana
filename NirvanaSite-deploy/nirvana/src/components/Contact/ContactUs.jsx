@@ -35,53 +35,69 @@ const ContactUs = () => {
             </div>
 
             <div className="max-w-6xl mx-auto px-6 py-16 space-y-20">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2">
+                    {/* Email Tile */}
                     <a
                         href="mailto:reservations@vkr-ventures.com"
-                        className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
+                        className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
                     >
-                        <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
+                        <FaEnvelope className="absolute -bottom-6 -right-6 text-[140px] text-gray-50 opacity-80 transition-transform duration-700 group-hover:-translate-y-3 group-hover:-translate-x-3 group-hover:text-accent/5 rotate-[-15deg] pointer-events-none" />
+                        <div className="relative z-10 grid h-16 w-16 place-items-center rounded-full bg-accent/10 text-accent text-2xl transition-transform duration-300 group-hover:scale-110">
                             <FaEnvelope />
                         </div>
-                        <h3 className="font-bold text-gray-900">Email Us</h3>
-                        <p className="text-sm text-gray-500 break-all">reservations@vkr-ventures.com</p>
+                        <div className="relative z-10 space-y-1.5">
+                            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Email Us</h3>
+                            <p className="text-base text-gray-500 font-medium">reservations@vkr-ventures.com</p>
+                        </div>
                     </a>
 
+                    {/* Phone Tile */}
                     <a
                         href="tel:704-780-1369"
-                        className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
+                        className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
                     >
-                        <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
+                        <FaPhone className="absolute -bottom-6 -right-6 text-[140px] text-gray-50 opacity-80 transition-transform duration-700 group-hover:-translate-y-3 group-hover:-translate-x-3 group-hover:text-accent/5 rotate-[-15deg] pointer-events-none" />
+                        <div className="relative z-10 grid h-16 w-16 place-items-center rounded-full bg-accent/10 text-accent text-2xl transition-transform duration-300 group-hover:scale-110">
                             <FaPhone />
                         </div>
-                        <h3 className="font-bold text-gray-900">Call Us</h3>
-                        <p className="text-sm text-gray-500">704-780-1369</p>
+                        <div className="relative z-10 space-y-1.5">
+                            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Call Us</h3>
+                            <p className="text-base text-gray-500 font-medium">704-780-1369</p>
+                        </div>
                     </a>
 
+                    {/* Instagram Tile */}
                     <a
                         href="https://www.instagram.com/nirvanaluxevacations/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
+                        className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
                     >
-                        <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
+                        <FaInstagram className="absolute -bottom-6 -right-6 text-[140px] text-gray-50 opacity-80 transition-transform duration-700 group-hover:-translate-y-3 group-hover:-translate-x-3 group-hover:text-accent/5 rotate-[-15deg] pointer-events-none" />
+                        <div className="relative z-10 grid h-16 w-16 place-items-center rounded-full bg-accent/10 text-accent text-2xl transition-transform duration-300 group-hover:scale-110">
                             <FaInstagram />
                         </div>
-                        <h3 className="font-bold text-gray-900">Instagram</h3>
-                        <p className="text-sm text-gray-500">@nirvanaluxevacations</p>
+                        <div className="relative z-10 space-y-1.5">
+                            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Instagram</h3>
+                            <p className="text-base text-gray-500 font-medium">@nirvanaluxevacations</p>
+                        </div>
                     </a>
 
+                    {/* Facebook Tile */}
                     <a
                         href="https://www.facebook.com/NirvanaaLuxe"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition-all hover:border-accent/40 hover:shadow-lg"
+                        className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
                     >
-                        <div className="grid h-14 w-14 place-items-center rounded-full bg-accent/10 text-accent text-xl transition-transform group-hover:scale-110">
+                        <FaFacebook className="absolute -bottom-6 -right-6 text-[140px] text-gray-50 opacity-80 transition-transform duration-700 group-hover:-translate-y-3 group-hover:-translate-x-3 group-hover:text-accent/5 rotate-[-15deg] pointer-events-none" />
+                        <div className="relative z-10 grid h-16 w-16 place-items-center rounded-full bg-accent/10 text-accent text-2xl transition-transform duration-300 group-hover:scale-110">
                             <FaFacebook />
                         </div>
-                        <h3 className="font-bold text-gray-900">Facebook</h3>
-                        <p className="text-sm text-gray-500">Nirvana Luxe</p>
+                        <div className="relative z-10 space-y-1.5">
+                            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Facebook</h3>
+                            <p className="text-base text-gray-500 font-medium">Nirvana Luxe</p>
+                        </div>
                     </a>
                 </div>
 
