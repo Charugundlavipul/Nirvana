@@ -739,6 +739,43 @@ BEGIN
         ELSE
             RAISE EXCEPTION 'Unsupported property_highlight_image action %', req.action;
         END IF;
+    ELSIF req.entity_type = 'blog' THEN
+        IF req.action = 'create' THEN
+            INSERT INTO public.blogs (
+                slug, title, category, author_id, author_name, author_image_url, excerpt, content, cover_image, published, published_at
+            ) VALUES (
+                req.payload->>'slug',
+                req.payload->>'title',
+                COALESCE(req.payload->>'category', 'Guide'),
+                NULLIF(req.payload->>'author_id', '')::uuid,
+                COALESCE(req.payload->>'author_name', 'Nirvana Luxe Team'),
+                COALESCE(req.payload->>'author_image_url', '/favicon.png'),
+                req.payload->>'excerpt',
+                req.payload->>'content',
+                req.payload->>'cover_image',
+                COALESCE((req.payload->>'published')::boolean, false),
+                CASE WHEN (req.payload->>'published')::boolean = true THEN NOW() ELSE NULL END
+            );
+        ELSIF req.action = 'update' THEN
+            UPDATE public.blogs
+            SET
+                slug = req.payload->>'slug',
+                title = req.payload->>'title',
+                category = COALESCE(req.payload->>'category', 'Guide'),
+                author_name = COALESCE(req.payload->>'author_name', 'Nirvana Luxe Team'),
+                author_image_url = COALESCE(req.payload->>'author_image_url', '/favicon.png'),
+                excerpt = req.payload->>'excerpt',
+                content = req.payload->>'content',
+                cover_image = req.payload->>'cover_image',
+                published = COALESCE((req.payload->>'published')::boolean, false),
+                published_at = CASE WHEN (req.payload->>'published')::boolean = true AND published_at IS NULL THEN NOW() ELSE published_at END,
+                updated_at = NOW()
+            WHERE id = req.entity_id;
+        ELSIF req.action = 'delete' THEN
+            DELETE FROM public.blogs WHERE id = req.entity_id;
+        ELSE
+            RAISE EXCEPTION 'Unsupported blog action %', req.action;
+        END IF;
     ELSE
         RAISE EXCEPTION 'Unsupported entity_type % in apply_approval_request', req.entity_type;
     END IF;
@@ -1939,3 +1976,106 @@ FROM properties p
 WHERE kh.scope_type = 'property'
   AND kh.property_id = p.id
   AND kh.title IS DISTINCT FROM p.name || ' Knowledge Base';
+
+-- ========================================================
+-- BLOGS & CONTENT MARKETING SCHEMA
+-- ========================================================
+-- If an existing environment has a drifted blogs table, run
+-- supabase/migrations/20260416_reset_blogs.sql first, then rerun this file.
+
+CREATE TABLE IF NOT EXISTS public.blogs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT DEFAULT 'Travel Guides',
+    author_id UUID REFERENCES auth.users(id),
+    author_name TEXT DEFAULT 'Nirvana Luxe Team',
+    author_image_url TEXT DEFAULT '/favicon.png',
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    cover_image TEXT,
+    read_time TEXT DEFAULT '5 min read',
+    published BOOLEAN DEFAULT false,
+    published_at TIMESTAMPTZ,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES auth.users(id);
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Travel Guides';
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'Nirvana Luxe Team';
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS author_image_url TEXT DEFAULT '/favicon.png';
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS excerpt TEXT;
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS read_time TEXT DEFAULT '5 min read';
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT false;
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
+ALTER TABLE public.blogs
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
+ALTER TABLE public.blogs
+    ALTER COLUMN category SET DEFAULT 'Travel Guides';
+ALTER TABLE public.blogs
+    ALTER COLUMN author_name SET DEFAULT 'Nirvana Luxe Team';
+ALTER TABLE public.blogs
+    ALTER COLUMN author_image_url SET DEFAULT '/favicon.png';
+ALTER TABLE public.blogs
+    ALTER COLUMN read_time SET DEFAULT '5 min read';
+ALTER TABLE public.blogs
+    ALTER COLUMN published SET DEFAULT false;
+UPDATE public.blogs
+SET
+    category = COALESCE(category, 'Travel Guides'),
+    author_name = COALESCE(author_name, 'Nirvana Luxe Team'),
+    author_image_url = COALESCE(author_image_url, '/favicon.png'),
+    read_time = COALESCE(read_time, '5 min read'),
+    published = COALESCE(published, false),
+    created_at = COALESCE(created_at, timezone('utc'::text, now())),
+    updated_at = COALESCE(updated_at, timezone('utc'::text, now()))
+WHERE
+    category IS NULL
+    OR author_name IS NULL
+    OR author_image_url IS NULL
+    OR read_time IS NULL
+    OR published IS NULL
+    OR created_at IS NULL
+    OR updated_at IS NULL;
+
+ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+    DROP POLICY IF EXISTS "Public can view published blogs" ON public.blogs;
+    DROP POLICY IF EXISTS "Authenticated users can manage blogs" ON public.blogs;
+EXCEPTION
+    WHEN undefined_object THEN null;
+END $$;
+
+CREATE POLICY "Public can view published blogs" ON public.blogs
+    FOR SELECT USING (published = true);
+
+CREATE POLICY "Authenticated users can manage blogs" ON public.blogs
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE OR REPLACE FUNCTION update_blogs_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+DROP TRIGGER IF EXISTS update_blogs_modtime ON public.blogs;
+CREATE TRIGGER update_blogs_modtime
+    BEFORE UPDATE ON public.blogs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_blogs_updated_at_column();

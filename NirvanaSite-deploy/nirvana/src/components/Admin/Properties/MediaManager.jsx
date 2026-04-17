@@ -9,6 +9,7 @@ import {
     submitOrUpdateApproval,
     queueKnowledgeRefresh
 } from "../../../lib/adminApi";
+import { compressImageToWebp } from "../../../lib/imageCompressor";
 
 const MediaManager = ({ propertyId, isDraft = false }) => {
     const [images, setImages] = useState([]);
@@ -111,7 +112,8 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
             const uploads = [];
 
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+                const originalFile = files[i];
+                const file = await compressImageToWebp(originalFile);
                 const fileName = `${propertyId}/gallery/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
 
                 const { error: uploadErr } = await supabase.storage

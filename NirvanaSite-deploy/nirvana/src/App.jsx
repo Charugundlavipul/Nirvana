@@ -11,6 +11,9 @@ import ReviewsPage from "./components/Review/ReviewPage";
 import PropertyOverview from "./components/PropertyOverview/propertyOverview";
 import PropertyPage from "./components/PropertyPage/PropertyPage";
 import PropertyGalleryPage from "./components/PropertyGallery/PropertyGalleryPage";
+import LocationPage from "./components/LocationPage/LocationPage";
+import BlogFeed from "./components/Blog/BlogFeed";
+import BlogPost from "./components/Blog/BlogPost";
 import ActivitiesPage from "./components/NearbyActivities/ActivitiesPage";
 import ContactUs from "./components/Contact/ContactUs";
 import LegalPage from "./components/Legal/LegalPage";
@@ -21,6 +24,7 @@ import PropertyList from "./components/Admin/Properties/PropertyList";
 import PropertyEditor from "./components/Admin/Properties/PropertyEditor";
 import GlobalContent from "./components/Admin/Global/GlobalContent";
 import ApprovalQueue from "./components/Admin/Approvals/ApprovalQueue";
+import BlogManager from "./components/Admin/Blogs/BlogManager";
 import AdminUsersManager from "./components/Admin/Users/AdminUsersManager";
 import SubscribersManager from "./components/Admin/Subscribers/SubscribersManager";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe";
@@ -51,6 +55,13 @@ function AppLayout() {
           <Route path="/properties" element={<PropertyOverview />} />
           <Route path="/book/:slug" element={<Booking />} />
 
+          {/* Location Landing Pages */}
+          <Route path="/destinations/:locationSlug" element={<LocationPage />} />
+
+          {/* Content & SEO Journal */}
+          <Route path="/blog" element={<BlogFeed />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+
           {/* Dynamic Activity Route */}
           <Route path="/activities/:slug" element={<ActivitiesPage />} />
 
@@ -77,6 +88,7 @@ function AppLayout() {
             <Route path="properties" element={<PropertyList />} />
             <Route path="properties/:slug" element={<PropertyEditor />} />
             <Route path="global" element={<GlobalContent />} />
+            <Route path="blogs" element={<BlogManager />} />
             <Route path="approvals" element={<ApprovalQueue />} />
             <Route path="subscribers" element={<SubscribersManager />} />
             <Route path="admins" element={<AdminUsersManager />} />

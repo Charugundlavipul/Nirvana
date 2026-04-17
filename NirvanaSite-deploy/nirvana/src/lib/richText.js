@@ -7,6 +7,7 @@ const ALLOWED_TAGS = new Set([
   "ul",
   "ol",
   "li",
+  "h1",
   "h2",
   "h3",
   "h4",

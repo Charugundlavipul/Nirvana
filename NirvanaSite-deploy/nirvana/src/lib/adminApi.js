@@ -191,23 +191,27 @@ export async function findOpenRequest(entityType, entityId, action = null) {
 }
 
 export async function resubmitApprovalRequest(requestId, newPayload, beforeSnapshot = null, comment = null) {
-  const { data, error } = await supabase
-    .from("approval_requests")
-    .update({
-      payload: newPayload,
-      before_snapshot: beforeSnapshot,
-      status: "pending",
-      comment: comment,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", requestId)
-    .select()
-    .maybeSingle();
-      
-  if (!error && !data) {
-      return { data: null, error: new Error("Draft update failed: Check if you have permission to edit this request.") };
+  try {
+    const response = await adminRequest("/api/admin/drafts/merge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestId,
+        entityType: newPayload?.entity_type || "blog",
+        action: "update",
+        payload: newPayload,
+        beforeSnapshot,
+        comment,
+      }),
+    });
+
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("Failed to resubmit approval draft via API:", error);
+    return { data: null, error };
   }
-  return { data, error };
 }
 
 export async function fetchMyPendingDrafts() {

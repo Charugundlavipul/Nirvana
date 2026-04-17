@@ -346,9 +346,34 @@ const ReviewManager = () => {
                         <div className={formStyles.fieldGroup}>
                             <label>Avatar</label>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                {formData.avatar_url && (
-                                    <img src={formData.avatar_url} alt="Avatar" style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid #ddd' }} />
-                                )}
+                                <div style={{ position: 'relative', width: 44, height: 44 }}>
+                                    {formData.avatar_url ? (
+                                        <img 
+                                            src={formData.avatar_url} 
+                                            alt="Avatar" 
+                                            style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid #ddd', objectFit: 'cover', position: 'absolute', zIndex: 2 }} 
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    ) : null}
+                                    <div 
+                                        style={{ 
+                                            width: 44, 
+                                            height: 44, 
+                                            borderRadius: '50%', 
+                                            backgroundColor: '#60BD68', 
+                                            color: 'white', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            fontWeight: 'bold',
+                                            fontSize: '18px',
+                                            position: 'absolute',
+                                            zIndex: 1
+                                        }}
+                                    >
+                                        {(formData.author_name || 'G').charAt(0).toUpperCase()}
+                                    </div>
+                                </div>
                                 <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} />
                             </div>
                             {uploading && <span style={{ fontSize: '12px', color: '#666' }}>Uploading...</span>}
@@ -389,7 +414,34 @@ const ReviewManager = () => {
                         <div key={r.id} className={listStyles.card} style={{ height: 'auto' }}>
                             <div className={listStyles.cardContent}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                    <img src={r.avatar_url || '/assets/placeholder-user.png'} style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#eee' }} alt="avatar" />
+                                    <div style={{ position: 'relative', width: 44, height: 44 }}>
+                                        {r.avatar_url ? (
+                                            <img 
+                                                src={r.avatar_url} 
+                                                style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#eee', objectFit: 'cover', position: 'absolute', zIndex: 2 }} 
+                                                alt="avatar" 
+                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                            />
+                                        ) : null}
+                                        <div 
+                                            style={{ 
+                                                width: 44, 
+                                                height: 44, 
+                                                borderRadius: '50%', 
+                                                backgroundColor: '#60BD68', 
+                                                color: 'white', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                fontWeight: 'bold',
+                                                fontSize: '18px',
+                                                position: 'absolute',
+                                                zIndex: 1
+                                            }}
+                                        >
+                                            {(r.author_name || 'G').charAt(0).toUpperCase()}
+                                        </div>
+                                    </div>
                                     <div>
                                         <strong>{r.author_name}</strong>
                                         <div style={{ color: '#ffb400' }}>{"★".repeat(r.rating)}</div>

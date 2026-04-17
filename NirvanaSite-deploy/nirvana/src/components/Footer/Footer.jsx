@@ -59,6 +59,7 @@ const Footer = () => {
                         <ul className="space-y-2 text-sm text-slate-300">
                             <li><Link href="/" className="transition hover:text-accent">Home</Link></li>
                             <li><Link href="/properties" className="transition hover:text-accent">Properties</Link></li>
+                            <li><Link href="/blog" className="transition hover:text-accent">Journal</Link></li>
                             <li><Link href="/review" className="transition hover:text-accent">Reviews</Link></li>
                             <li><Link href="/faq" className="transition hover:text-accent">FAQ</Link></li>
                             <li><Link href="/about" className="transition hover:text-accent">About Us</Link></li>

@@ -9,6 +9,7 @@ import {
     submitOrUpdateApproval,
     queueKnowledgeRefresh
 } from "../../../lib/adminApi";
+import { compressImageToWebp } from "../../../lib/imageCompressor";
 
 const SLOTS = ["home", "bg", "secondary"];
 
@@ -90,8 +91,8 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
     };
 
     const handleUpload = async (e, slot) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const originalFile = e.target.files?.[0];
+        if (!originalFile) return;
         if (!canEditDirectly && pendingBySlot[slot]) {
             alert(`A draft request for ${slot} is already pending review.`);
             return;
@@ -100,6 +101,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
         setUploading(prev => ({ ...prev, [slot]: true }));
 
         try {
+            const file = await compressImageToWebp(originalFile, { maxWidth: 1920 });
             const fileName = `${propertyId}/curated/${slot}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
 
             const { error: uploadErr } = await supabase.storage

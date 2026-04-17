@@ -252,6 +252,8 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                             <img
                                 src={introImageSrc}
                                 alt="Property Exterior"
+                                fetchPriority="high"
+                                decoding="async"
                                 className="w-full aspect-[4/3] object-cover cursor-pointer transform group-hover:scale-105 transition-transform duration-700"
                                 onClick={() => openLightbox(introImageSrc)}
                             />

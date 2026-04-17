@@ -6,6 +6,7 @@ import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts } from "../
 const NAV_ITEMS = [
     { label: "Dashboard", path: "/admin", exact: true, icon: "D", draftBadgeKey: "all" },
     { label: "Properties", path: "/admin/properties", icon: "P" },
+    { label: "Blogs", path: "/admin/blogs", icon: "B" },
     { label: "Knowledge Hub", path: "/admin/knowledge", icon: "K" },
     { label: "Subscribers", path: "/admin/subscribers", icon: "S" },
     { label: "Global Content", path: "/admin/global", icon: "G" },

@@ -66,6 +66,7 @@ const ENTITY_TABLE_BY_TYPE = {
   property_image: "property_images",
   property_curated_image: "property_curated_images",
   property_highlight_image: "property_highlight_images",
+  blog: "blogs",
 };
 
 const MANAGED_STORAGE_BUCKETS = new Set(["property-assets", "profile-pictures"]);
@@ -98,6 +99,15 @@ const friendlyStatus = (status) => {
   const normalized = String(status || "").toLowerCase();
   if (normalized === "revision_requested") return "Revision Requested";
   return status;
+};
+
+const getApprovalErrorMessage = (error) => {
+  const message = error?.message || "";
+  const missingColumnMatch = message.match(/Could not find the '([^']+)' column of 'blogs'/i);
+  if (missingColumnMatch) {
+    return `Blogs schema is missing the ${missingColumnMatch[1]} column in Supabase. Run the updated nirvana/supabase_schema.sql so the full blogs table is repaired.`;
+  }
+  return message || "Unknown error";
 };
 
 const FIELD_LABELS = {
@@ -1697,7 +1707,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
         </div>
       ) : null}
 
-      {isRevision && isPropertyRequest && req.entity_id && (
+      {isRevision && (
         <div style={{ marginTop: "12px" }}>
           <button
             type="button"
@@ -1856,7 +1866,7 @@ const ApprovalQueue = () => {
     });
 
     if (error) {
-      alert(`Failed to ${decision}: ${error.message}`);
+      alert(`Failed to ${decision}: ${getApprovalErrorMessage(error)}`);
     } else {
       if (decision === "approved") {
         try {
@@ -1885,15 +1895,31 @@ const ApprovalQueue = () => {
   };
 
   const handleRevise = async (req) => {
-    // Navigate to the property editor so the editor can make changes
-    if (req.entity_type === "property" && req.entity_id) {
-      // Look up the property slug
-      const { data } = await supabase.from("properties").select("slug").eq("id", req.entity_id).maybeSingle();
-      if (data?.slug) {
-        navigate(`/admin/properties/${data.slug}`);
-      } else {
-        alert("Could not find the property to revise.");
+    const entityType = String(req.entity_type || "").toLowerCase();
+
+    if (entityType === "property" || entityType.startsWith("property_")) {
+      let propertyId = req.entity_id;
+      if (entityType !== "property" && req.payload) {
+          try {
+              const pld = typeof req.payload === "string" ? JSON.parse(req.payload) : req.payload;
+              propertyId = pld?.property_id || propertyId;
+          } catch (e) {}
       }
+
+      if (propertyId) {
+        const { data } = await supabase.from("properties").select("slug").eq("id", propertyId).maybeSingle();
+        if (data?.slug) {
+          navigate(`/admin/properties/${data.slug}`);
+          return;
+        }
+      }
+      navigate("/admin/properties");
+    } else if (entityType === "blog") {
+      navigate("/admin/blogs");
+    } else if (["review", "faq", "activity"].includes(entityType)) {
+      navigate("/admin/global");
+    } else {
+      navigate("/admin"); // Fallback for unknown elements
     }
   };
 
