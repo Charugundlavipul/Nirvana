@@ -30,6 +30,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
   const [reviews, setReviews] = useState(initialReviews);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
   const [selectedSource, setSelectedSource] = useState("all");
 
   const [heroImage] = useState("/assets/exterior.avif");
@@ -159,6 +160,15 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     return r.source === selectedSource;
   });
 
+  useEffect(() => {
+    if (!filteredReviews?.length) return;
+    const timer = setTimeout(() => {
+      setExpandedReviewId(null);
+      setReviewIndex(prev => (prev + 1) % filteredReviews.length);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [filteredReviews?.length, expandedReviewId, reviewIndex]);
+
   const getVisibleReviews = () => {
     if (!filteredReviews.length) return [];
     // Sync with grid: 1 col < 1024, 3 cols >= 1024
@@ -170,8 +180,14 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     return result;
   };
 
-  const nextReview = () => setReviewIndex(prev => (prev + 1) % filteredReviews.length);
-  const prevReview = () => setReviewIndex(prev => (prev - 1 + filteredReviews.length) % filteredReviews.length);
+  const nextReview = () => {
+    setExpandedReviewId(null);
+    setReviewIndex(prev => (prev + 1) % filteredReviews.length);
+  };
+  const prevReview = () => {
+    setExpandedReviewId(null);
+    setReviewIndex(prev => (prev - 1 + filteredReviews.length) % filteredReviews.length);
+  };
 
   const getCardImages = (property) => {
     const images = cardImagesBySlug[property.slug] || [];
@@ -438,15 +454,33 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             </button>
 
             <div className="hidden lg:grid grid-cols-3 gap-6 w-full">
-              {getVisibleReviews().map((review, idx) => (
-                <PremiumReviewCard key={idx} review={review} />
-              ))}
+              {getVisibleReviews().map((review, idx) => {
+                const cardId = review.id || `${review.author || 'guest'}-${idx}`;
+                return (
+                  <PremiumReviewCard 
+                    key={cardId} 
+                    review={review} 
+                    isExpanded={expandedReviewId === cardId}
+                    onToggleExpand={() => setExpandedReviewId(expandedReviewId === cardId ? null : cardId)}
+                  />
+                );
+              })}
             </div>
 
             {/* Mobile/Tablet View (using flex/overflow for swipe feel or single item) */}
             <div className="lg:hidden w-full">
-              <div className="flex justify-center">
-                <PremiumReviewCard review={getVisibleReviews()[0]} />
+              <div className="flex justify-center max-w-sm mx-auto">
+                {getVisibleReviews().length > 0 && (() => {
+                  const review = getVisibleReviews()[0];
+                  const cardId = review.id || `${review.author || 'guest'}-mobile`;
+                  return (
+                    <PremiumReviewCard 
+                      review={review} 
+                      isExpanded={expandedReviewId === cardId}
+                      onToggleExpand={() => setExpandedReviewId(expandedReviewId === cardId ? null : cardId)}
+                    />
+                  );
+                })()}
               </div>
             </div>
 
@@ -616,7 +650,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 };
 
 // Premium Review Card Component
-const PremiumReviewCard = ({ review }) => {
+const PremiumReviewCard = ({ review, isExpanded, onToggleExpand }) => {
   if (!review) return null;
   const source = (review.source || "").toLowerCase();
 
@@ -672,7 +706,19 @@ const PremiumReviewCard = ({ review }) => {
         </div>
       </div>
 
-      <p className="text-gray-600 leading-relaxed line-clamp-4 flex-grow italic">"{review.text}"</p>
+      <div className="flex-grow flex flex-col text-left">
+          <p className={`text-gray-600 leading-relaxed italic transition-all ${isExpanded ? '' : 'line-clamp-4'}`}>
+            "{review.text}"
+          </p>
+          {review.text && review.text.length > 130 && (
+              <button 
+                  onClick={onToggleExpand} 
+                  className="text-accent text-sm font-semibold mt-2 hover:underline text-left self-start focus:outline-none"
+              >
+                  {isExpanded ? 'Read less' : 'Read full review'}
+              </button>
+          )}
+      </div>
 
       <div className="mt-4 pt-4 border-t border-slate-100">
         <p className="text-xs text-slate-400">Stayed at <span className="text-accent font-medium">{review.property || 'Nirvana Luxe'}</span></p>
