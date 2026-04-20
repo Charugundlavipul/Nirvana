@@ -13,10 +13,11 @@ const InlineReviews = ({ reviews = [] }) => {
 
   useEffect(() => {
     if (!reviews?.length) return;
+    const delay = expandedId !== null ? 10000 : 5000;
     const timer = setTimeout(() => {
       setExpandedId(null);
       setReviewIndex(prev => (prev + 1) % reviews.length);
-    }, 5000); // 5 seconds
+    }, delay);
     return () => clearTimeout(timer);
   }, [reviews?.length, expandedId, reviewIndex]);
 

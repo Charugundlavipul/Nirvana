@@ -162,10 +162,11 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
   useEffect(() => {
     if (!filteredReviews?.length) return;
+    const delay = expandedReviewId !== null ? 10000 : 5000;
     const timer = setTimeout(() => {
       setExpandedReviewId(null);
       setReviewIndex(prev => (prev + 1) % filteredReviews.length);
-    }, 5000);
+    }, delay);
     return () => clearTimeout(timer);
   }, [filteredReviews?.length, expandedReviewId, reviewIndex]);
 
