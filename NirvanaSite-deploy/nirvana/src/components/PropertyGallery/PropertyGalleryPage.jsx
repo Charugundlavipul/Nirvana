@@ -174,7 +174,7 @@ const PropertyGalleryPage = ({ slug, initialBundle = null }) => {
   const activeImage = activeImageIndex !== null ? timeline[activeImageIndex] : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pt-16 md:pt-18">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
         <div className="mb-8 border-b border-slate-200 pb-6">
           <Link

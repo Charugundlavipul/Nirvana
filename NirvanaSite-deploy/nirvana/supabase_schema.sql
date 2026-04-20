@@ -36,19 +36,7 @@ CREATE TABLE IF NOT EXISTS properties (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS booking_url TEXT;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS hospitable_property_id TEXT;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS video_url TEXT;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS spaces JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS full_bath_count INT DEFAULT 0;
-ALTER TABLE properties ADD COLUMN IF NOT EXISTS half_bath_count INT DEFAULT 0;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathroom_count NUMERIC(3,1);
-ALTER TABLE properties ALTER COLUMN is_published SET DEFAULT TRUE;
-ALTER TABLE properties ALTER COLUMN spaces SET DEFAULT '[]'::jsonb;
-ALTER TABLE properties ALTER COLUMN full_bath_count SET DEFAULT 0;
-ALTER TABLE properties ALTER COLUMN half_bath_count SET DEFAULT 0;
 UPDATE properties
 SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
 WHERE hospitable_property_id IS NOT NULL;
@@ -132,8 +120,6 @@ CREATE TABLE IF NOT EXISTS property_curated_images (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE property_curated_images ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
-ALTER TABLE property_curated_images ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 CREATE UNIQUE INDEX IF NOT EXISTS property_curated_images_property_slot_uidx
     ON property_curated_images (property_id, slot);
 CREATE INDEX IF NOT EXISTS property_curated_images_property_id_idx
@@ -164,10 +150,6 @@ CREATE TABLE IF NOT EXISTS property_images (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE property_images ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'gallery';
-ALTER TABLE property_images ALTER COLUMN category SET DEFAULT 'gallery';
-ALTER TABLE property_images ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
-ALTER TABLE property_images ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 CREATE UNIQUE INDEX IF NOT EXISTS property_images_property_url_uidx
     ON property_images (property_id, url);
 CREATE INDEX IF NOT EXISTS property_images_property_id_idx
@@ -197,8 +179,6 @@ CREATE TABLE IF NOT EXISTS property_highlight_images (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE property_highlight_images ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
-ALTER TABLE property_highlight_images ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 CREATE UNIQUE INDEX IF NOT EXISTS property_highlight_images_property_url_uidx
     ON property_highlight_images (property_id, url);
 CREATE INDEX IF NOT EXISTS property_highlight_images_property_id_idx
@@ -224,19 +204,13 @@ CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     property_id UUID REFERENCES properties(id) ON DELETE CASCADE, -- @deprecated: Use property_reviews
     author_name TEXT NOT NULL,
-    rating INT CHECK (rating >= 1 AND rating <= 5),
-    content TEXT,
-    source TEXT,
-    date DATE DEFAULT CURRENT_DATE,
-    avatar_url TEXT,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    content TEXT NOT NULL,
+    source TEXT DEFAULT 'direct',
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    avatar_url TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE reviews ALTER COLUMN property_id DROP NOT NULL; -- Allow nulls for M:N transition
-ALTER TABLE reviews ALTER COLUMN rating SET NOT NULL;
-ALTER TABLE reviews ALTER COLUMN content SET NOT NULL;
-ALTER TABLE reviews ALTER COLUMN date SET NOT NULL;
-ALTER TABLE reviews ALTER COLUMN avatar_url SET NOT NULL;
-ALTER TABLE reviews ALTER COLUMN source SET DEFAULT 'direct';
 
 -- 6. FAQs
 CREATE TABLE IF NOT EXISTS faqs (
@@ -248,8 +222,6 @@ CREATE TABLE IF NOT EXISTS faqs (
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE faqs ALTER COLUMN property_id DROP NOT NULL; -- Allow nulls for M:N transition
-ALTER TABLE faqs ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT FALSE;
 
 -- 7. Amenities
 CREATE TABLE IF NOT EXISTS amenities (
@@ -352,11 +324,6 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS before_snapshot JSONB;
-ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
-ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS comment TEXT;
-ALTER TABLE approval_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 CREATE INDEX IF NOT EXISTS approval_requests_status_idx ON approval_requests(status, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS approval_requests_entity_idx ON approval_requests(entity_type, entity_id);
 
@@ -1245,9 +1212,6 @@ CREATE TABLE IF NOT EXISTS site_content (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE site_content ADD COLUMN IF NOT EXISTS effective_date DATE;
-ALTER TABLE site_content ADD COLUMN IF NOT EXISTS last_updated DATE;
-
 INSERT INTO site_content (key, title, content, effective_date, last_updated) VALUES
     ('terms_and_conditions', 'Terms and Conditions', '', '2026-02-27', '2026-02-27'),
     ('privacy_policy', 'Privacy Policy', '', '2026-02-27', '2026-02-27')
@@ -1349,37 +1313,6 @@ CREATE TABLE IF NOT EXISTS knowledge_hubs (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS sync_status TEXT NOT NULL DEFAULT 'idle';
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS source_fingerprint TEXT;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_synced_source_fingerprint TEXT;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_sync_error TEXT;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS last_sync_model TEXT;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE knowledge_hubs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_hubs DROP CONSTRAINT IF EXISTS knowledge_hubs_scope_type_check;
-    ALTER TABLE knowledge_hubs
-        ADD CONSTRAINT knowledge_hubs_scope_type_check
-        CHECK (scope_type IN ('general', 'property'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_hubs DROP CONSTRAINT IF EXISTS knowledge_hubs_sync_status_check;
-    ALTER TABLE knowledge_hubs
-        ADD CONSTRAINT knowledge_hubs_sync_status_check
-        CHECK (sync_status IN ('idle', 'syncing', 'ready', 'error', 'stale'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 DO $$
 BEGIN
@@ -1449,41 +1382,6 @@ CREATE TABLE IF NOT EXISTS knowledge_sources (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS source_key TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS file_name TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS storage_bucket TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS storage_path TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS content_text TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS checksum TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS last_processed_at TIMESTAMPTZ;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS last_error TEXT;
-ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_sources DROP CONSTRAINT IF EXISTS knowledge_sources_source_type_check;
-    ALTER TABLE knowledge_sources
-        ADD CONSTRAINT knowledge_sources_source_type_check
-        CHECK (source_type IN ('system_snapshot', 'manual_note', 'upload'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_sources DROP CONSTRAINT IF EXISTS knowledge_sources_status_check;
-    ALTER TABLE knowledge_sources
-        ADD CONSTRAINT knowledge_sources_status_check
-        CHECK (status IN ('active', 'processing', 'archived', 'error'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 CREATE INDEX IF NOT EXISTS knowledge_sources_hub_status_idx
     ON knowledge_sources (hub_id, status, created_at DESC);
@@ -1536,27 +1434,6 @@ CREATE TABLE IF NOT EXISTS knowledge_sections (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS summary TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS content_markdown TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[];
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS section_origin TEXT NOT NULL DEFAULT 'ai';
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS display_order INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS last_generated_at TIMESTAMPTZ;
-ALTER TABLE knowledge_sections ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_sections DROP CONSTRAINT IF EXISTS knowledge_sections_section_origin_check;
-    ALTER TABLE knowledge_sections
-        ADD CONSTRAINT knowledge_sections_section_origin_check
-        CHECK (section_origin IN ('manual', 'ai', 'hybrid', 'system'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS knowledge_sections_hub_slug_uidx
     ON knowledge_sections (hub_id, slug);
@@ -1594,25 +1471,6 @@ CREATE TABLE IF NOT EXISTS knowledge_questions (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS source_ids UUID[] NOT NULL DEFAULT '{}'::uuid[];
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS question_origin TEXT NOT NULL DEFAULT 'ai';
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS display_order INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS last_generated_at TIMESTAMPTZ;
-ALTER TABLE knowledge_questions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_questions DROP CONSTRAINT IF EXISTS knowledge_questions_question_origin_check;
-    ALTER TABLE knowledge_questions
-        ADD CONSTRAINT knowledge_questions_question_origin_check
-        CHECK (question_origin IN ('manual', 'ai', 'hybrid', 'system'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 CREATE INDEX IF NOT EXISTS knowledge_questions_hub_section_idx
     ON knowledge_questions (hub_id, section_id, is_archived, display_order, created_at DESC);
@@ -1646,25 +1504,6 @@ CREATE TABLE IF NOT EXISTS knowledge_sync_runs (
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ
 );
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS trigger_source_id UUID REFERENCES knowledge_sources(id) ON DELETE SET NULL;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS source_count INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS section_count INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS question_count INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS chunk_count INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS summary JSONB NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS error_message TEXT;
-ALTER TABLE knowledge_sync_runs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_sync_runs DROP CONSTRAINT IF EXISTS knowledge_sync_runs_status_check;
-    ALTER TABLE knowledge_sync_runs
-        ADD CONSTRAINT knowledge_sync_runs_status_check
-        CHECK (status IN ('running', 'completed', 'failed'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 CREATE INDEX IF NOT EXISTS knowledge_sync_runs_hub_started_idx
     ON knowledge_sync_runs (hub_id, started_at DESC);
@@ -1686,25 +1525,6 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS source_id UUID REFERENCES knowledge_sources(id) ON DELETE CASCADE;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS section_id UUID REFERENCES knowledge_sections(id) ON DELETE CASCADE;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS question_id UUID REFERENCES knowledge_questions(id) ON DELETE CASCADE;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT '';
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS token_estimate INT NOT NULL DEFAULT 0;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS checksum TEXT;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-DO $$
-BEGIN
-    ALTER TABLE knowledge_chunks DROP CONSTRAINT IF EXISTS knowledge_chunks_chunk_type_check;
-    ALTER TABLE knowledge_chunks
-        ADD CONSTRAINT knowledge_chunks_chunk_type_check
-        CHECK (chunk_type IN ('source', 'section', 'question'));
-EXCEPTION WHEN duplicate_object THEN
-    NULL;
-END;
-$$;
 
 CREATE INDEX IF NOT EXISTS knowledge_chunks_hub_type_idx
     ON knowledge_chunks (hub_id, chunk_type, created_at DESC);
@@ -2001,38 +1821,6 @@ CREATE TABLE IF NOT EXISTS public.blogs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES auth.users(id);
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Travel Guides';
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'Nirvana Luxe Team';
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS author_image_url TEXT DEFAULT '/favicon.png';
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS excerpt TEXT;
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS cover_image TEXT;
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS read_time TEXT DEFAULT '5 min read';
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT false;
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
-ALTER TABLE public.blogs
-    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
-ALTER TABLE public.blogs
-    ALTER COLUMN category SET DEFAULT 'Travel Guides';
-ALTER TABLE public.blogs
-    ALTER COLUMN author_name SET DEFAULT 'Nirvana Luxe Team';
-ALTER TABLE public.blogs
-    ALTER COLUMN author_image_url SET DEFAULT '/favicon.png';
-ALTER TABLE public.blogs
-    ALTER COLUMN read_time SET DEFAULT '5 min read';
-ALTER TABLE public.blogs
-    ALTER COLUMN published SET DEFAULT false;
 UPDATE public.blogs
 SET
     category = COALESCE(category, 'Travel Guides'),
