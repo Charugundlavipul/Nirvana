@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronLeft, FaChevronRight, FaTimes, FaCalendarAlt, FaUser, FaClock, FaArrowRight } from 'react-icons/fa';
 
 function formatDisplayDate(dateStr) {
@@ -14,17 +14,23 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
   const [calendarData, setCalendarData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [showTwoMonths, setShowTwoMonths] = useState(true);
+  const containerRef = useRef(null);
 
   const [checkInDate, setCheckInDate] = useState(null);
   const [checkOutDate, setCheckOutDate] = useState(null);
   const [hoverDate, setHoverDate] = useState(null);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    if (typeof window !== 'undefined' && containerRef.current) {
+        const observer = new ResizeObserver((entries) => {
+             const { width } = entries[0].contentRect;
+             // 550px is the threshold where 2 months can fit side-by-side cleanly
+             setShowTwoMonths(width > 550);
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }
   }, []);
   
   const [adults, setAdults] = useState(2);
@@ -320,6 +326,10 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
     );
   };
 
+  const nightsCount = (checkInDate && checkOutDate) 
+    ? Math.round((new Date(checkOutDate + "T12:00:00Z") - new Date(checkInDate + "T12:00:00Z")) / (1000 * 60 * 60 * 24)) 
+    : 0;
+
   return (
     <div className="w-full relative">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -331,7 +341,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     <p className="text-sm text-slate-400 mt-1">Greyed out dates are not available</p>
                 </div>
 
-                <div className="relative min-h-[300px]">
+                <div className="relative min-h-[300px]" ref={containerRef}>
                     {loading && (
                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl">
                         <div className="w-8 h-8 border-4 border-primary/10 border-t-accent rounded-full animate-spin mb-3"></div>
@@ -345,9 +355,15 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     </div>
                     )}
 
-                    <div className="flex flex-col sm:flex-row gap-8 md:gap-12 px-2">
-                        {renderMonth(0)}
-                        {!isMobile && renderMonth(1)}
+                    <div className="flex flex-row justify-center gap-8 md:gap-12 px-0 sm:px-2">
+                        <div className="w-full flex-1 max-w-[350px]">
+                             {renderMonth(0)}
+                        </div>
+                        {showTwoMonths && (
+                            <div className="w-full flex-1 max-w-[350px]">
+                                {renderMonth(1)}
+                            </div>
+                        )}
                     </div>
                     
                     {/* Bottom Navigation Arrows */}
@@ -374,6 +390,11 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-accent/70 mb-2">
                           <FaClock size={10} />
                           <span>Your Selected Stay</span>
+                          {nightsCount > 0 && (
+                            <span className="ml-2 bg-accent/20 text-accent font-bold px-2 py-0.5 rounded-full tracking-normal">
+                              {nightsCount} Night{nightsCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 flex-wrap">
                           <div className="flex items-center gap-2">
@@ -505,7 +526,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     ) : quote ? (
                         <div className="space-y-3 animate-in fade-in duration-500">
                             <div className="flex justify-between items-center text-sm text-slate-600">
-                                <span>Rent</span>
+                                <span>Rent <span className="text-xs text-slate-400 ml-1">({nightsCount} night{nightsCount !== 1 ? 's' : ''})</span></span>
                                 <span className="font-medium text-slate-800">{quote.financials.totals.sub_total.formatted}</span>
                             </div>
 
