@@ -49,7 +49,7 @@ const LocationPage = () => {
             />
 
             {/* Hero Section */}
-            <section className="relative h-[60vh] w-full flex items-center justify-center bg-slate-900 overflow-hidden">
+            <section className="site-hero site-hero--md flex w-full items-center justify-center overflow-hidden bg-slate-900">
                 <div className="absolute inset-0 bg-black/50 z-10" />
                 <img 
                     src={`/images/locations/${locationSlug}-hero.jpg`} 

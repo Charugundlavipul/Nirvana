@@ -133,53 +133,53 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         <div className="font-sans text-gray-800 bg-slate-50">
             {/* Hero Section */}
             <section
-                className="mt-[65px] h-[85vh] w-full relative overflow-hidden bg-cover bg-center bg-no-repeat"
+                className="site-hero site-hero--lg relative w-full overflow-hidden bg-cover bg-center bg-no-repeat"
                 ref={heroRef}
                 style={{ backgroundImage: `url(${heroImageSrc})` }}
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10 px-6">
-                    <p className="text-accent uppercase tracking-[0.3em] text-sm font-semibold mb-4">Luxury Retreat</p>
-                    <h1 className="text-5xl md:text-7xl font-bold mb-4 drop-shadow-lg">{property.name}</h1>
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-10 pt-20 text-center text-white sm:px-6 sm:pb-12 md:pt-24">
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">Luxury Retreat</p>
+                    <h1 className="mb-3 max-w-4xl text-4xl font-bold leading-none drop-shadow-lg sm:text-5xl sm:leading-tight md:mb-4 md:text-7xl">{property.name}</h1>
 
-                    <div className="flex items-center gap-2 mb-6">
+                    <div className="mb-5 flex items-center gap-2 sm:mb-6">
                         <FaMapMarkerAlt className="text-accent" />
-                        <span className="text-xl font-light tracking-wide">{property.location}</span>
+                        <span className="text-lg font-light tracking-wide sm:text-xl">{property.location}</span>
                     </div>
 
                     {/* Property Stats */}
-                    <div className="flex flex-wrap justify-center gap-6 mb-8 text-white/90">
+                    <div className="mb-6 flex max-w-3xl flex-wrap justify-center gap-3 text-white/90 sm:mb-8 sm:gap-4 md:gap-6">
                         {property.bedroom_count && (
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                            <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm sm:text-base">
                                 <FaBed className="text-accent" />
                                 <span>{property.bedroom_count} Bedrooms</span>
                             </div>
                         )}
                         {bathroomSummary && (
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                            <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm sm:text-base">
                                 <FaBath className="text-accent" />
                                 <span>{bathroomSummary}</span>
                             </div>
                         )}
                         {property.guests_max && (
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                            <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm sm:text-base">
                                 <FaUsers className="text-accent" />
                                 <span>Up to {property.guests_max} Guests</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex w-full max-w-[18rem] flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
                         <Link
                             href={`/book/${slug}`}
-                            className="inline-block px-10 py-4 bg-accent hover:bg-accent/90 text-white text-lg font-bold uppercase tracking-wider transition-all shadow-2xl hover:shadow-accent/30"
+                            className="inline-block bg-accent px-6 py-4 text-base font-bold uppercase tracking-[0.18em] text-white shadow-2xl transition-all hover:bg-accent/90 hover:shadow-accent/30 sm:px-10 sm:text-lg sm:tracking-wider"
                         >
                             Book Your Stay
                         </Link>
                         <Link
                             href={`/${slug}/gallery`}
-                            className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold border border-white/30 transition-all"
+                            className="inline-flex items-center justify-center gap-2 border border-white/30 bg-white/10 px-6 py-4 text-base font-semibold text-white transition-all backdrop-blur-sm hover:bg-white/20 sm:px-10 sm:text-lg"
                         >
                             <FaPlay size={12} /> View Gallery
                         </Link>
@@ -188,7 +188,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                 href={videoUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white text-lg font-semibold border border-white/30 transition-all"
+                                className="inline-flex items-center justify-center gap-2 border border-white/30 bg-white/10 px-6 py-4 text-base font-semibold text-white transition-all backdrop-blur-sm hover:bg-white/20 sm:px-10 sm:text-lg"
                             >
                                 <FaPlay size={12} /> Watch Video
                             </a>
@@ -197,28 +197,28 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
 
                 {/* Scroll Indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+                <div className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 animate-bounce md:block">
                     <FaChevronDown className="text-white/60 text-2xl" />
                 </div>
             </section>
 
             {/* Property Introduction */}
-            <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-                <div className="flex flex-col lg:flex-row items-center gap-16">
-                    <div className="flex-1 space-y-8">
+            <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 md:px-12 md:py-24">
+                <div className="flex flex-col gap-10 md:gap-12 lg:flex-row lg:items-center lg:gap-16">
+                    <div className="flex-1 space-y-6 min-w-0 md:space-y-8">
                         <div>
-                            <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">About This Property</p>
-                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Welcome to {property.name}</h2>
+                            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent sm:text-sm sm:tracking-[0.2em]">About This Property</p>
+                            <h2 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl md:text-5xl">Welcome to {property.name}</h2>
                         </div>
                         <div>
-                            <p className="text-xl text-slate-600 leading-relaxed font-light whitespace-pre-line line-clamp-6 md:line-clamp-[12] overflow-hidden text-ellipsis">
+                            <p className="overflow-hidden text-ellipsis whitespace-pre-line text-base font-light leading-7 text-slate-600 line-clamp-6 sm:text-lg sm:leading-8 md:text-xl md:leading-relaxed md:line-clamp-[12]">
                                 {descriptionPreview.text}
                             </p>
                             {(descriptionPreview.text.length > 300 || descriptionPreview.isTruncated) && (
                                 <button
                                     type="button"
                                     onClick={() => openLightbox(null, 'description')}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 px-5 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-white transition-colors"
+                                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 px-5 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
                                 >
                                     Read more
                                 </button>
@@ -226,41 +226,41 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-slate-200">
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.bedroom_count || '-'}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-wider">Bedrooms</p>
+                        <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-5 sm:gap-5 md:grid-cols-4 md:gap-6 md:pt-6">
+                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                                <p className="text-2xl font-bold text-accent sm:text-3xl">{property.bedroom_count || '-'}</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Bedrooms</p>
                             </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{fullBathCount || '-'}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-wider">Full Baths</p>
+                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                                <p className="text-2xl font-bold text-accent sm:text-3xl">{fullBathCount || '-'}</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Full Baths</p>
                             </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{halfBathCount || '-'}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-wider">Half Baths</p>
+                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                                <p className="text-2xl font-bold text-accent sm:text-3xl">{halfBathCount || '-'}</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Half Baths</p>
                             </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-accent">{property.guests_max || '-'}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-wider">Guests</p>
+                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                                <p className="text-2xl font-bold text-accent sm:text-3xl">{property.guests_max || '-'}</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Guests</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex-1 w-full relative group">
-                        <div className="absolute -inset-4 bg-gradient-to-br from-accent/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative w-full flex-1 group">
+                        <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-accent/20 to-transparent opacity-0 transition-opacity duration-500 md:-inset-4 group-hover:opacity-100"></div>
                         <div className="relative overflow-hidden rounded-2xl shadow-2xl">
                             <img
                                 src={introImageSrc}
                                 alt="Property Exterior"
                                 fetchPriority="high"
                                 decoding="async"
-                                className="w-full aspect-[4/3] object-cover cursor-pointer transform group-hover:scale-105 transition-transform duration-700"
+                                className="aspect-[4/3] w-full cursor-pointer object-cover transition-transform duration-700 group-hover:scale-105"
                                 onClick={() => openLightbox(introImageSrc)}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <button
                                 onClick={() => openLightbox(introImageSrc)}
-                                className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-sm text-slate-900 font-semibold px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white"
+                                className="absolute bottom-4 right-4 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 opacity-100 shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-white md:bottom-6 md:right-6 md:text-base md:opacity-0 group-hover:md:opacity-100"
                             >
                                 View Full Image
                             </button>
@@ -426,7 +426,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             )}
 
             {/* CTA Section */}
-            <section className="relative py-32 bg-slate-900 overflow-hidden">
+            <section className="site-viewport-section relative overflow-hidden bg-slate-900">
                 <div className="absolute inset-0 opacity-30">
                     <img src={heroImageSrc} alt="" className="w-full h-full object-cover" />
                 </div>

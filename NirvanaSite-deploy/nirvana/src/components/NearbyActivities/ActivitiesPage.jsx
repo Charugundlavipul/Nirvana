@@ -21,7 +21,7 @@ const ActivitiesPage = ({
   return (
     <div className="bg-gray-50 min-h-screen font-sans text-gray-800">
       <div
-        className="relative h-[60vh] bg-cover bg-center flex items-center justify-center -mt-[50px]"
+        className="site-hero site-hero--md flex items-center justify-center bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>

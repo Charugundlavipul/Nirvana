@@ -22,7 +22,7 @@ const AboutUs = () => {
     <div className="bg-gray-50 min-h-screen font-sans text-gray-800 pb-20">
       <div
         ref={heroRef}
-        className="relative h-[60vh] w-full overflow-hidden bg-cover bg-center -mt-[50px]"
+        className="site-hero site-hero--md w-full overflow-hidden bg-cover bg-center"
         style={{
           backgroundImage: `url(/assets/aboutUs-hero.avif)`,
         }}

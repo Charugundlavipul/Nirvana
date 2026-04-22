@@ -314,22 +314,22 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     <div className="w-full bg-gray-50 text-gray-800 font-sans">
 
       {/* Hero Section */}
-      <div className="relative mt-[65px]">
+      <div className="relative">
         <div
           ref={heroRef}
-          className="relative h-[80vh] min-h-[550px] flex items-center justify-center bg-cover bg-center"
+          className="site-hero site-hero--lg flex items-center justify-center bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
-          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mb-16">
-            <p className="text-accent uppercase tracking-[0.3em] text-xs sm:text-sm font-medium mb-4">The Nirvana Luxe Collection</p>
-            <h1 className="text-5xl md:text-6xl lg:text-[4rem] font-bold text-white mb-5 leading-[1.15] drop-shadow-lg">
+          <div className="relative z-10 mx-auto max-w-4xl px-4 pb-10 pt-14 text-center sm:px-6 sm:pb-12 sm:pt-16 md:pb-16 md:pt-0">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">The Nirvana Luxe Collection</p>
+            <h1 className="mb-4 text-4xl font-bold leading-[1.05] text-white drop-shadow-lg sm:text-5xl sm:leading-[1.1] md:mb-5 md:text-6xl md:leading-[1.15] lg:text-[4rem]">
               Nirvana Luxe <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
             <p className="sr-only">
               Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
             </p>
-            <p className="text-xl text-white/90 font-normal max-w-2xl mx-auto leading-relaxed mt-4">
+            <p className="mx-auto mt-3 max-w-2xl text-lg font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
               Browse the official Nirvana Luxe collection of premium cabins, lakefront homes, and large-group vacation rentals.
             </p>
           </div>
@@ -338,7 +338,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </div>
 
       {/* Signature Retreats Section */}
-      <section className="relative pt-64 md:pt-36 pb-16 px-6 bg-slate-50 overflow-hidden">
+      <section className="relative overflow-hidden bg-slate-50 px-6 pb-16 pt-20 md:pt-36">
         {/* Luxury Decorative Background Elements */}
         {/* Stronger grid pattern */}
         <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
@@ -518,14 +518,14 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative h-[70vh] flex items-center justify-center bg-gray-900 text-white overflow-hidden">
+      <section className="site-viewport-section relative flex items-center justify-center overflow-hidden bg-gray-900 px-4 text-white sm:px-6">
         <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{ backgroundImage: `url(${oasisImages[0] || heroImage})` }}></div>
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/60"></div>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl">
-          <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Ready to Experience Luxury?</p>
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">Your Dream Escape Awaits</h2>
-          <p className="text-xl text-gray-300 mb-10 leading-relaxed font-light">
+        <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.24em] text-accent sm:text-sm sm:tracking-[0.3em]">Ready to Experience Luxury?</p>
+          <h2 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">Your Dream Escape Awaits</h2>
+          <p className="mb-10 text-lg font-light leading-relaxed text-gray-300 sm:text-xl">
             Book your stay and create memories that last a lifetime
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -892,8 +892,8 @@ const HeroSearch = ({ router, properties = [] }) => {
       </div>
 
       {/* Mobile Search Bar */}
-      <div className="md:hidden absolute left-0 right-0 bottom-0 translate-y-1/2 z-20 px-4">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 flex flex-col gap-3">
+      <div className="relative z-20 -mt-8 px-4 md:hidden">
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
           
           <div className="relative flex items-center gap-3 border border-gray-200 rounded-xl p-3">
             <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
@@ -926,8 +926,8 @@ const HeroSearch = ({ router, properties = [] }) => {
             )}
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex-1 border border-gray-200 rounded-xl p-3">
+          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
+            <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check in</span>
               <input 
                 type="date"
@@ -942,7 +942,7 @@ const HeroSearch = ({ router, properties = [] }) => {
               />
             </div>
             
-            <div className="flex-1 border border-gray-200 rounded-xl p-3">
+            <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check out</span>
               <input 
                 type="date"

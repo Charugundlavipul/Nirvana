@@ -21,6 +21,10 @@
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
+:root {
+  --site-header-height: 4.5rem;
+}
+
 /* Custom Utility Classes */
 @layer utilities {
   .glass {
@@ -40,6 +44,30 @@
   .text-gold {
     color: var(--color-accent);
   }
+
+  .site-hero {
+    position: relative;
+    margin-top: calc(-1 * var(--site-header-height));
+    padding-top: var(--site-header-height);
+  }
+
+  .site-hero--sm {
+    min-height: clamp(18rem, 42svh, 28rem);
+  }
+
+  .site-hero--md {
+    min-height: clamp(22rem, 55svh, 40rem);
+  }
+
+  .site-hero--lg {
+    min-height: clamp(26rem, 78svh, 56rem);
+  }
+
+  .site-viewport-section {
+    min-height: clamp(24rem, 70svh, 48rem);
+    padding-top: clamp(4rem, 10vw, 6rem);
+    padding-bottom: clamp(4rem, 10vw, 6rem);
+  }
 }
 
 /* Reset / Base overrides */
@@ -51,6 +79,10 @@ body,
   overflow-x: clip;
 }
 
+html {
+  scroll-padding-top: var(--site-header-height);
+}
+
 html.nav-menu-open,
 body.nav-menu-open {
   overflow-x: hidden;
@@ -60,4 +92,9 @@ body.nav-menu-open {
 
 body {
   @apply bg-white text-gray-900 antialiased font-sans;
+}
+
+.main-content {
+  min-height: 100svh;
+  padding-top: var(--site-header-height);
 }

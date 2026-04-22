@@ -17,7 +17,7 @@ const LegalPage = ({ pageKey, initialData }) => {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-800 pb-20">
-            <div className="relative h-[35vh] w-full overflow-hidden bg-gradient-to-br from-[#0b1324] via-[#0f1b33] to-[#10243f] -mt-[50px] flex items-center justify-center">
+            <div className="site-hero site-hero--sm flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#0b1324] via-[#0f1b33] to-[#10243f]">
                 <div className="text-center px-6 pt-10">
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-4">Legal</p>
                     <h1 className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg">
