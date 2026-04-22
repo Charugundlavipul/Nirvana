@@ -97,8 +97,8 @@ const AboutUs = () => {
               <a href="https://www.facebook.com/NirvanaLuxe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
                 <FaFacebook className="text-primary text-xl" /> Nirvana Luxe
               </a>
-              <a href="tel:704-780-1369" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
-                <FaPhone className="text-primary text-xl" /> 704-780-1369
+              <a href="tel:704-780-1368" className="flex items-center gap-3 text-lg text-gray-700 hover:text-primary transition-colors font-medium">
+                <FaPhone className="text-primary text-xl" /> 704-780-1368
               </a>
             </div>
           </div>

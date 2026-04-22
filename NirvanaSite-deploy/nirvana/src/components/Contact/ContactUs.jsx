@@ -53,7 +53,7 @@ const ContactUs = () => {
 
                     {/* Phone Tile */}
                     <a
-                        href="tel:704-780-1369"
+                        href="tel:704-780-1368"
                         className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
                     >
                         <FaPhone className="absolute -bottom-6 -right-6 text-[140px] text-gray-50 opacity-80 transition-transform duration-700 group-hover:-translate-y-3 group-hover:-translate-x-3 group-hover:text-accent/5 rotate-[-15deg] pointer-events-none" />
@@ -62,7 +62,7 @@ const ContactUs = () => {
                         </div>
                         <div className="relative z-10 space-y-1.5">
                             <h3 className="font-bold text-gray-900 text-xl tracking-tight">Call Us</h3>
-                            <p className="text-base text-gray-500 font-medium">704-780-1369</p>
+                            <p className="text-base text-gray-500 font-medium">704-780-1368</p>
                         </div>
                     </a>
 

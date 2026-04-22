@@ -3,7 +3,7 @@ export const SITE_TITLE = "Luxury Vacation Rentals in the Smokies and Lake Norma
 export const SITE_DESCRIPTION =
   "Book luxury vacation rentals with Nirvana Luxe in Sevierville, Tennessee and Lake Norman, North Carolina.";
 export const DEFAULT_OG_IMAGE = "/logo512.png";
-export const SITE_PHONE = "+1-704-780-1369";
+export const SITE_PHONE = "+1-704-780-1368";
 export const SITE_EMAIL = "reservations@vkr-ventures.com";
 export const SOCIAL_LINKS = [
   "https://www.instagram.com/nirvanaluxevacations/",

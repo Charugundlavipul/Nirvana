@@ -215,8 +215,8 @@ const supportHTML = `
                                                             </table>
                                                         </td>
                                                         <td style="padding: 0px; color: rgb(0, 0, 0);"><a
-                                                                href="tel:704-780-1369"
-                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>704-780-1369</span></a>
+                                                                href="tel:704-780-1368"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>704-780-1368</span></a>
                                                         </td>
                                                     </tr>
                                                     <tr style="vertical-align: middle; height: 28px;">
@@ -362,8 +362,8 @@ const reservationsHTML = `
                                                             </table>
                                                         </td>
                                                         <td style="padding: 0px; color: rgb(0, 0, 0);"><a
-                                                                href="tel:704-780-1369"
-                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>704-780-1369</span></a>
+                                                                href="tel:704-780-1368"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>704-780-1368</span></a>
                                                         </td>
                                                     </tr>
                                                     <tr style="vertical-align: middle; height: 28px;">
