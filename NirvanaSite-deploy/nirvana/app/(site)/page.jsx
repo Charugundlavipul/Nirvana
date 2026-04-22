@@ -50,7 +50,7 @@ export default async function HomePage() {
     logo: absoluteUrl("/logo512.png"),
     sameAs: [
       "https://www.instagram.com/nirvanaluxevacations/",
-      "https://www.facebook.com/NirvanaaLuxe",
+      "https://www.facebook.com/NirvanaLuxe",
       "https://www.youtube.com/@nirvanaaluxe",
     ],
   };

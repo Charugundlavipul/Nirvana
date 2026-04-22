@@ -7,7 +7,7 @@ export const SITE_PHONE = "+1-704-780-1369";
 export const SITE_EMAIL = "reservations@vkr-ventures.com";
 export const SOCIAL_LINKS = [
   "https://www.instagram.com/nirvanaluxevacations/",
-  "https://www.facebook.com/NirvanaaLuxe",
+  "https://www.facebook.com/NirvanaLuxe",
   "https://www.youtube.com/@nirvanaaluxe",
 ];
 

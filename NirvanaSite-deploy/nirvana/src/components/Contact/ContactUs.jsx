@@ -85,7 +85,7 @@ const ContactUs = () => {
 
                     {/* Facebook Tile */}
                     <a
-                        href="https://www.facebook.com/NirvanaaLuxe"
+                        href="https://www.facebook.com/NirvanaLuxe"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group relative overflow-hidden flex flex-col items-center justify-center gap-4 rounded-[2rem] border border-gray-200 bg-white p-10 sm:p-12 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
@@ -145,7 +145,7 @@ const ContactUs = () => {
                             <a href="https://www.instagram.com/nirvanaluxevacations/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
                                 <FaInstagram size={18} />
                             </a>
-                            <a href="https://www.facebook.com/NirvanaaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
+                            <a href="https://www.facebook.com/NirvanaLuxe" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
                                 <FaFacebook size={18} />
                             </a>
                         </div>
