@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -59,10 +60,12 @@ function Navbar() {
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex-shrink-0 z-[60]">
             <Link href="/" onClick={handleLinkClick}>
-              <img
+              <Image
                 src="/assets/nirvana_logo.png"
                 alt="Nirvana Logo"
-                className="h-12 w-auto object-contain"
+                width={187}
+                height={48}
+                className="object-contain"
               />
             </Link>
           </div>
@@ -115,7 +118,8 @@ function Navbar() {
       <aside
         id="mobile-nav-drawer"
         className={`fixed top-0 right-0 z-40 flex h-dvh w-[min(18rem,100vw)] max-w-full flex-col justify-center gap-8 border-l border-gray-200 bg-white px-8 pt-20 pb-10 shadow-2xl transition-transform duration-300 md:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
-        aria-hidden={!isOpen}
+        aria-label="Mobile navigation"
+        inert={!isOpen}
       >
         {navLinks.map((link) => (
           <Link

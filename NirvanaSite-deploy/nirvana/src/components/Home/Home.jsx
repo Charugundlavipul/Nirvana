@@ -4,17 +4,28 @@ import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { fetchPropertyBundleBySlug } from "../../lib/contentApi";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft, FaSearch, FaCalendarAlt } from 'react-icons/fa';
 import { getCompactBathroomSummary } from "../../lib/bathrooms";
 
-const oasisImages = [
-  "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp",
-];
+const HERO_IMAGE = "/assets/exterior.avif";
+const CTA_IMAGE = "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp";
+
+const getPropertyCardImages = (property) => {
+  const primary = property.primary_image || property.image || "";
+  const seen = new Set();
+
+  return [primary, ...(property.highlightImages || [])]
+    .filter(Boolean)
+    .filter((img) => {
+      if (seen.has(img)) return false;
+      seen.add(img);
+      return true;
+    })
+    .slice(0, 5);
+};
 
 const Home = ({ initialProperties = [], initialReviews = [] }) => {
   const router = useRouter();
-  const heroRef = useRef(null);
 
   // Dynamic properties state
   const [properties, setProperties] = useState(initialProperties);
@@ -25,15 +36,11 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [imageIndices, setImageIndices] = useState({});
   const [cardImagesBySlug, setCardImagesBySlug] = useState({});
-  const [galleryLoadedBySlug, setGalleryLoadedBySlug] = useState({});
-  const [galleryLoadingBySlug, setGalleryLoadingBySlug] = useState({});
 
   const [reviews, setReviews] = useState(initialReviews);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [expandedReviewId, setExpandedReviewId] = useState(null);
   const [selectedSource, setSelectedSource] = useState("all");
-
-  const [heroImage] = useState("/assets/exterior.avif");
 
   // Badge assignment based on property order
   const BADGES = ["Most Popular", "Featured", "New"];
@@ -45,18 +52,13 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
     const indices = {};
     const initialCardImages = {};
-    const initialGalleryLoaded = {};
     homeProperties.forEach((property) => {
       indices[property.id] = 0;
-      const primary = property.primary_image || property.image || "";
-      initialCardImages[property.slug] = primary ? [primary] : [];
-      initialGalleryLoaded[property.slug] = false;
+      initialCardImages[property.slug] = getPropertyCardImages(property);
     });
 
     setImageIndices(indices);
     setCardImagesBySlug(initialCardImages);
-    setGalleryLoadedBySlug(initialGalleryLoaded);
-    setGalleryLoadingBySlug({});
   }, [initialProperties]);
 
   useEffect(() => {
@@ -96,30 +98,6 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     return () => clearInterval(interval);
   }, [properties.length, isPaused, isMobile]);
 
-  // Prefetch top-5 gallery images for ALL properties in the background
-  // after the page has settled, so carousel clicks feel instant everywhere.
-  const prefetchedRef = useRef(false);
-  useEffect(() => {
-    if (!properties.length || prefetchedRef.current) return;
-    prefetchedRef.current = true;
-
-    const PREFETCH_DELAY_MS = 2000; // wait 2s after page load
-
-    const timer = setTimeout(async () => {
-      for (const property of properties) {
-        if (!property.slug || galleryLoadedBySlug[property.slug]) continue;
-        try {
-          await loadGalleryForCard(property);
-        } catch (err) {
-          // Silently ignore — prefetch failures shouldn't disrupt the page
-        }
-      }
-    }, PREFETCH_DELAY_MS);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties]);
-
   const nextProperty = () => {
     setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
   };
@@ -143,17 +121,6 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     }
     return result;
   };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (heroRef.current) {
-        const offset = window.pageYOffset;
-        heroRef.current.style.backgroundPositionY = `calc(50% + ${offset * 0.5}px)`;
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const filteredReviews = reviews.filter(r => {
     if (selectedSource === "all") return true;
@@ -210,103 +177,15 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     });
   };
 
-  const loadGalleryForCard = async (property, directionAfterLoad = null) => {
-    const slug = property.slug;
-    if (!slug) return;
-    if (galleryLoadedBySlug[slug]) {
-      if (directionAfterLoad) moveCardImage(property, directionAfterLoad);
-      return;
-    }
-    if (galleryLoadingBySlug[slug]) return;
-
-    setGalleryLoadingBySlug((prev) => ({ ...prev, [slug]: true }));
-    try {
-      const fallbackHighlights = (property.highlightImages || []).filter(Boolean);
-      const bundle = await fetchPropertyBundleBySlug(slug);
-      const primary = property.primary_image || property.image || "";
-      const galleryImages = (bundle?.galleryImages || []).filter(Boolean);
-      const candidateImages = galleryImages.length ? galleryImages : fallbackHighlights;
-
-      const seen = new Set();
-      const merged = [primary, ...candidateImages]
-        .filter(Boolean)
-        .filter((img) => {
-          if (seen.has(img)) return false;
-          seen.add(img);
-          return true;
-        })
-        .slice(0, 5);
-
-      // Force the browser to cache the images in the background
-      merged.forEach((url) => {
-        const img = new window.Image();
-        img.src = url;
-      });
-
-      setCardImagesBySlug((prev) => ({
-        ...prev,
-        [slug]: merged.length ? merged : (prev[slug] || []),
-      }));
-      setGalleryLoadedBySlug((prev) => ({ ...prev, [slug]: true }));
-
-      if (directionAfterLoad && merged.length > 1) {
-        setImageIndices((prev) => ({
-          ...prev,
-          [property.id]: directionAfterLoad === "next" ? 1 : merged.length - 1,
-        }));
-      }
-    } catch (error) {
-      console.error(`Failed loading gallery images for ${slug}:`, error);
-      const primary = property.primary_image || property.image || "";
-      const fallbackHighlights = (property.highlightImages || []).filter(Boolean);
-      const seen = new Set();
-      const merged = [primary, ...fallbackHighlights]
-        .filter(Boolean)
-        .filter((img) => {
-          if (seen.has(img)) return false;
-          seen.add(img);
-          return true;
-        })
-        .slice(0, 5);
-
-      // Force the browser to cache the images in the background
-      merged.forEach((url) => {
-        const img = new window.Image();
-        img.src = url;
-      });
-
-      if (merged.length > 1) {
-        setCardImagesBySlug((prev) => ({ ...prev, [slug]: merged }));
-        if (directionAfterLoad) {
-          setImageIndices((prev) => ({
-            ...prev,
-            [property.id]: directionAfterLoad === "next" ? 1 : merged.length - 1,
-          }));
-        }
-      }
-      setGalleryLoadedBySlug((prev) => ({ ...prev, [slug]: true }));
-    } finally {
-      setGalleryLoadingBySlug((prev) => ({ ...prev, [slug]: false }));
-    }
-  };
-
-  const handleCardNext = async (e, property) => {
+  const handleCardNext = (e, property) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!galleryLoadedBySlug[property.slug]) {
-      await loadGalleryForCard(property, "next");
-      return;
-    }
     moveCardImage(property, "next");
   };
 
-  const handleCardPrev = async (e, property) => {
+  const handleCardPrev = (e, property) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!galleryLoadedBySlug[property.slug]) {
-      await loadGalleryForCard(property, "prev");
-      return;
-    }
     moveCardImage(property, "prev");
   };
 
@@ -316,10 +195,19 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       {/* Hero Section */}
       <div className="relative">
         <div
-          ref={heroRef}
-          className="site-hero site-hero--lg flex items-center justify-center bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="site-hero site-hero--lg relative flex items-center justify-center overflow-hidden"
         >
+          <Image
+            src={HERO_IMAGE}
+            alt=""
+            fill
+            preload
+            fetchPriority="high"
+            sizes="100vw"
+            quality={80}
+            className="object-cover"
+            aria-hidden="true"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
           <div className="relative z-10 mx-auto max-w-4xl px-4 pb-10 pt-14 text-center sm:px-6 sm:pb-12 sm:pt-16 md:pb-16 md:pt-0">
             <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">The Nirvana Luxe Collection</p>
@@ -389,7 +277,6 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
                       currentIndex={currentIndex}
                       onPrev={(e) => handleCardPrev(e, prop)}
                       onNext={(e) => handleCardNext(e, prop)}
-                      isGalleryLoading={!!galleryLoadingBySlug[prop.slug]}
                       link={`/${prop.slug}`}
                       stats={{
                         beds: prop.bedroom_count || 0,
@@ -519,7 +406,15 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
       {/* CTA Section */}
       <section className="site-viewport-section relative flex items-center justify-center overflow-hidden bg-gray-900 px-4 text-white sm:px-6">
-        <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{ backgroundImage: `url(${oasisImages[0] || heroImage})` }}></div>
+        <Image
+          src={CTA_IMAGE}
+          alt=""
+          fill
+          sizes="100vw"
+          quality={75}
+          className="object-cover opacity-50"
+          aria-hidden="true"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/60"></div>
 
         <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
@@ -550,24 +445,24 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 };
 
 // Signature Retreat Card Component
-const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, isGalleryLoading, link, stats, badge }) => {
-  const currentImage = images[currentIndex] || "";
+const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, link, stats, badge }) => {
+  const safeIndex = images.length ? currentIndex % images.length : 0;
+  const currentImage = images[safeIndex] || "";
 
   return (
     <div className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left" onClick={() => window.location.href = link}>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
-        {images.map((img, idx) => (
+        {currentImage && (
           <Image
-            key={`${img}-${idx}`}
-            src={img}
-            alt={`${title} - image ${idx + 1}`}
+            key={currentImage}
+            src={currentImage}
+            alt={`${title} - image ${safeIndex + 1}`}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`object-cover transition-all duration-300 group-hover:scale-105 ${
-              idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
+            quality={65}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-        ))}
+        )}
 
         {/* Gradient Header for Badge */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent opacity-60"></div>
@@ -580,26 +475,26 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
         )}
 
         {/* Carousel Controls - Only visible on hover */}
-        <div className="absolute inset-x-0 top-1/2 z-30 flex -translate-y-1/2 justify-between px-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onPrev(e); }}
-            disabled={isGalleryLoading}
-            className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Previous image"
-          >
-            <FaChevronLeft size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onNext(e); }}
-            disabled={isGalleryLoading}
-            className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Next image"
-          >
-            <FaChevronRight size={14} />
-          </button>
-        </div>
+        {images.length > 1 && (
+          <div className="absolute inset-x-0 top-1/2 z-30 flex -translate-y-1/2 justify-between px-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onPrev(e); }}
+              className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white"
+              aria-label="Previous image"
+            >
+              <FaChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onNext(e); }}
+              className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white"
+              aria-label="Next image"
+            >
+              <FaChevronRight size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Image Indicator Dots */}
         {images.length > 1 && (
@@ -608,7 +503,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
               <div
                 key={idx}
                 className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${
-                  idx === currentIndex % 5 ? "w-3 bg-white" : "w-1.5 bg-white/60"
+                  idx === safeIndex % 5 ? "w-3 bg-white" : "w-1.5 bg-white/60"
                 }`}
               />
             ))}
@@ -668,6 +563,7 @@ const PremiumReviewCard = ({ review, isExpanded, onToggleExpand }) => {
           width={60}
           height={24}
           className="h-6 w-auto object-contain"
+          style={{ width: "auto", height: "24px" }}
         />
       );
     }
@@ -694,7 +590,7 @@ const PremiumReviewCard = ({ review, isExpanded, onToggleExpand }) => {
           )}
         </div>
         <div className="flex-1">
-          <h4 className="font-bold text-gray-900 text-lg">{review.author || 'Guest'}</h4>
+          <p className="font-bold text-gray-900 text-lg">{review.author || 'Guest'}</p>
           <div className="flex items-center gap-2">
             <div className="flex text-amber-500">
               {[...Array(5)].map((_, i) => <FaStar key={i} size={12} />)}
@@ -795,8 +691,10 @@ const HeroSearch = ({ router, properties = [] }) => {
           <div className="flex-[1.3] flex items-center gap-3 pl-6 pr-4 py-4 border-r border-gray-200 rounded-l-full hover:bg-gray-50 transition-colors cursor-pointer relative">
             <FaMapMarkerAlt className="text-gray-400 text-lg flex-shrink-0" />
             <input 
+              id="home-search-location-desktop"
               ref={inputRef}
               type="text" 
+              aria-label="Search by destination or property"
               placeholder="Where to?" 
               value={searchLocation}
               onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
@@ -831,7 +729,9 @@ const HeroSearch = ({ router, properties = [] }) => {
               <div className="flex flex-col flex-1">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check in</span>
                 <input 
+                  id="home-search-check-in-desktop"
                   type="date"
+                  aria-label="Check-in date"
                   min={todayString}
                   value={checkInDate}
                   onClick={(e) => e.target.showPicker?.()}
@@ -846,7 +746,9 @@ const HeroSearch = ({ router, properties = [] }) => {
               <div className="flex flex-col flex-1">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check out</span>
                 <input 
+                  id="home-search-check-out-desktop"
                   type="date"
+                  aria-label="Check-out date"
                   min={checkInDate || todayString}
                   value={checkOutDate}
                   onClick={(e) => e.target.showPicker?.()}
@@ -863,6 +765,8 @@ const HeroSearch = ({ router, properties = [] }) => {
             <div className="flex flex-col w-full">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Guests</span>
               <select 
+                id="home-search-guests-desktop"
+                aria-label="Guests"
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
                 className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none appearance-none cursor-pointer w-full"
@@ -898,7 +802,9 @@ const HeroSearch = ({ router, properties = [] }) => {
           <div className="relative flex items-center gap-3 border border-gray-200 rounded-xl p-3">
             <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
             <input 
+              id="home-search-location-mobile"
               type="text" 
+              aria-label="Search by destination or property"
               placeholder="Where to?" 
               value={searchLocation}
               onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
@@ -930,7 +836,9 @@ const HeroSearch = ({ router, properties = [] }) => {
             <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check in</span>
               <input 
+                id="home-search-check-in-mobile"
                 type="date"
+                aria-label="Check-in date"
                 min={todayString}
                 value={checkInDate}
                 onClick={(e) => e.target.showPicker?.()}
@@ -945,7 +853,9 @@ const HeroSearch = ({ router, properties = [] }) => {
             <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check out</span>
               <input 
+                id="home-search-check-out-mobile"
                 type="date"
+                aria-label="Check-out date"
                 min={checkInDate || todayString}
                 value={checkOutDate}
                 onClick={(e) => e.target.showPicker?.()}
@@ -958,6 +868,8 @@ const HeroSearch = ({ router, properties = [] }) => {
           <div className="border border-gray-200 rounded-xl p-3">
             <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Guests</span>
             <select 
+              id="home-search-guests-mobile"
+              aria-label="Guests"
               value={guests}
               onChange={(e) => setGuests(e.target.value)}
               className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none appearance-none"

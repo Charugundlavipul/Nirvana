@@ -8,6 +8,9 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 2678400,
+    qualities: [65, 75, 80],
     remotePatterns: [
       {
         protocol: 'https',

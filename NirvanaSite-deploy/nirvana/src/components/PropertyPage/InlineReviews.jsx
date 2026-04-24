@@ -63,7 +63,7 @@ const InlineReviews = ({ reviews = [] }) => {
     if (src === "vrbo") {
       return (
         <div className="h-6 w-14 relative block">
-           <Image src="/assets/vrbo.png" alt="Vrbo" fill className="object-contain" />
+           <Image src="/assets/vrbo.png" alt="Vrbo" fill sizes="56px" className="object-contain" />
         </div>
       );
     }

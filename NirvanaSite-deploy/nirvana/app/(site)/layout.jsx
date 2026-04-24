@@ -5,7 +5,7 @@ export default function SiteLayout({ children }) {
   return (
     <>
       <Navbar />
-      <div className="main-content">{children}</div>
+      <main className="main-content">{children}</main>
       <Footer />
     </>
   );

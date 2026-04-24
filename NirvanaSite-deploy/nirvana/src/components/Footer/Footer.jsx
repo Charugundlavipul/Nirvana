@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { FaYoutube, FaInstagram, FaFacebook, FaArrowRight } from 'react-icons/fa';
-import { supabase } from "../../supabaseClient";
+import { FaYoutube, FaInstagram, FaFacebook } from 'react-icons/fa';
 
 const Footer = () => {
     const [email, setEmail] = useState("");
@@ -22,17 +22,32 @@ const Footer = () => {
         setStatus("loading");
         setStatusMsg("");
 
-        const { error } = await supabase
-            .from("alert_subscribers")
-            .insert({ email: email.trim().toLowerCase(), privacy_accepted: true });
+        let response;
+        let payload = {};
 
-        if (error) {
-            if (error.code === "23505") {
+        try {
+            response = await fetch("/api/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    privacyAccepted,
+                }),
+            });
+            payload = await response.json().catch(() => ({}));
+        } catch (error) {
+            setStatus("error");
+            setStatusMsg("Something went wrong. Please try again.");
+            return;
+        }
+
+        if (!response.ok) {
+            if (response.status === 409) {
                 setStatus("duplicate");
-                setStatusMsg("This email is already subscribed.");
+                setStatusMsg(payload?.error || "This email is already subscribed.");
             } else {
                 setStatus("error");
-                setStatusMsg("Something went wrong. Please try again.");
+                setStatusMsg(payload?.error || "Something went wrong. Please try again.");
             }
         } else {
             setStatus("success");
@@ -47,7 +62,13 @@ const Footer = () => {
             <div className="bg-[#0a1222] text-white">
                 <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-14 md:grid-cols-2 lg:grid-cols-4">
                     <section className="space-y-4">
-                        <img src="/assets/nirvana_logo.png" alt="Nirvana Logo" className="h-12 w-auto object-contain brightness-0 invert opacity-95" />
+                        <Image
+                            src="/assets/nirvana_logo.png"
+                            alt="Nirvana Logo"
+                            width={187}
+                            height={48}
+                            className="object-contain brightness-0 invert opacity-95"
+                        />
                         <p className="max-w-xs text-sm leading-relaxed text-slate-300">
                             Luxury homes, curated locations, and elevated hospitality designed for unforgettable stays.
                         </p>
@@ -55,7 +76,7 @@ const Footer = () => {
                     </section>
 
                     <section>
-                        <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Explore</h4>
+                        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Explore</h2>
                         <ul className="space-y-2 text-sm text-slate-300">
                             <li><Link href="/" className="transition hover:text-accent">Home</Link></li>
                             <li><Link href="/properties" className="transition hover:text-accent">Properties</Link></li>
@@ -68,7 +89,7 @@ const Footer = () => {
                     </section>
 
                     <section>
-                        <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Follow</h4>
+                        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Follow</h2>
                         <p className="mb-4 text-sm text-slate-300">Get updates and behind-the-scenes content.</p>
                         <div className="flex gap-3">
                             <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-10 w-10 place-items-center rounded-full border border-slate-500 text-slate-300 transition hover:border-accent hover:text-accent"><FaYoutube /></a>
@@ -78,9 +99,10 @@ const Footer = () => {
                     </section>
 
                     <section>
-                        <h4 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Stay Updated</h4>
+                        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Stay Updated</h2>
                         <p className="mb-4 text-sm text-slate-300">Subscribe to get alerts on new properties and exclusive deals.</p>
                         <form onSubmit={handleSubscribe} className="space-y-3">
+                            <label htmlFor="footer-subscribe-email" className="sr-only">Email address</label>
                             <input
                                 id="footer-subscribe-email"
                                 type="email"
