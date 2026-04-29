@@ -1,14 +1,32 @@
 import { supabase } from "../supabaseClient";
 
-async function adminRequest(path, options = {}) {
+async function getValidSession() {
+  // First, try to get the current session.
   const {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession();
 
-  if (sessionError || !session?.access_token) {
-    throw new Error("Admin session is required.");
+  // If we have a valid session, return it immediately.
+  if (!sessionError && session?.access_token) {
+    return session;
   }
+
+  // Session is missing or expired — attempt a silent refresh.
+  const {
+    data: { session: refreshedSession },
+    error: refreshError,
+  } = await supabase.auth.refreshSession();
+
+  if (refreshError || !refreshedSession?.access_token) {
+    throw new Error("Admin session is required. Please log in again.");
+  }
+
+  return refreshedSession;
+}
+
+async function adminRequest(path, options = {}) {
+  const session = await getValidSession();
 
   const headers = new Headers(options.headers || {});
   headers.set("Authorization", `Bearer ${session.access_token}`);

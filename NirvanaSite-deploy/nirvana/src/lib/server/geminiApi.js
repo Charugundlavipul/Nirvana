@@ -2,6 +2,20 @@ const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_GENERATION_MODEL = "gemini-3.1-flash-lite-preview";
 const DEFAULT_EMBEDDING_MODEL = "gemini-embedding-001";
 
+// Fallback chain used when the primary model is overloaded or rate-limited.
+// Each model is tried in order; the first successful response wins.
+const GENERATION_FALLBACK_CHAIN = [
+  "gemini-3.1-flash-lite-preview", // Primary: Gemini 3.1 Flash-Lite
+  "gemini-3-flash-preview",        // Fallback 1: Gemini 3 Flash (Preview)
+  "gemini-2.5-flash",              // Fallback 2: Gemini 2.5 Flash (Stable)
+];
+
+function isOverloadError(status, payload) {
+  if (status === 429 || status === 503) return true;
+  const message = `${payload?.error?.message || ""}`.toLowerCase();
+  return message.includes("overloaded") || message.includes("quota") || message.includes("rate limit");
+}
+
 function getGeminiApiKey() {
   return (
     process.env.GEMINI_API_KEY ||
@@ -41,10 +55,30 @@ async function geminiRequest(pathname, body) {
       payload?.error?.message ||
       payload?.message ||
       `Gemini request failed with status ${response.status}.`;
-    throw new Error(errorMessage);
+    const err = new Error(errorMessage);
+    err.status = response.status;
+    err.payload = payload;
+    throw err;
   }
 
   return payload;
+}
+
+// Tries each model in the fallback chain in order.
+// Falls back to the next model only on overload / rate-limit errors.
+async function geminiRequestWithFallback(buildPathname, body, chain = GENERATION_FALLBACK_CHAIN) {
+  let lastError;
+  for (const model of chain) {
+    try {
+      return await geminiRequest(buildPathname(model), body);
+    } catch (err) {
+      const isTransient = isOverloadError(err.status, err.payload);
+      if (!isTransient) throw err; // Hard error — don't retry with another model
+      console.warn(`[gemini] Model "${model}" overloaded or rate-limited, trying next fallback...`);
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 function extractTextFromResponse(payload) {
@@ -68,7 +102,15 @@ export async function generateText({
   responseMimeType,
   mediaParts = [],
 }) {
-  const payload = await geminiRequest(`/models/${model}:generateContent`, {
+  // Build the fallback chain: start from the requested model, then continue
+  // with the remaining entries in the default chain.
+  const modelIndex = GENERATION_FALLBACK_CHAIN.indexOf(model);
+  const chain =
+    modelIndex >= 0
+      ? GENERATION_FALLBACK_CHAIN.slice(modelIndex)
+      : [model, ...GENERATION_FALLBACK_CHAIN];
+
+  const body = {
     contents: [
       {
         parts: [...mediaParts, { text: prompt }],
@@ -79,7 +121,13 @@ export async function generateText({
       maxOutputTokens,
       ...(responseMimeType ? { responseMimeType } : {}),
     },
-  });
+  };
+
+  const payload = await geminiRequestWithFallback(
+    (m) => `/models/${m}:generateContent`,
+    body,
+    chain
+  );
 
   const text = extractTextFromResponse(payload);
   if (!text) {
