@@ -41,7 +41,7 @@ export async function syncKnowledgeHub(hubId) {
 }
 
 export async function refreshKnowledgeSystemContext(hubId) {
-  return adminRequest(`/api/admin/knowledge/hubs/${hubId}/refresh-context`, {
+  return adminRequest(`/api/admin/knowledge/hubs/${hubId}`, {
     method: "POST",
   });
 }
@@ -85,6 +85,26 @@ export async function saveKnowledgeSection(hubId, payload) {
 export async function deleteKnowledgeSection(hubId, sectionId) {
   return adminRequest(`/api/admin/knowledge/hubs/${hubId}/sections/${sectionId}`, {
     method: "DELETE",
+  });
+}
+
+export async function acceptKnowledgeSectionSuggestion(hubId, sectionId) {
+  return adminRequest(`/api/admin/knowledge/hubs/${hubId}/sections/${sectionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: "accept_suggestion" }),
+  });
+}
+
+export async function dismissKnowledgeSectionSuggestion(hubId, sectionId) {
+  return adminRequest(`/api/admin/knowledge/hubs/${hubId}/sections/${sectionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: "dismiss_suggestion" }),
   });
 }
 

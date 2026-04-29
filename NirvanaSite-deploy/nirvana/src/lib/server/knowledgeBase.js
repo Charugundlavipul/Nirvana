@@ -7,12 +7,17 @@ import {
   generateText,
 } from "./geminiApi";
 import { getBathroomSummary } from "../bathrooms";
+import {
+  STANDARD_KNOWLEDGE_SECTIONS,
+  getStandardKnowledgeSectionBySlug,
+  isStandardKnowledgeSectionSlug,
+} from "../knowledgeSectionCatalog";
 
 const KNOWLEDGE_SYNC_MODEL_LABEL = "gemini-3.1-flash-lite-preview + gemini-embedding-001";
 const CHUNK_SIZE = 1100;
 const CHUNK_OVERLAP = 180;
 const TEXT_EMBED_DIMENSION = 768;
-const MAX_GENERATED_SECTIONS = 20;
+const MAX_GENERATED_SECTIONS = 80;
 const TARGET_MIN_SECTIONS = 5;
 const MAX_RECOMMENDED_QUESTIONS_PER_SECTION = 3;
 const SOURCE_APPENDIX_SLUG = "canonical-source-details";
@@ -316,11 +321,22 @@ function isAiManagedQuestion(question) {
   return question?.question_origin === "ai";
 }
 
+function isStandardKnowledgeSection(section) {
+  return (
+    Boolean(section?.metadata?.standard_section) ||
+    isStandardKnowledgeSectionSlug(section?.slug || slugify(section?.title || ""))
+  );
+}
+
 function normalizeQuestionKey(value) {
   return normalizeWhitespace(value || "").toLowerCase();
 }
 
 function getSectionTopicKey(section) {
+  const standardSection = getStandardKnowledgeSectionBySlug(
+    section?.slug || slugify(section?.title || "")
+  );
+  if (standardSection) return standardSection.slug;
   return `${section?.metadata?.ai_topic_key || slugify(section?.title || "")}`.trim();
 }
 
@@ -370,21 +386,55 @@ function hasSectionTextChanges(existingSection, nextSection) {
   );
 }
 
+function hasMeaningfulSectionSuggestion(existingSection, nextSection) {
+  const existingText = normalizeWhitespace(
+    [existingSection?.summary || "", existingSection?.content_markdown || ""].join("\n")
+  );
+  const nextText = normalizeWhitespace(
+    [nextSection?.summary || "", nextSection?.content_markdown || ""].join("\n")
+  );
+
+  if (!nextText) return false;
+  if (!existingText) return true;
+  if (existingText === nextText) return false;
+
+  const tokenScore = computeTokenDiceScore(buildTokenSet(existingText), buildTokenSet(nextText));
+  const lengthDelta = Math.abs(nextText.length - existingText.length);
+
+  if (tokenScore >= 0.9 && lengthDelta < 80) {
+    return false;
+  }
+
+  return true;
+}
+
 function clearSuggestedSectionEditMetadata(metadata = {}) {
   const nextMetadata = { ...(metadata || {}) };
   delete nextMetadata.ai_suggested_edit;
   delete nextMetadata.ai_suggested_edit_updated_at;
+  delete nextMetadata.ai_suggested_edit_checksum;
   return nextMetadata;
 }
 
 function buildSuggestedSectionEdit(section, rawSection, sourceIds, syncTimestamp) {
   return {
-    title: normalizeWhitespace(rawSection?.title || section?.title || ""),
+    title: normalizeWhitespace(section?.title || rawSection?.title || ""),
     summary: normalizeWhitespace(rawSection?.summary || ""),
     content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
     source_ids: sourceIds,
     generated_at: syncTimestamp,
   };
+}
+
+function getSuggestedSectionEditChecksum(suggestion = {}) {
+  return checksum(
+    [
+      normalizeWhitespace(suggestion.title || ""),
+      normalizeWhitespace(suggestion.summary || ""),
+      normalizeWhitespace(suggestion.content_markdown || ""),
+      normalizeIdList(suggestion.source_ids || []).sort().join(","),
+    ].join("\n")
+  );
 }
 
 function findMatchingKnowledgeSection(rawSection, existingSectionsByTopicKey, existingSections) {
@@ -436,6 +486,35 @@ function findMatchingKnowledgeSection(rawSection, existingSectionsByTopicKey, ex
   return bestMatch;
 }
 
+function coerceGeneratedExistingSection(rawSection, existingSectionsByTopicKey) {
+  const title = `${rawSection?.title || ""}`.trim();
+  const key = slugify(title);
+  const existing = key ? existingSectionsByTopicKey.get(key) : null;
+  if (!existing) return null;
+
+  return {
+    ...rawSection,
+    title: existing.title,
+    slug: existing.slug || key,
+    display_order: existing.display_order || 0,
+    existing_section_id: existing.id,
+  };
+}
+
+function filterGeneratedExistingSections(rawSections, existingSectionsByTopicKey) {
+  const sections = [];
+  const seenSlugs = new Set();
+
+  for (const rawSection of Array.isArray(rawSections) ? rawSections : []) {
+    const existingSection = coerceGeneratedExistingSection(rawSection, existingSectionsByTopicKey);
+    if (!existingSection || seenSlugs.has(existingSection.slug)) continue;
+    seenSlugs.add(existingSection.slug);
+    sections.push(existingSection);
+  }
+
+  return sections.slice(0, MAX_GENERATED_SECTIONS);
+}
+
 function buildKnowledgePrompt({ hub, sourceCatalog, existingSections, existingQuestions }) {
   const sourceBlocks = sourceCatalog
     .map(
@@ -462,6 +541,16 @@ function buildKnowledgePrompt({ hub, sourceCatalog, existingSections, existingQu
         .join("\n\n")
     : "None";
 
+  const standardSectionText = STANDARD_KNOWLEDGE_SECTIONS.map(
+    (section, index) => `${index + 1}. ${section.title}`
+  ).join("\n");
+
+  const allowedExistingSectionText = existingSections.length
+    ? existingSections
+        .map((section, index) => `${index + 1}. ${section.title}`)
+        .join("\n")
+    : "None";
+
   return `
 You are curating an admin-only hospitality knowledge base.
 
@@ -471,10 +560,16 @@ ${hub.property?.name ? `Property: ${hub.property.name}` : ""}
 
 Goals:
 1. Consolidate operational knowledge from the provided sources.
-2. Create sections that help admins answer difficult guest and operations questions.
-3. Add new sections only when the sources justify genuinely new information.
+2. Suggest edits only for sections that already exist in the knowledge base.
+3. Never invent, rename, or create a section outside the existing section list.
 4. Use the latest source facts as the authority. Preserve existing knowledge unless current sources clearly add to it or directly contradict it.
 5. Keep answers concise, factual, and useful for hospitality operations.
+
+Standard fixed section titles:
+${standardSectionText}
+
+Allowed existing section titles for this hub:
+${allowedExistingSectionText}
 
 Existing sections for continuity only:
 ${existingSectionText}
@@ -505,17 +600,18 @@ Return JSON with this exact shape:
 
 Rules:
 - Use only the supplied sources.
-- Keep the final knowledge hub compact, but do not over-club unrelated topics. Aim for focused sections and allow up to 20 when the sources justify it.
-- Focus on categories like check-in, access, rules, safety, troubleshooting, amenities, local guidance, policies, and operations when supported by the sources.
+- The "title" for each returned section must exactly match one title from the allowed existing section list.
+- Return a section only when the existing section is missing useful source-backed information, has stale information, or current sources clearly update/contradict it.
+- Do not rewrite a section simply to rephrase it. If the existing content is already accurate and complete, omit that section.
+- Do not create custom sections. Custom sections are only created manually by admins, but existing custom sections may receive suggested edits.
 - Sections and answers must be detailed enough for admins but not verbose.
 - Prefer 1 to 3 recommended questions per section.
 - Do not use markdown headings inside content_markdown; simple bullets or short paragraphs are enough.
 - Every section and question must include at least one source_ref.
-- Prefer updating or enriching an existing topic over creating a duplicate topic with slightly different wording.
-- Create a brand-new section only when the new information is genuinely irrelevant to every existing section.
+- Prefer minimal, additive edits. Keep existing correct facts and add only missing or updated details.
 - Do not remove existing knowledge unless current sources clearly contradict it.
 - If existing knowledge is still valid but current sources add new detail, merge the new detail into that topic instead of replacing it wholesale.
-- Treat any existing manual or hybrid content as curated editorial knowledge. Do not regenerate the same topic or question in a way that would overwrite that curated content.
+- Treat every existing section as curated editorial knowledge. Return suggested edits only; never assume any section can be overwritten automatically.
 - If a topic is missing from the sources, omit it rather than guessing.
 
 Sources:
@@ -1705,6 +1801,129 @@ async function fetchHubQuestions(adminClient, hubId) {
   return data || [];
 }
 
+async function ensureStandardKnowledgeSections(adminClient, hubId, userId = null) {
+  const { data: existingSections, error } = await adminClient
+    .from("knowledge_sections")
+    .select("*")
+    .eq("hub_id", hubId);
+
+  if (error) throw error;
+
+  const existingBySlug = new Map(
+    (existingSections || []).map((section) => [section.slug, section])
+  );
+  const ensuredSections = [];
+
+  for (const standardSection of STANDARD_KNOWLEDGE_SECTIONS) {
+    const existing = existingBySlug.get(standardSection.slug);
+    const metadata = {
+      ...(existing?.metadata || {}),
+      standard_section: true,
+      ai_topic_key: standardSection.slug,
+    };
+
+    if (existing) {
+      const { data, error: updateError } = await adminClient
+        .from("knowledge_sections")
+        .update({
+          title: standardSection.title,
+          slug: standardSection.slug,
+          display_order: standardSection.displayOrder,
+          is_archived: false,
+          metadata,
+        })
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+      if (updateError) throw updateError;
+      ensuredSections.push(data);
+      continue;
+    }
+
+    const { data, error: insertError } = await adminClient
+      .from("knowledge_sections")
+      .insert({
+        hub_id: hubId,
+        title: standardSection.title,
+        slug: standardSection.slug,
+        summary: "",
+        content_markdown: "",
+        source_ids: [],
+        section_origin: "ai",
+        display_order: standardSection.displayOrder,
+        created_by: userId,
+        metadata: {
+          standard_section: true,
+          ai_topic_key: standardSection.slug,
+          verification_status: "unverified",
+          verification_reason: "Standard section created from the fixed knowledge-base catalog.",
+          verification_source_ids: [],
+          contradictory_source_ids: [],
+          needs_review: false,
+        },
+      })
+      .select("*")
+      .single();
+    if (insertError) throw insertError;
+    ensuredSections.push(data);
+  }
+
+  return ensuredSections;
+}
+
+async function archiveNonStandardAiSections(adminClient, hubId, syncTimestamp) {
+  const sections = await fetchHubSections(adminClient, hubId);
+  const staleAiSections = sections.filter(
+    (section) =>
+      isAiManagedSection(section) &&
+      !isStandardKnowledgeSection(section) &&
+      section.metadata?.system_section !== "source_appendix"
+  );
+
+  if (!staleAiSections.length) return [];
+
+  const staleSectionIds = staleAiSections.map((section) => section.id);
+  const archiveMetadata = (metadata = {}) =>
+    sanitizeJsonLike({
+      ...(metadata || {}),
+      archived_at: syncTimestamp,
+      archived_reason: "AI-managed section is outside the fixed standard section catalog.",
+    });
+
+  for (const section of staleAiSections) {
+    const { error } = await adminClient
+      .from("knowledge_sections")
+      .update({
+        is_archived: true,
+        metadata: archiveMetadata(section.metadata || {}),
+      })
+      .eq("id", section.id);
+    if (error) throw error;
+  }
+
+  const { data: staleQuestions, error: questionFetchError } = await adminClient
+    .from("knowledge_questions")
+    .select("id,metadata")
+    .eq("hub_id", hubId)
+    .eq("is_archived", false)
+    .eq("question_origin", "ai")
+    .in("section_id", staleSectionIds);
+  if (questionFetchError) throw questionFetchError;
+
+  for (const question of staleQuestions || []) {
+    const { error } = await adminClient
+      .from("knowledge_questions")
+      .update({
+        is_archived: true,
+        metadata: archiveMetadata(question.metadata || {}),
+      })
+      .eq("id", question.id);
+    if (error) throw error;
+  }
+
+  return staleSectionIds;
+}
+
 function computeSourceFingerprint(sources) {
   const seed = sources
     .map((source) =>
@@ -2173,6 +2392,9 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
       sources,
       options.userId || null
     );
+    const syncTimestamp = new Date().toISOString();
+    await ensureStandardKnowledgeSections(adminClient, hubId, options.userId || null);
+    await archiveNonStandardAiSections(adminClient, hubId, syncTimestamp);
     const sections = await fetchHubSections(adminClient, hubId);
     const visibleSections = sections.filter((section) => !section.metadata?.hidden_from_ui);
     const llmContinuitySections = visibleSections.filter(
@@ -2209,81 +2431,60 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
     });
 
     const rawSections = Array.isArray(generated?.sections) ? generated.sections : [];
-    const nextSections = rawSections.slice(0, generatedSectionLimit);
+    const nextSections = filterGeneratedExistingSections(
+      rawSections,
+      existingSectionsByTopicKey
+    ).slice(
+      0,
+      generatedSectionLimit
+    );
     let sectionCount = 0;
     let questionCount = 0;
     const generatedSectionIds = new Set();
     const generatedQuestionIds = new Set();
     const protectedSectionSuggestionIds = new Set();
-    const syncTimestamp = new Date().toISOString();
 
     for (const [index, rawSection] of nextSections.entries()) {
       const title = `${rawSection?.title || ""}`.trim();
       if (!title) continue;
 
-      const slug = slugify(title);
+      const slug = rawSection?.slug || slugify(title);
       const sectionTopicKey = slug;
       const existing =
-        existingSectionsByTopicKey.get(sectionTopicKey) ||
-        findMatchingKnowledgeSection(rawSection, existingSectionsByTopicKey, llmContinuitySections);
+        existingSectionsByTopicKey.get(sectionTopicKey);
       const sourceIds = mapSourceIds(rawSection?.source_refs, sourceRefToId);
       let sectionId = existing?.id || null;
 
-      if (existing && isAiManagedSection(existing)) {
-        const updatePayload = {
-          title,
-          slug,
-          summary: normalizeWhitespace(rawSection?.summary || ""),
-          content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
-          source_ids: mergeUniqueUuidArrays(existing.source_ids || [], sourceIds),
-          section_origin: "ai",
-          display_order:
-            Number.isFinite(rawSection?.display_order) && rawSection.display_order >= 0
-              ? rawSection.display_order
-              : index,
-          is_archived: false,
-          last_generated_at: syncTimestamp,
-          metadata: {
-            ...clearSuggestedSectionEditMetadata(existing.metadata || {}),
-            ai_topic_key: sectionTopicKey,
-            ai_updated_at: syncTimestamp,
-            verification_status: "source_backed",
-            verification_reason: "Generated from current source material during hub refresh.",
-            verification_source_ids: sourceIds,
-            contradictory_source_ids: [],
-            needs_review: false,
-          },
-        };
-
-        const { data, error } = await adminClient
-          .from("knowledge_sections")
-          .update(updatePayload)
-          .eq("id", existing.id)
-          .select("id")
-          .single();
-        if (error) throw error;
-        sectionId = data.id;
-        sectionCount += 1;
-      } else if (existing && ["manual", "hybrid"].includes(existing.section_origin)) {
+      if (existing && !isReadOnlySystemSection(existing)) {
         sectionId = existing.id;
         const suggestedEdit = buildSuggestedSectionEdit(existing, rawSection, sourceIds, syncTimestamp);
         const nextMetadata = clearSuggestedSectionEditMetadata(existing.metadata || {});
-        const hasChanges = hasSectionTextChanges(existing, suggestedEdit);
+        const hasChanges =
+          hasSectionTextChanges(existing, suggestedEdit) &&
+          hasMeaningfulSectionSuggestion(existing, suggestedEdit);
+        const suggestionChecksum = getSuggestedSectionEditChecksum(suggestedEdit);
+        const dismissedChecksum = `${existing.metadata?.ai_suggested_edit_dismissed_checksum || ""}`;
+        const shouldSuggest = hasChanges && dismissedChecksum !== suggestionChecksum;
 
-        if (hasChanges || existing.metadata?.ai_suggested_edit) {
+        if (shouldSuggest || existing.metadata?.ai_suggested_edit) {
           const { error } = await adminClient
             .from("knowledge_sections")
             .update({
-              metadata: hasChanges
+              metadata: shouldSuggest
                 ? {
                     ...nextMetadata,
+                    standard_section:
+                      Boolean(nextMetadata.standard_section) || isStandardKnowledgeSection(existing),
                     ai_topic_key:
                       existing.metadata?.ai_topic_key || getSectionTopicKey(existing) || sectionTopicKey,
                     ai_suggested_edit: suggestedEdit,
                     ai_suggested_edit_updated_at: syncTimestamp,
+                    ai_suggested_edit_checksum: suggestionChecksum,
                   }
                 : {
                     ...nextMetadata,
+                    standard_section:
+                      Boolean(nextMetadata.standard_section) || isStandardKnowledgeSection(existing),
                     ai_topic_key:
                       existing.metadata?.ai_topic_key || getSectionTopicKey(existing) || sectionTopicKey,
                   },
@@ -2292,65 +2493,12 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
           if (error) throw error;
         }
 
-        if (hasChanges) {
+        if (shouldSuggest) {
           protectedSectionSuggestionIds.add(existing.id);
+          sectionCount += 1;
         }
       } else if (!existing) {
-        const { data, error } = await adminClient
-          .from("knowledge_sections")
-          .insert({
-            hub_id: hubId,
-            title,
-            slug,
-            summary: normalizeWhitespace(rawSection?.summary || ""),
-            content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
-            source_ids: sourceIds,
-            section_origin: "ai",
-            display_order:
-              Number.isFinite(rawSection?.display_order) && rawSection.display_order >= 0
-                ? rawSection.display_order
-                : index,
-            created_by: options.userId || null,
-            last_generated_at: syncTimestamp,
-            metadata: {
-              ai_topic_key: sectionTopicKey,
-              ai_created_at: syncTimestamp,
-              verification_status: "source_backed",
-              verification_reason: "Generated from current source material during hub refresh.",
-              verification_source_ids: sourceIds,
-              contradictory_source_ids: [],
-              needs_review: false,
-            },
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        sectionId = data.id;
-        sectionCount += 1;
-        llmContinuitySections.push({
-          id: data.id,
-          title,
-          slug,
-          summary: normalizeWhitespace(rawSection?.summary || ""),
-          content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
-          source_ids: sourceIds,
-          section_origin: "ai",
-          metadata: {
-            ai_topic_key: sectionTopicKey,
-          },
-        });
-        existingSectionsByTopicKey.set(sectionTopicKey, {
-          id: data.id,
-          title,
-          slug,
-          summary: normalizeWhitespace(rawSection?.summary || ""),
-          content_markdown: normalizeWhitespace(rawSection?.content_markdown || ""),
-          source_ids: sourceIds,
-          section_origin: "ai",
-          metadata: {
-            ai_topic_key: sectionTopicKey,
-          },
-        });
+        continue;
       }
 
       if (!sectionId) continue;
@@ -2444,7 +2592,7 @@ export async function syncKnowledgeHub(adminClient, hubId, options = {}) {
 
     const staleProtectedSuggestions = llmContinuitySections.filter(
       (section) =>
-        ["manual", "hybrid"].includes(section.section_origin) &&
+        !isReadOnlySystemSection(section) &&
         section.metadata?.ai_suggested_edit &&
         !protectedSectionSuggestionIds.has(section.id)
     );
@@ -2966,6 +3114,9 @@ export async function saveSection(adminClient, input) {
         "Source-preserved system sections are read-only. Update the sources to refresh them."
       );
     }
+    if (isStandardKnowledgeSection(existing) && existing.slug !== slug) {
+      throw new Error("Standard section names are fixed. Add a custom section instead.");
+    }
     const wasAiManaged = isAiManagedSection(existing) || Boolean(existing.metadata?.ai_topic_key);
 
     const { data, error } = await adminClient
@@ -3065,6 +3216,113 @@ export async function saveSection(adminClient, input) {
   await markHubSyncStatus(adminClient, input.hubId, "stale", {
     last_sync_error: null,
   });
+  return data;
+}
+
+export async function acceptSectionSuggestion(adminClient, input) {
+  const { data: existing, error: existingError } = await adminClient
+    .from("knowledge_sections")
+    .select("*")
+    .eq("id", input.sectionId)
+    .eq("hub_id", input.hubId)
+    .single();
+  if (existingError) throw existingError;
+
+  if (isReadOnlySystemSection(existing)) {
+    throw new Error(
+      "Source-preserved system sections are read-only. Update the sources to refresh them."
+    );
+  }
+
+  const suggestedEdit = parseObjectLike(existing.metadata?.ai_suggested_edit);
+  if (!suggestedEdit.title && !suggestedEdit.summary && !suggestedEdit.content_markdown) {
+    throw new Error("No suggested edit is available for this section.");
+  }
+
+  const nextTitle = isStandardKnowledgeSection(existing)
+    ? existing.title
+    : normalizeWhitespace(suggestedEdit.title || existing.title || "");
+  const nextSlug = isStandardKnowledgeSection(existing)
+    ? existing.slug
+    : slugify(nextTitle);
+  const wasAiManaged = isAiManagedSection(existing) || Boolean(existing.metadata?.ai_topic_key);
+  const acceptedAt = new Date().toISOString();
+  const nextMetadata = clearSuggestedSectionEditMetadata(existing.metadata || {});
+
+  const { data, error } = await adminClient
+    .from("knowledge_sections")
+    .update({
+      title: nextTitle,
+      slug: nextSlug,
+      summary: normalizeWhitespace(suggestedEdit.summary || ""),
+      content_markdown: normalizeWhitespace(suggestedEdit.content_markdown || ""),
+      source_ids: mergeUniqueUuidArrays(existing.source_ids || [], suggestedEdit.source_ids || []),
+      section_origin: "manual",
+      metadata: {
+        ...nextMetadata,
+        ai_topic_key: existing.metadata?.ai_topic_key || getSectionTopicKey(existing),
+        standard_section:
+          Boolean(nextMetadata.standard_section) || isStandardKnowledgeSection(existing),
+        manualized_from_ai_at:
+          wasAiManaged && !existing.metadata?.manualized_from_ai_at
+            ? acceptedAt
+            : existing.metadata?.manualized_from_ai_at,
+        ai_suggested_edit_accepted_at: acceptedAt,
+        ai_suggested_edit_accepted_by: input.userId || null,
+        verification_status: "source_backed",
+        verification_reason: "Admin accepted an AI suggested edit generated from current sources.",
+        verification_source_ids: normalizeIdList(suggestedEdit.source_ids || []),
+        contradictory_source_ids: [],
+        needs_review: false,
+      },
+    })
+    .eq("id", input.sectionId)
+    .eq("hub_id", input.hubId)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  await markHubSyncStatus(adminClient, input.hubId, "stale", {
+    last_sync_error: null,
+  });
+
+  return data;
+}
+
+export async function dismissSectionSuggestion(adminClient, input) {
+  const { data: existing, error: existingError } = await adminClient
+    .from("knowledge_sections")
+    .select("*")
+    .eq("id", input.sectionId)
+    .eq("hub_id", input.hubId)
+    .single();
+  if (existingError) throw existingError;
+
+  const dismissedAt = new Date().toISOString();
+  const suggestedEdit = parseObjectLike(existing.metadata?.ai_suggested_edit);
+  const suggestedEditChecksum =
+    existing.metadata?.ai_suggested_edit_checksum ||
+    getSuggestedSectionEditChecksum(suggestedEdit);
+  const { data, error } = await adminClient
+    .from("knowledge_sections")
+    .update({
+      metadata: {
+        ...clearSuggestedSectionEditMetadata(existing.metadata || {}),
+        ai_suggested_edit_dismissed_at: dismissedAt,
+        ai_suggested_edit_dismissed_by: input.userId || null,
+        ai_suggested_edit_dismissed_checksum: suggestedEditChecksum,
+      },
+    })
+    .eq("id", input.sectionId)
+    .eq("hub_id", input.hubId)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  await markHubSyncStatus(adminClient, input.hubId, "stale", {
+    last_sync_error: null,
+  });
+
   return data;
 }
 
@@ -3224,6 +3482,9 @@ export async function deleteSection(adminClient, input) {
 
   if (isReadOnlySystemSection(section)) {
     throw new Error("Source-preserved system sections cannot be deleted.");
+  }
+  if (isStandardKnowledgeSection(section)) {
+    throw new Error("Standard sections are fixed and cannot be deleted.");
   }
 
   const { data: questions, error: questionsError } = await adminClient
@@ -3546,6 +3807,7 @@ export async function scheduleKnowledgeRefreshForAdminChange(adminClient, input 
 
 export async function getKnowledgeHubPayload(adminClient, hubId) {
   const hub = await loadHub(adminClient, hubId);
+  await ensureStandardKnowledgeSections(adminClient, hubId);
   const sources = await fetchHubSources(adminClient, hubId);
 
   const [sections, questions] = await Promise.all([

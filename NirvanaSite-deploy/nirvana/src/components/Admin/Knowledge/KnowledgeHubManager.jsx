@@ -1,11 +1,14 @@
 import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { FaSyncAlt } from "react-icons/fa";
 import AdminLayout from "../AdminLayout";
 import styles from "./KnowledgeHubManager.module.css";
 import {
+  acceptKnowledgeSectionSuggestion,
   askKnowledgeHubQuestion,
   createManualKnowledgeSource,
   deleteKnowledgeQuestion,
   deleteKnowledgeSection,
+  dismissKnowledgeSectionSuggestion,
   updateManualKnowledgeSource,
   fetchKnowledgeHub,
   fetchKnowledgeHubs,
@@ -16,6 +19,10 @@ import {
   uploadKnowledgeSource,
   deleteKnowledgeSource,
 } from "../../../lib/adminKnowledgeApi";
+import {
+  STANDARD_KNOWLEDGE_SECTIONS,
+  isStandardKnowledgeSectionSlug,
+} from "../../../lib/knowledgeSectionCatalog";
 
 const EMPTY_SECTION_FORM = {
   sectionId: null,
@@ -115,6 +122,13 @@ function isSystemKnowledgeSection(section) {
   );
 }
 
+function isStandardKnowledgeSection(section) {
+  return (
+    Boolean(section?.metadata?.standard_section) ||
+    isStandardKnowledgeSectionSlug(section?.slug)
+  );
+}
+
 function getSuggestedSectionEdit(section) {
   const suggestion = section?.suggested_edit;
   if (!suggestion) return null;
@@ -182,11 +196,12 @@ const KnowledgeHubManager = () => {
   const [syncing, setSyncing] = useState(false);
   const [chatting, setChatting] = useState(false);
   const [savingSection, setSavingSection] = useState(false);
+  const [actingOnSuggestionId, setActingOnSuggestionId] = useState(null);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [savingSource, setSavingSource] = useState(false);
   const [deletingSectionId, setDeletingSectionId] = useState(null);
   const [deletingQuestionId, setDeletingQuestionId] = useState(null);
-  const [refreshingSystemSourceId, setRefreshingSystemSourceId] = useState(null);
+  const [refreshingSources, setRefreshingSources] = useState(false);
   const [deletingSourceId, setDeletingSourceId] = useState(null);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -283,6 +298,13 @@ const KnowledgeHubManager = () => {
         .includes(query);
     });
   }, [deferredSearch, hubData]);
+
+  const editingSection = useMemo(
+    () => (hubData?.sections || []).find((section) => section.id === editingSectionId) || null,
+    [editingSectionId, hubData]
+  );
+
+  const editingStandardSection = isStandardKnowledgeSection(editingSection);
 
   const editableSections = useMemo(
     () => (hubData?.sections || []).filter((section) => !isSystemKnowledgeSection(section)),
@@ -464,7 +486,7 @@ const KnowledgeHubManager = () => {
   async function handleDeleteSource(sourceId) {
     if (!selectedHubId || !sourceId) return;
     if (!window.confirm("Are you sure you want to delete this source? The knowledge base will be refreshed immediately after deletion.")) return;
-    
+
     setDeletingSourceId(sourceId);
     setStatus(null);
     try {
@@ -478,9 +500,9 @@ const KnowledgeHubManager = () => {
     }
   }
 
-  async function handleRefreshSystemSource(sourceId) {
-    if (!selectedHubId || !sourceId) return;
-    setRefreshingSystemSourceId(sourceId);
+  async function handleRefreshSources() {
+    if (!selectedHubId) return;
+    setRefreshingSources(true);
     setStatus(null);
     try {
       await refreshKnowledgeSystemContext(selectedHubId);
@@ -492,7 +514,7 @@ const KnowledgeHubManager = () => {
     } catch (error) {
       setStatus({ type: "error", text: error.message });
     } finally {
-      setRefreshingSystemSourceId(null);
+      setRefreshingSources(false);
     }
   }
 
@@ -585,6 +607,36 @@ const KnowledgeHubManager = () => {
     }
   }
 
+  async function handleAcceptSectionSuggestion(section) {
+    if (!selectedHubId || !section?.id) return;
+    setActingOnSuggestionId(section.id);
+    setStatus(null);
+    try {
+      await acceptKnowledgeSectionSuggestion(selectedHubId, section.id);
+      await loadHub(selectedHubId);
+      setStatus({ type: "success", text: "Suggested section edit accepted." });
+    } catch (error) {
+      setStatus({ type: "error", text: error.message });
+    } finally {
+      setActingOnSuggestionId(null);
+    }
+  }
+
+  async function handleDismissSectionSuggestion(section) {
+    if (!selectedHubId || !section?.id) return;
+    setActingOnSuggestionId(section.id);
+    setStatus(null);
+    try {
+      await dismissKnowledgeSectionSuggestion(selectedHubId, section.id);
+      await loadHub(selectedHubId);
+      setStatus({ type: "success", text: "Suggested section edit dismissed." });
+    } catch (error) {
+      setStatus({ type: "error", text: error.message });
+    } finally {
+      setActingOnSuggestionId(null);
+    }
+  }
+
   async function handleDeleteQuestion(question) {
     if (!selectedHubId || !question?.id) return;
     if (!window.confirm(`Delete the Q&A "${question.question}"? This removes it from live answers immediately.`)) {
@@ -618,12 +670,12 @@ const KnowledgeHubManager = () => {
     setSectionForm(
       section
         ? {
-            sectionId: section.id,
-            title: section.title || "",
-            summary: section.summary || "",
-            contentMarkdown: section.content_markdown || "",
-            displayOrder: section.display_order || 0,
-          }
+          sectionId: section.id,
+          title: section.title || "",
+          summary: section.summary || "",
+          contentMarkdown: section.content_markdown || "",
+          displayOrder: section.display_order || 0,
+        }
         : EMPTY_SECTION_FORM
     );
 
@@ -654,16 +706,16 @@ const KnowledgeHubManager = () => {
     setQuestionForm(
       question
         ? {
-            questionId: question.id,
-            sectionId: question.section_id || sectionId || "",
-            question: question.question || "",
-            answer: question.answer || "",
-            displayOrder: question.display_order || 0,
-          }
+          questionId: question.id,
+          sectionId: question.section_id || sectionId || "",
+          question: question.question || "",
+          answer: question.answer || "",
+          displayOrder: question.display_order || 0,
+        }
         : {
-            ...EMPTY_QUESTION_FORM,
-            sectionId,
-          }
+          ...EMPTY_QUESTION_FORM,
+          sectionId,
+        }
     );
 
     if (question) {
@@ -702,8 +754,8 @@ const KnowledgeHubManager = () => {
             <p className={styles.eyebrow}>Hospitality knowledge orchestration</p>
             <h2>General and property hubs stay grounded in preserved sources.</h2>
             <p className={styles.heroText}>
-              Upload files, add manual notes, curate sections, and let Gemini refresh the
-              operational knowledge structure without deleting existing admin content.
+              Upload files, add manual notes, and let Gemini suggest source-backed edits for
+              existing sections. Admins decide what gets accepted.
             </p>
           </div>
           <div className={styles.heroControls}>
@@ -735,14 +787,26 @@ const KnowledgeHubManager = () => {
             >
               {syncing ? "Syncing..." : "Sync knowledge"}
             </button>
+            <button
+              className={styles.secondaryButton}
+              onClick={handleRefreshSources}
+              disabled={!selectedHubId || refreshingSources || loadingHub}
+              title="Refresh all system snapshots from original property data"
+            >
+              <FaSyncAlt
+                className={refreshingSources ? styles.spinning : ""}
+                size={14}
+                style={{ marginRight: "10px" }}
+              />
+              {refreshingSources ? "Refreshing sources..." : "Refresh sources"}
+            </button>
           </div>
         </section>
 
         {status ? (
           <div
-            className={`${styles.statusBanner} ${
-              status.type === "error" ? styles.statusError : styles.statusSuccess
-            }`}
+            className={`${styles.statusBanner} ${status.type === "error" ? styles.statusError : styles.statusSuccess
+              }`}
           >
             {status.text}
           </div>
@@ -777,134 +841,134 @@ const KnowledgeHubManager = () => {
 
         <div className={styles.layout}>
           <div className={styles.mainColumn}>
-          {selectedHub?.scope_type !== "general" ? (
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <h3>Ask the AI</h3>
-                  <p>Query the active RAG context that admins will use for answers.</p>
-                </div>
-              </div>
-
-              <div className={styles.askComposer}>
-                <div className={styles.questionPicker}>
-                  <input
-                    className={styles.textInput}
-                    value={chatQuestion}
-                    onChange={(event) => {
-                      setChatQuestion(event.target.value);
-                      setShowQuestionPicker(true);
-                    }}
-                    onFocus={() => setShowQuestionPicker(true)}
-                    onBlur={() => {
-                      setTimeout(() => setShowQuestionPicker(false), 120);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        handleAskQuestion();
-                      }
-                    }}
-                    placeholder="Search saved prompts or ask a custom question..."
-                  />
-                  {showQuestionPicker &&
-                  (filteredSuggestedQuestions.length || chatQuestion.trim()) ? (
-                    <div className={styles.suggestionDropdown}>
-                      {filteredSuggestedQuestions.length ? (
-                        <div className={styles.suggestionGroup}>
-                          <span className={styles.suggestionLabel}>Saved prompts</span>
-                          {filteredSuggestedQuestions.map((item) => (
-                            <button
-                              key={item.id}
-                              className={styles.suggestionItem}
-                              onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => {
-                                setChatQuestion(item.question);
-                                setShowQuestionPicker(false);
-                              }}
-                            >
-                              {item.question}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {chatQuestion.trim() && !hasExactSuggestedQuestion ? (
-                        <button
-                          className={`${styles.suggestionItem} ${styles.customSuggestion}`}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => setShowQuestionPicker(false)}
-                        >
-                          <span className={styles.customSuggestionLabel}>Custom question</span>
-                          <span>{chatQuestion.trim()}</span>
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <p className={styles.askHint}>
-                    Pick a saved prompt from the dropdown or keep typing to ask a custom
-                    question.
-                  </p>
+            {selectedHub?.scope_type !== "general" ? (
+              <section className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div>
+                    <h3>Ask the AI</h3>
+                    <p>Query the active RAG context that admins will use for answers.</p>
+                  </div>
                 </div>
 
-                <button
-                  className={styles.secondaryButton}
-                  onClick={() => handleAskQuestion()}
-                  disabled={!chatQuestion.trim() || chatting}
-                >
-                  {chatting ? "Thinking..." : "Ask question"}
-                </button>
-              </div>
+                <div className={styles.askComposer}>
+                  <div className={styles.questionPicker}>
+                    <input
+                      className={styles.textInput}
+                      value={chatQuestion}
+                      onChange={(event) => {
+                        setChatQuestion(event.target.value);
+                        setShowQuestionPicker(true);
+                      }}
+                      onFocus={() => setShowQuestionPicker(true)}
+                      onBlur={() => {
+                        setTimeout(() => setShowQuestionPicker(false), 120);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleAskQuestion();
+                        }
+                      }}
+                      placeholder="Search saved prompts or ask a custom question..."
+                    />
+                    {showQuestionPicker &&
+                      (filteredSuggestedQuestions.length || chatQuestion.trim()) ? (
+                      <div className={styles.suggestionDropdown}>
+                        {filteredSuggestedQuestions.length ? (
+                          <div className={styles.suggestionGroup}>
+                            <span className={styles.suggestionLabel}>Saved prompts</span>
+                            {filteredSuggestedQuestions.map((item) => (
+                              <button
+                                key={item.id}
+                                className={styles.suggestionItem}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => {
+                                  setChatQuestion(item.question);
+                                  setShowQuestionPicker(false);
+                                }}
+                              >
+                                {item.question}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
 
-              {chatResult ? (
-                <div className={styles.chatResult}>
-                  <h4>Answer</h4>
-                  <p>{chatResult.answer}</p>
-
-                  <div className={styles.answerActions}>
-                    <button
-                      type="button"
-                      className={styles.ghostButton}
-                      onClick={() => setShowEvidence((previous) => !previous)}
-                    >
-                      {showEvidence
-                        ? "Hide sources"
-                        : `Show sources (${chatResult.citations?.length || 0})`}
-                    </button>
+                        {chatQuestion.trim() && !hasExactSuggestedQuestion ? (
+                          <button
+                            className={`${styles.suggestionItem} ${styles.customSuggestion}`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => setShowQuestionPicker(false)}
+                          >
+                            <span className={styles.customSuggestionLabel}>Custom question</span>
+                            <span>{chatQuestion.trim()}</span>
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <p className={styles.askHint}>
+                      Pick a saved prompt from the dropdown or keep typing to ask a custom
+                      question.
+                    </p>
                   </div>
 
-                  {showEvidence && (chatResult.citations || []).length ? (
-                    <div className={styles.evidenceList}>
-                      {chatResult.citations.map((item) => (
-                        <article key={item.key} className={styles.evidenceCard}>
-                          <div className={styles.evidenceHeader}>
-                            <div>
-                              <strong>{formatEvidenceTitle(item)}</strong>
-                              <p>
-                                {formatEvidenceType(item.chunkType)}
-                                {item.source?.source_type
-                                  ? ` • ${item.source.source_type}`
-                                  : ""}
-                              </p>
-                            </div>
-                            <span className={styles.sourceBadge}>
-                              {Math.round((item.similarity || 0) * 100)}% match
-                            </span>
-                          </div>
-                          {item.excerpt ? (
-                            <p className={styles.evidenceExcerpt}>{item.excerpt}</p>
-                          ) : null}
-                        </article>
-                      ))}
-                    </div>
-                  ) : null}
+                  <button
+                    className={styles.secondaryButton}
+                    onClick={() => handleAskQuestion()}
+                    disabled={!chatQuestion.trim() || chatting}
+                  >
+                    {chatting ? "Thinking..." : "Ask question"}
+                  </button>
                 </div>
-              ) : null}
 
-            </section>
-          ) : null}
+                {chatResult ? (
+                  <div className={styles.chatResult}>
+                    <h4>Answer</h4>
+                    <p>{chatResult.answer}</p>
 
-          <section className={styles.panel}>
+                    <div className={styles.answerActions}>
+                      <button
+                        type="button"
+                        className={styles.ghostButton}
+                        onClick={() => setShowEvidence((previous) => !previous)}
+                      >
+                        {showEvidence
+                          ? "Hide sources"
+                          : `Show sources (${chatResult.citations?.length || 0})`}
+                      </button>
+                    </div>
+
+                    {showEvidence && (chatResult.citations || []).length ? (
+                      <div className={styles.evidenceList}>
+                        {chatResult.citations.map((item) => (
+                          <article key={item.key} className={styles.evidenceCard}>
+                            <div className={styles.evidenceHeader}>
+                              <div>
+                                <strong>{formatEvidenceTitle(item)}</strong>
+                                <p>
+                                  {formatEvidenceType(item.chunkType)}
+                                  {item.source?.source_type
+                                    ? ` • ${item.source.source_type}`
+                                    : ""}
+                                </p>
+                              </div>
+                              <span className={styles.sourceBadge}>
+                                {Math.round((item.similarity || 0) * 100)}% match
+                              </span>
+                            </div>
+                            {item.excerpt ? (
+                              <p className={styles.evidenceExcerpt}>{item.excerpt}</p>
+                            ) : null}
+                          </article>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+              </section>
+            ) : null}
+
+            <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
                   <h3>Sources ({hubData?.sources?.length || 0})</h3>
@@ -924,15 +988,15 @@ const KnowledgeHubManager = () => {
               </div>
 
               {showAddSource ? (
-                <div style={{marginTop: "20px"}}>
+                <div style={{ marginTop: "20px" }}>
                   <div className={styles.sourceTabs}>
-                    <button 
+                    <button
                       className={`${styles.sourceTab} ${sourceTab === "upload" ? styles.activeSourceTab : ""}`}
                       onClick={() => setSourceTab("upload")}
                     >
                       File upload
                     </button>
-                    <button 
+                    <button
                       className={`${styles.sourceTab} ${sourceTab === "text" ? styles.activeSourceTab : ""}`}
                       onClick={() => setSourceTab("text")}
                     >
@@ -1039,20 +1103,6 @@ const KnowledgeHubManager = () => {
                         </div>
                         <div className={styles.sourceActions}>
                           <span className={styles.sourceBadge}>{source.source_type}</span>
-                          {isSystemSnapshot ? (
-                            <button
-                              type="button"
-                              className={styles.sourceIconButton}
-                              onClick={() => handleRefreshSystemSource(source.id)}
-                              disabled={
-                                Boolean(refreshingSystemSourceId) || savingSource || syncing || loadingHub
-                              }
-                              title="Refresh system snapshot"
-                              aria-label="Refresh system snapshot"
-                            >
-                              {refreshingSystemSourceId === source.id ? "..." : "↻"}
-                            </button>
-                          ) : null}
                           {isManualTextSource ? (
                             <button
                               type="button"
@@ -1156,8 +1206,8 @@ const KnowledgeHubManager = () => {
                 <div>
                   <h3>Knowledge for this scope</h3>
                   <p>
-                    Source-backed knowledge grows additively. Current source material is also
-                    visible below as a read-only system appendix.
+                    {STANDARD_KNOWLEDGE_SECTIONS.length} standard sections are fixed for every
+                    knowledge base. Custom sections can be added manually.
                   </p>
                 </div>
                 <div className={styles.headerActions}>
@@ -1168,21 +1218,22 @@ const KnowledgeHubManager = () => {
                     placeholder="Search sections..."
                   />
                   <button className={styles.secondaryButton} onClick={() => startSectionEdit()}>
-                    Add section
+                    Add custom section
                   </button>
                 </div>
               </div>
 
               {showSectionForm ? (
                 <form className={styles.formCard} onSubmit={handleSectionSubmit}>
-                  <h4>{sectionForm.sectionId ? "Edit section" : "New section"}</h4>
+                  <h4>{sectionForm.sectionId ? "Edit section" : "New custom section"}</h4>
                   <input
                     className={styles.textInput}
                     value={sectionForm.title}
                     onChange={(event) =>
                       setSectionForm((previous) => ({ ...previous, title: event.target.value }))
                     }
-                    placeholder="Section title"
+                    placeholder="Custom section title"
+                    disabled={editingStandardSection}
                     required
                   />
                   <textarea
@@ -1233,9 +1284,10 @@ const KnowledgeHubManager = () => {
                   const isOpen = openSectionIds.includes(section.id);
                   const sectionVerification = getVerificationStatus(section);
                   const isSystemSection = isSystemKnowledgeSection(section);
+                  const isStandardSection = isStandardKnowledgeSection(section);
                   const suggestedEdit = getSuggestedSectionEdit(section);
-                  const showSuggestedEdit =
-                    Boolean(suggestedEdit) && ["manual", "hybrid"].includes(section.section_origin);
+                  const showSuggestedEdit = Boolean(suggestedEdit);
+                  const isSuggestionActionPending = actingOnSuggestionId === section.id;
                   return (
                     <article key={section.id} className={styles.sectionCard}>
                       <button
@@ -1256,7 +1308,9 @@ const KnowledgeHubManager = () => {
                           {showSuggestedEdit ? (
                             <span className={styles.suggestedEditBadge}>Suggested edits</span>
                           ) : null}
-                          <span>{section.section_origin}</span>
+                          {isStandardSection ? (
+                            <span className={styles.standardBadge}>Standard</span>
+                          ) : null}
                         </div>
                       </button>
 
@@ -1275,6 +1329,7 @@ const KnowledgeHubManager = () => {
                                   }))
                                 }
                                 placeholder="Section title"
+                                disabled={editingStandardSection}
                                 required
                               />
                               <textarea
@@ -1321,29 +1376,15 @@ const KnowledgeHubManager = () => {
                           ) : (
                             <>
                               <div className={styles.sectionBlock}>
-                                <div className={styles.sectionBlockHeader}>
-                                  <span className={styles.sectionBlockEyebrow}>Summary</span>
-                                </div>
-                                {section.summary ? (
-                                  <p className={styles.sectionSummaryText}>{section.summary}</p>
-                                ) : null}
-                                {isSystemSection ? (
-                                  <p className={styles.systemSectionNote}>
-                                    This section is refreshed directly from the current source set.
-                                    It stays visible for coverage and reindexing, but it is not
-                                    edited here.
-                                  </p>
-                                ) : null}
-                                {section.metadata?.verification_reason ? (
-                                  <p className={styles.verificationReason}>
-                                    {section.metadata.verification_reason}
-                                  </p>
-                                ) : null}
                                 {section.content_markdown ? (
                                   <div className={styles.sectionSummaryContent}>
                                     {renderKnowledgeContent(section.content_markdown)}
                                   </div>
-                                ) : null}
+                                ) : (
+                                  <p className={styles.sectionSummaryText}>
+                                    {section.summary || "No content available for this section."}
+                                  </p>
+                                )}
                               </div>
 
                               {showSuggestedEdit ? (
@@ -1357,25 +1398,24 @@ const KnowledgeHubManager = () => {
                                     </span>
                                   </div>
                                   <p className={styles.suggestedEditNote}>
-                                    Manual sections are protected from automatic refreshes. Review
-                                    this AI suggestion and apply any parts you want to keep.
+                                    This edit is not applied automatically. Accept it to update the
+                                    section, or dismiss it to keep the current content.
                                   </p>
                                   {suggestedEdit.title &&
-                                  suggestedEdit.title.trim() !== section.title.trim() ? (
+                                    suggestedEdit.title.trim() !== section.title.trim() ? (
                                     <p className={styles.suggestedEditTitle}>
                                       Suggested title: {suggestedEdit.title}
-                                    </p>
-                                  ) : null}
-                                  {suggestedEdit.summary ? (
-                                    <p className={styles.sectionSummaryText}>
-                                      {suggestedEdit.summary}
                                     </p>
                                   ) : null}
                                   {suggestedEdit.content_markdown ? (
                                     <div className={styles.sectionSummaryContent}>
                                       {renderKnowledgeContent(suggestedEdit.content_markdown)}
                                     </div>
-                                  ) : null}
+                                  ) : (
+                                    <p className={styles.sectionSummaryText}>
+                                      {suggestedEdit.summary}
+                                    </p>
+                                  )}
                                   {(suggestedEdit.source_items || []).length ? (
                                     <div className={styles.citationRow}>
                                       {suggestedEdit.source_items.map((item) => (
@@ -1385,6 +1425,24 @@ const KnowledgeHubManager = () => {
                                       ))}
                                     </div>
                                   ) : null}
+                                  <div className={styles.inlineActions}>
+                                    <button
+                                      type="button"
+                                      className={styles.primaryButton}
+                                      onClick={() => handleAcceptSectionSuggestion(section)}
+                                      disabled={isSuggestionActionPending}
+                                    >
+                                      {isSuggestionActionPending ? "Saving..." : "Accept suggestion"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={styles.ghostButton}
+                                      onClick={() => handleDismissSectionSuggestion(section)}
+                                      disabled={isSuggestionActionPending}
+                                    >
+                                      Dismiss
+                                    </button>
+                                  </div>
                                 </div>
                               ) : null}
 
@@ -1398,16 +1456,18 @@ const KnowledgeHubManager = () => {
                                   >
                                     Edit section
                                   </button>
-                                  <button
-                                    type="button"
-                                    className={styles.deleteButton}
-                                    onClick={() => handleDeleteSection(section)}
-                                    disabled={deletingSectionId === section.id}
-                                  >
-                                    {deletingSectionId === section.id
-                                      ? "Deleting..."
-                                      : "Delete section"}
-                                  </button>
+                                  {!isStandardSection ? (
+                                    <button
+                                      type="button"
+                                      className={styles.deleteButton}
+                                      onClick={() => handleDeleteSection(section)}
+                                      disabled={deletingSectionId === section.id}
+                                    >
+                                      {deletingSectionId === section.id
+                                        ? "Deleting..."
+                                        : "Delete section"}
+                                    </button>
+                                  ) : null}
                                 </div>
                               ) : null}
 
