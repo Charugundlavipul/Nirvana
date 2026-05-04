@@ -161,19 +161,17 @@ const InlineActivities = ({ activities = [], slug }) => {
                     </div>
                 )}
 
-                {activities.length > 3 && (
-                    <div className="text-center mt-20">
-                        <Link 
-                            href={`/activities/${slug}`} 
-                            className="inline-flex items-center gap-4 group text-slate-900 font-bold uppercase tracking-[0.2em] text-sm hover:text-accent transition-all pl-4"
-                        >
-                            View All Experiences
-                            <span className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-accent group-hover:bg-accent group-hover:text-white transition-all">
-                                <FaArrowRight />
-                            </span>
-                        </Link>
-                    </div>
-                )}
+                <div className="text-center mt-20">
+                    <Link 
+                        href={`/activities/${slug}`} 
+                        className="inline-flex items-center gap-4 group text-slate-900 font-bold uppercase tracking-[0.2em] text-sm hover:text-accent transition-all pl-4"
+                    >
+                        View All Experiences
+                        <span className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-accent group-hover:bg-accent group-hover:text-white transition-all">
+                            <FaArrowRight />
+                        </span>
+                    </Link>
+                </div>
             </div>
         </section>
     );
