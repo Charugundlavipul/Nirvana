@@ -357,7 +357,12 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
                 </div>
             ) : null}
 
-            <div className={styles.row} style={{ flexWrap: "wrap", marginTop: "20px" }}>
+            <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(3, 1fr)", 
+                gap: "12px", 
+                marginTop: "20px" 
+            }}>
                 {images.map((img) => {
                     const imageId = String(img.id);
                     const deleteDraft = pendingDrafts.deletesById[imageId];
@@ -370,8 +375,8 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
                     const effectiveHighlight = isHighlighted ? !hasPendingRemove : hasPendingAdd;
 
                     return (
-                        <div key={img.id} style={{ width: "150px" }}>
-                            <div style={{ position: "relative", width: "150px", height: "100px" }}>
+                        <div key={img.id} style={{ width: "100%" }}>
+                            <div style={{ position: "relative", width: "100%", height: "160px" }}>
                                 <img
                                     src={img.url}
                                     alt="Gallery"
@@ -381,10 +386,11 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
                                         objectFit: "cover",
                                         borderRadius: "8px",
                                         opacity: deleteDraft ? 0.6 : 1,
-                                        border: effectiveHighlight ? "2px solid #f59e0b" : "2px solid transparent",
+                                        border: effectiveHighlight ? "3px solid #f59e0b" : "1px solid #e2e8f0",
                                         boxSizing: "border-box",
                                     }}
                                 />
+
 
                                 {/* Star highlight toggle */}
                                 <button
