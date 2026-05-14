@@ -1867,3 +1867,98 @@ CREATE TRIGGER update_blogs_modtime
     BEFORE UPDATE ON public.blogs
     FOR EACH ROW
     EXECUTE FUNCTION update_blogs_updated_at_column();
+-- ═══════════════════════════════════════════════════════════════════════
+-- Chat system tables for guest ↔ host messaging via Hospitable
+-- Run this in Supabase SQL editor
+
+-- 1. Chat Conversations
+CREATE TABLE IF NOT EXISTS chat_conversations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    guest_name TEXT NOT NULL DEFAULT 'Guest',
+    guest_email TEXT,
+    guest_phone TEXT,
+    property_slug TEXT,
+    hospitable_inquiry_id TEXT,           -- mapped Hospitable inquiry/reservation UUID
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'archived')),
+    last_message_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS chat_conversations_status_idx ON chat_conversations(status, last_message_at DESC);
+CREATE INDEX IF NOT EXISTS chat_conversations_hospitable_idx ON chat_conversations(hospitable_inquiry_id);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'chat_conversations_set_updated_at'
+    ) THEN
+        CREATE TRIGGER chat_conversations_set_updated_at
+        BEFORE UPDATE ON chat_conversations
+        FOR EACH ROW
+        EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+-- 2. Chat Messages
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    sender_type TEXT NOT NULL CHECK (sender_type IN ('guest', 'host', 'system')),
+    body TEXT NOT NULL,
+    hospitable_message_id TEXT,           -- reference ID from Hospitable (for dedup)
+    read_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS chat_messages_conversation_idx ON chat_messages(conversation_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS chat_messages_hospitable_msg_idx ON chat_messages(hospitable_message_id)
+    WHERE hospitable_message_id IS NOT NULL;
+
+-- 3. RLS Policies — allow anonymous inserts for guest messages, read for polling
+ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Conversations: anyone can create; only service role or authenticated admins read all
+DROP POLICY IF EXISTS chat_conversations_insert_policy ON chat_conversations;
+CREATE POLICY chat_conversations_insert_policy ON chat_conversations
+    FOR INSERT
+    WITH CHECK (true);
+
+DROP POLICY IF EXISTS chat_conversations_select_policy ON chat_conversations;
+CREATE POLICY chat_conversations_select_policy ON chat_conversations
+    FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS chat_conversations_update_policy ON chat_conversations;
+CREATE POLICY chat_conversations_update_policy ON chat_conversations
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+
+-- Messages: anyone can insert guest messages; anyone can read (the API controls access via conversation_id)
+DROP POLICY IF EXISTS chat_messages_insert_policy ON chat_messages;
+CREATE POLICY chat_messages_insert_policy ON chat_messages
+    FOR INSERT
+    WITH CHECK (true);
+
+DROP POLICY IF EXISTS chat_messages_select_policy ON chat_messages;
+CREATE POLICY chat_messages_select_policy ON chat_messages
+    FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS chat_messages_update_policy ON chat_messages;
+CREATE POLICY chat_messages_update_policy ON chat_messages
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+
+-- Enable Supabase Realtime for chat_messages (safe to re-run)
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
+EXCEPTION WHEN duplicate_object THEN
+    NULL;
+END;
+$$;
