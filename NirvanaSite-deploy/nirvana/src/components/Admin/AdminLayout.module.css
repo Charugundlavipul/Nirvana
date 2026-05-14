@@ -156,3 +156,5 @@
     overflow-y: auto;
     padding: 40px;
 }
+.mobileMenuBtn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 16px; color: #171717; }
+@media (max-width: 768px) { .mobileMenuBtn { display: block; } .mainContent, .mainContent.expanded { margin-left: 0; } .topBar { padding: 0 16px; } .contentScrollWrapper { padding: 16px; } .pageHeader { display: flex; align-items: center; } .pageTitle { font-size: 20px; } .pageSubtitle { font-size: 12px; } }

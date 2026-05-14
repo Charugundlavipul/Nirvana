@@ -109,3 +109,4 @@
     white-space: nowrap;
     overflow: hidden;
 }
+@media (max-width: 768px) { .sidebar { transform: translateX(-100%); width: 260px; } .sidebar.open { transform: translateX(0); width: 260px; } .sidebar.closed { transform: translateX(-100%); width: 260px; } }

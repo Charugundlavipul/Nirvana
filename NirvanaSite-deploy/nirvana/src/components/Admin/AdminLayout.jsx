@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./AdminLayout.module.css";
 import Sidebar from "./Sidebar";
 import { supabase } from "../../supabaseClient";
@@ -8,6 +8,12 @@ import PortfolioChatWidget from "../common/PortfolioChatWidget";
 const AdminLayout = ({ children, title, subtitle }) => {
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    useEffect(() => {
+        if (window.innerWidth <= 768) {
+            setIsSidebarOpen(false);
+        }
+    }, []);
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -20,8 +26,8 @@ const AdminLayout = ({ children, title, subtitle }) => {
             <main className={`${styles.mainContent} ${!isSidebarOpen ? styles.expanded : ""}`}>
                 <header className={styles.topBar}>
                     <div className={styles.pageHeader}>
-                        <h1 className={styles.pageTitle}>{title}</h1>
-                        {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
+                        <button className={styles.mobileMenuBtn} onClick={() => setIsSidebarOpen(!isSidebarOpen)}>☰</button><div><h1 className={styles.pageTitle}>{title}</h1>
+                        {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}</div>
                     </div>
                     <div className={styles.actions}>
                         <button onClick={handleSignOut} className={styles.signOutBtn}>

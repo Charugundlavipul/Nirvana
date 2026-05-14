@@ -92,13 +92,13 @@ const normalizeReview = (review, propertyById) => {
 
 async function fetchPropertiesRaw() {
   const baseColumns =
-    "id,slug,name,hospitable_property_id,location,description,guests_max,bedroom_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
-  const withBookingColumns = `id,slug,name,hospitable_property_id,booking_url,location,description,guests_max,bedroom_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+    "id,slug,name,hospitable_property_id,location,description,guests_max,bedroom_count,bed_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
+  const withBookingColumns = `id,slug,name,hospitable_property_id,booking_url,location,description,guests_max,bedroom_count,bed_count,full_bath_count,half_bath_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
   const withBookingAndSpacesColumns = `${withBookingColumns},spaces`;
   const withBookingSpacesAndVideoColumns = `${withBookingAndSpacesColumns},video_url`;
   const legacyBaseColumns =
-    "id,slug,name,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
-  const legacyWithBookingColumns = `id,slug,name,booking_url,location,description,guests_max,bedroom_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
+    "id,slug,name,location,description,guests_max,bedroom_count,bed_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub";
+  const legacyWithBookingColumns = `id,slug,name,booking_url,location,description,guests_max,bedroom_count,bed_count,bathroom_count,bed_details,bath_details,pet_friendly,pet_fee,hot_tub`;
   const legacyWithBookingAndSpacesColumns = `${legacyWithBookingColumns},spaces`;
   const legacyWithBookingSpacesAndVideoColumns = `${legacyWithBookingAndSpacesColumns},video_url`;
 
