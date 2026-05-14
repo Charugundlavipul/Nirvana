@@ -150,10 +150,10 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
 
                     {/* Property Stats */}
                     <div className="mb-6 flex max-w-3xl flex-wrap justify-center gap-3 text-white/90 sm:mb-8 sm:gap-4 md:gap-6">
-                        {property.bedroom_count && (
+                        {(property.bedroom_count || property.bed_count) && (
                             <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm sm:text-base">
                                 <FaBed className="text-accent" />
-                                <span>{property.bedroom_count} Bedrooms</span>
+                                <span>{property.bedroom_count} {property.bedroom_count === 1 ? 'Bedroom' : 'Bedrooms'}{property.bed_count ? ` / ${property.bed_count} Beds` : ''}</span>
                             </div>
                         )}
                         {bathroomSummary && (
@@ -228,8 +228,11 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         {/* Quick Stats */}
                         <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-5 sm:gap-5 md:grid-cols-4 md:gap-6 md:pt-6">
                             <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">{property.bedroom_count || '-'}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Bedrooms</p>
+                                <p className="text-2xl font-bold text-accent sm:text-3xl">
+                                  {property.bedroom_count || '-'}
+                                  {property.bed_count ? <span className="text-lg text-slate-400 font-medium">/{property.bed_count}</span> : null}
+                                </p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Bdrms / Beds</p>
                             </div>
                             <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">{fullBathCount || '-'}</p>

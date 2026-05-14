@@ -340,10 +340,10 @@ const PropertyOverview = ({ initialProperties = [] }) => {
                       className="w-full cursor-pointer appearance-none bg-transparent text-sm font-medium text-slate-900 focus:outline-none"
                     >
                       <option value="">Any</option>
-                      <option value="2">2+ beds</option>
-                      <option value="3">3+ beds</option>
-                      <option value="4">4+ beds</option>
-                      <option value="5">5+ beds</option>
+                      <option value="2">2+ bdrms</option>
+                      <option value="3">3+ bdrms</option>
+                      <option value="4">4+ bdrms</option>
+                      <option value="5">5+ bdrms</option>
                     </select>
                   </div>
                 </div>

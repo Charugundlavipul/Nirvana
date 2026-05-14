@@ -279,7 +279,8 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
                       onNext={(e) => handleCardNext(e, prop)}
                       link={`/${prop.slug}`}
                       stats={{
-                        beds: prop.bedroom_count || 0,
+                        bedrooms: prop.bedroom_count || 0,
+                        beds: prop.bed_count || 0,
                         baths: getCompactBathroomSummary(prop) || 0,
                         guests: prop.guests_max || 0
                       }}
@@ -520,7 +521,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
         <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
           <span className="flex items-center gap-1.5">
-            <FaBed className="text-accent" /> {stats.beds} beds
+            <FaBed className="text-accent" /> {stats.bedrooms} {stats.bedrooms === 1 ? 'bdrm' : 'bdrms'}{stats.beds ? ` / ${stats.beds} beds` : ''}
           </span>
           <span className="flex items-center gap-1.5">
             <FaBath className="text-accent" /> {stats.baths}

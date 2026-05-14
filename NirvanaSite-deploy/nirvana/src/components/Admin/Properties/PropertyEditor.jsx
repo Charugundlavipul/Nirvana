@@ -28,6 +28,7 @@ const toFormState = (data = {}) => {
         description: data.description || "",
         guests_max: data.guests_max || "",
         bedroom_count: data.bedroom_count || "",
+        bed_count: data.bed_count || "",
         full_bath_count: fullBathCount ?? 0,
         half_bath_count: halfBathCount ?? 0,
         bed_details: data.bed_details || "",
@@ -100,6 +101,7 @@ const PropertyEditor = () => {
         description: "",
         guests_max: "",
         bedroom_count: "",
+        bed_count: "",
         full_bath_count: 0,
         half_bath_count: 0,
         bed_details: "",
@@ -658,6 +660,10 @@ const PropertyEditor = () => {
                                     <div className={styles.fieldGroup}>
                                         <label>Bedrooms</label>
                                         <input type="number" name="bedroom_count" value={formData.bedroom_count} onChange={handleChange} />
+                                    </div>
+                                    <div className={styles.fieldGroup}>
+                                        <label>Beds</label>
+                                        <input type="number" name="bed_count" value={formData.bed_count} onChange={handleChange} />
                                     </div>
                                     <div className={styles.fieldGroup}>
                                         <label>Full Baths</label>

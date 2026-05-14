@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS properties (
     description TEXT,
     guests_max INT,
     bedroom_count INT,
+    bed_count INT,
     bed_details TEXT,
     full_bath_count INT DEFAULT 0,
     half_bath_count INT DEFAULT 0,
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS properties (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathroom_count NUMERIC(3,1);
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS bed_count INT;
 UPDATE properties
 SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
 WHERE hospitable_property_id IS NOT NULL;
