@@ -168,8 +168,14 @@ const PropertyListingCard = ({ property }) => {
         <div className="mb-3 flex items-center gap-3 text-sm text-slate-600">
           <span className="flex items-center gap-1.5">
             <FaBed className="text-accent" />
-            {property.bedroom_count} {property.bedroom_count === 1 ? 'bdrm' : 'bdrms'}{property.bed_count ? ` / ${property.bed_count} beds` : ''}
+            {property.bedroom_count} {property.bedroom_count === 1 ? 'bdrm' : 'bdrms'}
           </span>
+          {property.bed_count > 0 && (
+            <span className="flex items-center gap-1.5">
+              <FaBed className="text-accent" />
+              {property.bed_count} {property.bed_count === 1 ? 'bed' : 'beds'}
+            </span>
+          )}
           <span className="flex items-center gap-1.5">
             <FaBath className="text-accent" />
             {compactBathroomSummary || "No baths listed"}

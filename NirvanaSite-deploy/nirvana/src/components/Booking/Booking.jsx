@@ -301,7 +301,10 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                 </div>
                 <h2 className="text-3xl font-bold">{selectedProperty?.title}</h2>
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-300">
-                  <span className="flex items-center gap-1"><FaBed /> {selectedProperty?.bedroom_count} {selectedProperty?.bedroom_count === 1 ? 'bdrm' : 'bdrms'}{selectedProperty?.bed_count ? ` / ${selectedProperty?.bed_count} beds` : ''}</span>
+                  <span className="flex items-center gap-1"><FaBed /> {selectedProperty?.bedroom_count} {selectedProperty?.bedroom_count === 1 ? 'bdrm' : 'bdrms'}</span>
+                  {selectedProperty?.bed_count > 0 && (
+                    <span className="flex items-center gap-1"><FaBed /> {selectedProperty?.bed_count} {selectedProperty?.bed_count === 1 ? 'bed' : 'beds'}</span>
+                  )}
                   <span className="flex items-center gap-1"><FaBath /> {getCompactBathroomSummary(selectedProperty) || "-"}</span>
                   <span className="flex items-center gap-1"><FaUsers /> Up to {selectedProperty?.guests_max} guests</span>
                 </div>

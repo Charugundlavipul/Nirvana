@@ -116,7 +116,8 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
     // Desktop: Carousel logic
     const result = [];
-    for (let i = 0; i < itemsToShow; i++) {
+    const count = Math.min(itemsToShow, properties.length);
+    for (let i = 0; i < count; i++) {
       result.push(properties[(currentPropertyIndex + i) % properties.length]);
     }
     return result;
@@ -140,7 +141,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
   const getVisibleReviews = () => {
     if (!filteredReviews.length) return [];
     // Sync with grid: 1 col < 1024, 3 cols >= 1024
-    const count = itemsToShow;
+    const count = Math.min(itemsToShow, filteredReviews.length);
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(filteredReviews[(reviewIndex + i) % filteredReviews.length]);
@@ -521,8 +522,13 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
         <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
           <span className="flex items-center gap-1.5">
-            <FaBed className="text-accent" /> {stats.bedrooms} {stats.bedrooms === 1 ? 'bdrm' : 'bdrms'}{stats.beds ? ` / ${stats.beds} beds` : ''}
+            <FaBed className="text-accent" /> {stats.bedrooms} {stats.bedrooms === 1 ? 'bdrm' : 'bdrms'}
           </span>
+          {stats.beds > 0 && (
+            <span className="flex items-center gap-1.5">
+              <FaBed className="text-accent" /> {stats.beds} {stats.beds === 1 ? 'bed' : 'beds'}
+            </span>
+          )}
           <span className="flex items-center gap-1.5">
             <FaBath className="text-accent" /> {stats.baths}
           </span>

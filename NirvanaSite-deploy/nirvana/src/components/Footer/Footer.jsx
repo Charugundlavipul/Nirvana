@@ -62,13 +62,15 @@ const Footer = () => {
             <div className="bg-[#0a1222] text-white">
                 <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-14 md:grid-cols-2 lg:grid-cols-4">
                     <section className="space-y-4">
-                        <Image
-                            src="/assets/nirvana_logo.png"
-                            alt="Nirvana Logo"
-                            width={187}
-                            height={48}
-                            className="object-contain brightness-0 invert opacity-95"
-                        />
+                        <div className="bg-white/95 inline-block p-3 rounded-2xl shadow-sm">
+                            <Image
+                                src="/assets/nirvana_logo_transparent.png"
+                                alt="Nirvana Logo"
+                                width={240}
+                                height={60}
+                                className="object-contain"
+                            />
+                        </div>
                         <p className="max-w-xs text-sm leading-relaxed text-slate-300">
                             Luxury homes, curated locations, and elevated hospitality designed for unforgettable stays.
                         </p>

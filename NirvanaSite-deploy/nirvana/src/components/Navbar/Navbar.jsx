@@ -61,10 +61,10 @@ function Navbar() {
           <div className="flex-shrink-0 z-[60]">
             <Link href="/" onClick={handleLinkClick}>
               <Image
-                src="/assets/nirvana_logo.png"
+                src="/assets/nirvana_logo_transparent.png"
                 alt="Nirvana Logo"
-                width={187}
-                height={48}
+                width={240}
+                height={60}
                 className="object-contain"
               />
             </Link>

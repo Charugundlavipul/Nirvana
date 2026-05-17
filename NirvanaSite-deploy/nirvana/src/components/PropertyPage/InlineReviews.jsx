@@ -26,11 +26,11 @@ const InlineReviews = ({ reviews = [] }) => {
   const getVisibleReviews = () => {
     if (!reviews.length) return [];
     
-    // Sync with grid: 1 col < 1024, 3 cols >= 1024
     let count = 3;
     if (isClient && window.innerWidth < 1024) {
       count = 1;
     }
+    count = Math.min(count, reviews.length);
 
     const result = [];
     for (let i = 0; i < count; i++) {

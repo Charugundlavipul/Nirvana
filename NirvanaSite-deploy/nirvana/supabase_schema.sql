@@ -435,7 +435,7 @@ BEGIN
 
             INSERT INTO public.properties (
                 slug, name, booking_url, hospitable_property_id, video_url, is_published, location, description,
-                guests_max, bedroom_count, bed_details, full_bath_count, half_bath_count, bath_details,
+                guests_max, bedroom_count, bed_count, bed_details, full_bath_count, half_bath_count, bath_details,
                 pet_friendly, pet_fee, hot_tub, spaces
             ) VALUES (
                 v_slug,
@@ -448,6 +448,7 @@ BEGIN
                 req.payload->>'description',
                 NULLIF(req.payload->>'guests_max', '')::int,
                 NULLIF(req.payload->>'bedroom_count', '')::int,
+                NULLIF(req.payload->>'bed_count', '')::int,
                 req.payload->>'bed_details',
                 COALESCE(
                     NULLIF(req.payload->>'full_bath_count', '')::int,
@@ -482,6 +483,7 @@ BEGIN
                 description = req.payload->>'description',
                 guests_max = NULLIF(req.payload->>'guests_max', '')::int,
                 bedroom_count = NULLIF(req.payload->>'bedroom_count', '')::int,
+                bed_count = NULLIF(req.payload->>'bed_count', '')::int,
                 bed_details = req.payload->>'bed_details',
                 full_bath_count = COALESCE(
                     NULLIF(req.payload->>'full_bath_count', '')::int,
