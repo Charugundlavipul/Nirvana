@@ -144,7 +144,7 @@ const HostsPage = () => {
         <div
           ref={heroRef}
           className="relative flex-1 w-full overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: `url(/assets/hosts-hero.png)` }}
+          style={{ backgroundImage: `url(/assets/hosts-hero.png)` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 flex flex-col items-center justify-center text-center px-5 sm:px-6 pt-8 sm:pt-12">
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.22em] sm:tracking-[0.3em] text-accent mb-3 sm:mb-5">
@@ -188,9 +188,9 @@ const HostsPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 py-14 sm:py-20 space-y-16 sm:space-y-28">
-        {/* ═══════════════ PILLAR 1 — ACQUISITION ═══════════════ */}
-        <section className="flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-20">
+      {/* ═══════════════ PILLAR 1 — ACQUISITION ═══════════════ */}
+      <section className="w-full bg-white py-16 sm:py-24 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-20">
           <div className="w-full lg:w-1/2 rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-xl sm:shadow-2xl">
             <Image
               src="/assets/hosts-acquisition.png"
@@ -202,7 +202,7 @@ const HostsPage = () => {
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
-              <span className="inline-block px-4 py-1.5 rounded-full bg-slate-200 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For New Investors</span>
+              <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For New Investors</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-snug">
               Property Acquisition
@@ -210,7 +210,7 @@ const HostsPage = () => {
               &amp; Development
             </h2>
             <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-              We find high-yield properties, run the numbers, and help you close —
+              We find high-yield properties, crunch the numbers, and help you close —
               ensuring positive cash flows and growing investment value.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
@@ -223,11 +223,19 @@ const HostsPage = () => {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
 
-        {/* ═══════════════ PILLAR 2 — MANAGEMENT ═══════════════ */}
-        <section className="flex flex-col lg:flex-row-reverse items-center gap-8 sm:gap-12 lg:gap-20">
+            <div className="pt-3 sm:pt-5">
+              <p className="text-sm sm:text-[0.95rem] text-gray-600 leading-relaxed border-l-2 border-accent pl-4 py-1">
+                <span className="text-gray-900 font-bold">Seamless Transition:</span> Once your property is acquired, you have the option to seamlessly transition into our end-to-end management program to start generating returns on day one.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ PILLAR 2 — MANAGEMENT ═══════════════ */}
+      <section className="w-full bg-slate-50 py-16 sm:py-24 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 flex flex-col lg:flex-row-reverse items-center gap-8 sm:gap-12 lg:gap-20">
           <div className="w-full lg:w-1/2 rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-xl sm:shadow-2xl">
             <Image
               src="/assets/hosts-management-v3.png"
@@ -239,7 +247,7 @@ const HostsPage = () => {
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
-              <span className="inline-block px-4 py-1.5 rounded-full bg-slate-200 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For Existing Owners</span>
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For Existing Owners &amp; New Investors</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-snug">
               End-to-End Property
@@ -261,7 +269,10 @@ const HostsPage = () => {
               ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 py-16 sm:py-24 space-y-16 sm:space-y-28">
 
         {/* ═══════════════ PM SERVICES GRID (REFINED) ═══════════════ */}
         <section className="space-y-8 sm:space-y-12">
@@ -303,7 +314,7 @@ const HostsPage = () => {
               Your Path to Passive Income
             </h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {processSteps.map((step, idx) => (
               <div key={idx} className="relative bg-white p-8 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
