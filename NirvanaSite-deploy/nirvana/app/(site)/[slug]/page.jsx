@@ -22,12 +22,28 @@ export async function generateMetadata({ params }) {
     });
   }
 
+  const location = property.location || "Luxury Vacation Rental";
+  const locationKeywords = location.toLowerCase().includes("sevierville")
+    ? ["Sevierville TN cabin", "Smoky Mountains luxury cabin", "cabin rental near Dollywood", "Tennessee vacation home"]
+    : location.toLowerCase().includes("lake norman") || location.toLowerCase().includes("mooresville")
+    ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
+    : ["luxury vacation rental", "premium vacation home"];
+
   return buildMetadata({
-    title: property.name,
-    description: descriptionFromRichText(property.description, 160) || `${property.name} in ${property.location}.`,
+    title: `${property.name} — ${location}`,
+    description: descriptionFromRichText(property.description, 160) || `Book ${property.name} in ${location}. Direct booking luxury vacation rental with Nirvana Luxe.`,
     pathname: `/${property.slug}`,
     images: [property.curated?.bg || property.curated?.home || "/logo512.png"],
     type: "article",
+    keywords: [
+      property.name,
+      `${property.name} vacation rental`,
+      `${property.name} cabin`,
+      "Nirvana Luxe",
+      "direct booking",
+      "luxury vacation rental",
+      ...locationKeywords,
+    ],
   });
 }
 

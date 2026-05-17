@@ -50,3 +50,29 @@ export const getLegalPageContent = cache(async (pageKey) => {
     effectiveDate: data?.effective_date || null,
   };
 });
+
+export const getBlogBySlug = cache(async (slug) => {
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("slug, title, excerpt, cover_image, author_name, author, category, created_at, read_time")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error fetching blog by slug:", error);
+  }
+  return data || null;
+});
+
+export const getBlogSlugs = cache(async () => {
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("slug")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching blog slugs:", error);
+    return [];
+  }
+  return (data || []).map((row) => row.slug).filter(Boolean);
+});

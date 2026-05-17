@@ -65,7 +65,7 @@ const Footer = () => {
                         <div className="bg-white/95 inline-block p-3 rounded-2xl shadow-sm">
                             <Image
                                 src="/assets/nirvana_logo_transparent.png"
-                                alt="Nirvana Logo"
+                                alt="Nirvana Luxe — Luxury Vacation Rentals in the Smoky Mountains and Lake Norman"
                                 width={240}
                                 height={60}
                                 className="object-contain"

@@ -200,7 +200,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
         >
           <Image
             src={HERO_IMAGE}
-            alt=""
+            alt="Luxury vacation rental cabin in the Smoky Mountains at sunset — Nirvana Luxe"
             fill
             preload
             fetchPriority="high"

@@ -4,10 +4,18 @@ import { buildMetadata } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
-  title: "Contact Nirvana Luxe",
-  description: "Contact Nirvana Luxe for booking questions, property details, and vacation rental support.",
+  title: "Contact Nirvana Luxe — Booking Inquiries & Support",
+  description: "Contact Nirvana Luxe for booking questions, property details, availability, group trip planning, and vacation rental support.",
   pathname: "/contact",
-  keywords: ["contact Nirvana Luxe", "vacation rental support", "luxury rental contact"],
+  keywords: [
+    "contact Nirvana Luxe",
+    "vacation rental support",
+    "luxury rental contact",
+    "vacation rental inquiry",
+    "cabin rental customer service",
+    "booking questions Smoky Mountains",
+    "Lake Norman rental inquiry",
+  ],
 });
 
 export default function ContactPage() {

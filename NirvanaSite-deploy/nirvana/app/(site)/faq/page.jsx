@@ -6,10 +6,20 @@ import { buildFaqJsonLd, buildMetadata } from "../../../src/lib/seo";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "Frequently Asked Questions",
-  description: "Find answers to common questions about booking, check-in, amenities, and house rules for Nirvana Luxe stays.",
+  title: "FAQ — Check-In, Amenities, Booking & House Rules",
+  description: "Find answers to common questions about booking, check-in times, cancellation policies, amenities, pet policies, and house rules for Nirvana Luxe vacation rentals.",
   pathname: "/faq",
-  keywords: ["vacation rental FAQ", "check-in questions", "booking FAQ", "Nirvana Luxe FAQ"],
+  keywords: [
+    "vacation rental FAQ",
+    "check-in questions",
+    "booking FAQ",
+    "Nirvana Luxe FAQ",
+    "cabin check-in time",
+    "pet policy vacation rental",
+    "cancellation policy luxury cabin",
+    "amenities luxury rental",
+    "house rules cabin rental",
+  ],
 });
 
 export default async function FaqPage() {

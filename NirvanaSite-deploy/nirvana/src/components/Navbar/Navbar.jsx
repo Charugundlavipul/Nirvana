@@ -50,6 +50,7 @@ function Navbar() {
     { name: 'FAQ', path: '/faq' },
     { name: 'Reviews', path: '/review' },
     { name: 'About', path: '/about' },
+    { name: 'Contact', path: '/contact' },
   ];
 
   return (
@@ -62,7 +63,7 @@ function Navbar() {
             <Link href="/" onClick={handleLinkClick}>
               <Image
                 src="/assets/nirvana_logo_transparent.png"
-                alt="Nirvana Logo"
+                alt="Nirvana Luxe — Luxury Vacation Rentals"
                 width={240}
                 height={60}
                 className="object-contain"
