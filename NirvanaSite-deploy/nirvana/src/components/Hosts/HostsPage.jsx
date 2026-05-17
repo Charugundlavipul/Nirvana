@@ -202,7 +202,7 @@ const HostsPage = () => {
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For New Investors</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-slate-200 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For New Investors</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-snug">
               Property Acquisition
@@ -239,7 +239,7 @@ const HostsPage = () => {
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For Existing Owners</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-slate-200 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-3">For Existing Owners</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-snug">
               End-to-End Property
