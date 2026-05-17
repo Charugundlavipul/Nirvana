@@ -50,13 +50,14 @@ function Navbar() {
     { name: 'FAQ', path: '/faq' },
     { name: 'Reviews', path: '/review' },
     { name: 'About', path: '/about' },
+    { name: 'Hosts', path: '/hosts' },
     { name: 'Contact', path: '/contact' },
   ];
 
   return (
     <>
       <nav
-        className="fixed top-0 left-0 w-full z-50 transition-all duration-300 font-sans bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 py-2"
+        className="fixed top-0 left-0 w-full z-50 transition-all duration-300 font-sans bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 py-4"
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex-shrink-0 z-[60]">
