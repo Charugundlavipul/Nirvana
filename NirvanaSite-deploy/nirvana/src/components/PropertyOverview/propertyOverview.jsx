@@ -210,22 +210,38 @@ const PropertyOverview = ({ initialProperties = [] }) => {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-20 pt-24 font-sans text-slate-800">
-      <div className="mx-auto mb-8 max-w-7xl px-6 sm:px-8 md:px-12">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg md:p-8">
-          <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-accent">
-              Nirvana Luxe Collection
-            </p>
-            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
-              Discover Your Next Stay
-            </h1>
-          </div>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+      {/* Light Hero Header */}
+      <section className="relative overflow-hidden bg-white px-4 pb-6 pt-28 sm:px-6 sm:pb-8 sm:pt-32 md:pb-10 md:pt-36">
+        {/* Decorative shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/5 sm:h-[400px] sm:w-[400px]"></div>
+          <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-emerald-50 sm:h-[420px] sm:w-[420px]"></div>
+          <div className="absolute right-1/4 top-1/3 h-32 w-32 rounded-full bg-amber-50/60 blur-2xl"></div>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-inner">
+        <div className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5">
+            <FaMapMarkerAlt className="text-accent text-xs" />
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Nirvana Luxe Collection</span>
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            Discover Your Next Stay
+          </h1>
+          <p className="mt-2 max-w-lg text-sm text-slate-500 sm:text-base">
+            Browse luxury cabins, lakefront homes, and large-group vacation rentals — all available for direct booking.
+          </p>
+        </div>
+      </section>
+
+      {/* Search Section */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 pt-8 pb-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg md:p-6">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr_1fr]">
               <div className="group">
-                <div className="relative flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="relative flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaMapMarkerAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -241,18 +257,23 @@ const PropertyOverview = ({ initialProperties = [] }) => {
                       className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
                     />
                     {showDropdown && dropdownSuggestions.length > 0 && (
-                      <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-72 overflow-y-auto z-50">
+                      <div
+                        ref={dropdownRef}
+                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-72 overflow-y-auto z-50"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
                         {dropdownSuggestions.map((property) => (
                           <button
                             key={property.id || property.slug}
-                            onClick={() => {
+                            onPointerDown={(e) => {
+                              e.preventDefault();
                               setSearchLocation(property.title || property.name || '');
                               setShowDropdown(false);
                             }}
                             className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center gap-3"
                           >
                             {(property.primary_image || property.image) && (
-                              <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                              <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 ring-1 ring-slate-200" />
                             )}
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-slate-900 truncate">{property.title || property.name}</p>
@@ -267,7 +288,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -285,7 +306,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -305,7 +326,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
 
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaUserFriends className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -328,7 +349,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 transition-colors hover:border-accent/30 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaBed className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -360,59 +381,66 @@ const PropertyOverview = ({ initialProperties = [] }) => {
             </div>
           </div>
 
+          {/* Status bar */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 font-medium">
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 font-medium ring-1 ring-slate-200/50">
                 <span className="font-bold text-slate-900">{filteredProperties.length}</span> of{" "}
                 {properties.length} properties
               </span>
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="font-semibold text-accent hover:underline"
+                  className="rounded-full bg-rose-50 px-3 py-1.5 font-semibold text-rose-600 ring-1 ring-rose-100 transition-colors hover:bg-rose-100"
                 >
-                  Clear filters
+                  ✕ Clear filters
                 </button>
               )}
             </div>
-            <div className="hidden items-center gap-3 text-xs text-slate-500 md:flex">
-              <span className="rounded-full bg-accent/10 px-3 py-1.5 font-semibold text-accent">
+            <div className="hidden items-center gap-2 text-xs text-slate-500 md:flex">
+              <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 font-semibold text-accent ring-1 ring-accent/10">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent"></span>
                 Direct booking
               </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">
+              <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 ring-1 ring-slate-200/50">
+                <FaCalendarAlt className="text-slate-400" />
                 Availability search
               </span>
             </div>
           </div>
 
           {searchError && (
-            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {searchError}
             </div>
           )}
 
           {searchNotice && !searchError && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               {searchNotice}
             </div>
           )}
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 md:px-12">
+      {/* Property Grid */}
+      <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-8">
         {filteredProperties.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500">
-            <span className="mb-4 text-4xl">Home</span>
-            <p className="font-medium">No properties match your criteria</p>
+          <div className="flex h-72 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white text-center shadow-sm">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+              <FaSearch className="text-xl text-slate-400" />
+            </div>
+            <p className="text-lg font-semibold text-slate-700">No properties match your criteria</p>
+            <p className="mt-1 text-sm text-slate-500">Try adjusting your filters or search terms.</p>
             <button
               onClick={clearFilters}
-              className="mt-2 text-sm font-semibold text-accent hover:underline"
+              className="mt-4 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent/90 hover:shadow-md"
             >
-              Clear filters
+              Clear all filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8">
             {filteredProperties.map((property) => (
               <PropertyListingCard key={property.slug} property={property} />
             ))}

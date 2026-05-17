@@ -60,7 +60,13 @@
   }
 
   .site-hero--lg {
-    min-height: clamp(26rem, 78svh, 56rem);
+    min-height: clamp(22rem, 55svh, 34rem);
+  }
+
+  @media (min-width: 768px) {
+    .site-hero--lg {
+      min-height: clamp(26rem, 78svh, 56rem);
+    }
   }
 
   .site-viewport-section {

@@ -210,15 +210,15 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             aria-hidden="true"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
-          <div className="relative z-10 mx-auto max-w-4xl px-4 pb-10 pt-14 text-center sm:px-6 sm:pb-12 sm:pt-16 md:pb-16 md:pt-0">
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">The Nirvana Luxe Collection</p>
-            <h1 className="mb-4 text-4xl font-bold leading-[1.05] text-white drop-shadow-lg sm:text-5xl sm:leading-[1.1] md:mb-5 md:text-6xl md:leading-[1.15] lg:text-[4rem]">
-              Nirvana Luxe <br className="hidden sm:block" /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
+          <div className="relative z-10 mx-auto max-w-4xl px-4 pb-6 pt-10 text-center sm:px-6 sm:pb-12 sm:pt-16 md:pb-16 md:pt-0">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">The Nirvana Luxe Collection</p>
+            <h1 className="mb-3 text-3xl font-bold leading-[1.05] text-white drop-shadow-lg sm:text-5xl sm:leading-[1.1] md:mb-5 md:text-6xl md:leading-[1.15] lg:text-[4rem]">
+              Nirvana Luxe <br /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
             <p className="sr-only">
               Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
             </p>
-            <p className="mx-auto mt-3 max-w-2xl text-lg font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
+            <p className="mx-auto mt-2 max-w-2xl text-sm font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
               Browse the official Nirvana Luxe collection of premium cabins, lakefront homes, and large-group vacation rentals.
             </p>
           </div>
@@ -803,8 +803,8 @@ const HeroSearch = ({ router, properties = [] }) => {
       </div>
 
       {/* Mobile Search Bar */}
-      <div className="relative z-20 -mt-8 px-4 md:hidden">
-        <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+      <div className="relative z-20 -mt-6 px-4 md:hidden">
+        <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl">
           
           <div className="relative flex items-center gap-3 border border-gray-200 rounded-xl p-3">
             <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
@@ -819,11 +819,14 @@ const HeroSearch = ({ router, properties = [] }) => {
               className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none placeholder-gray-500"
             />
             {showDropdown && filteredProperties.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-60 overflow-y-auto z-50">
+              <div
+                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-60 overflow-y-auto z-50"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 {filteredProperties.map((property) => (
                   <button
                     key={property.id || property.slug}
-                    onClick={() => handlePropertySelect(property)}
+                    onPointerDown={(e) => { e.preventDefault(); handlePropertySelect(property); }}
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
                   >
                     {(property.primary_image || property.image) && (
@@ -839,9 +842,10 @@ const HeroSearch = ({ router, properties = [] }) => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
-            <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
-              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check in</span>
+          {/* Dates + Guests in one row */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
+              <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check in</span>
               <input 
                 id="home-search-check-in-mobile"
                 type="date"
@@ -853,12 +857,12 @@ const HeroSearch = ({ router, properties = [] }) => {
                   setCheckInDate(e.target.value);
                   if (checkOutDate && e.target.value && checkOutDate <= e.target.value) setCheckOutDate("");
                 }}
-                className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer"
+                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none cursor-pointer"
               />
             </div>
             
-            <div className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3">
-              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Check out</span>
+            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
+              <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check out</span>
               <input 
                 id="home-search-check-out-mobile"
                 type="date"
@@ -867,32 +871,32 @@ const HeroSearch = ({ router, properties = [] }) => {
                 value={checkOutDate}
                 onClick={(e) => e.target.showPicker?.()}
                 onChange={(e) => setCheckOutDate(e.target.value)}
-                className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer"
+                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none cursor-pointer"
               />
             </div>
-          </div>
 
-          <div className="border border-gray-200 rounded-xl p-3">
-            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">Guests</span>
-            <select 
-              id="home-search-guests-mobile"
-              aria-label="Guests"
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              className="w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none appearance-none"
-            >
-              <option value="">Add guests</option>
-              <option value="2">2+ guests</option>
-              <option value="4">4+ guests</option>
-              <option value="6">6+ guests</option>
-              <option value="8">8+ guests</option>
-              <option value="10">10+ guests</option>
-            </select>
+            <div className="rounded-xl border border-gray-200 p-2.5">
+              <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Guests</span>
+              <select 
+                id="home-search-guests-mobile"
+                aria-label="Guests"
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none appearance-none"
+              >
+                <option value="">Any</option>
+                <option value="2">2+</option>
+                <option value="4">4+</option>
+                <option value="6">6+</option>
+                <option value="8">8+</option>
+                <option value="10">10+</option>
+              </select>
+            </div>
           </div>
 
           <button 
             onClick={handleSearch}
-            className="w-full bg-accent text-white rounded-xl py-3.5 font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-transform"
+            className="w-full bg-accent text-white rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-transform"
           >
             <FaSearch /> Search
           </button>
