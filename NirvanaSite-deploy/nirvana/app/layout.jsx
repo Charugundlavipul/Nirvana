@@ -1,9 +1,11 @@
 import "../src/index.css";
+import Script from "next/script";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_TITLE,
+  SITE_KEYWORDS,
   getMetadataBase,
 } from "../src/lib/siteConfig";
 
@@ -14,6 +16,7 @@ export const metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   applicationName: SITE_NAME,
   verification: {
     google: "zkMdqKWIHLTe8_TrkPvJmoWx-edj8tfAzrji-c81y8U",
@@ -42,7 +45,21 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-XE6P41ERZ5"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-XE6P41ERZ5');
+          `}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
