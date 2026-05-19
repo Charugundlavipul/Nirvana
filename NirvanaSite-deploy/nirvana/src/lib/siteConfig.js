@@ -72,7 +72,27 @@ export const SITE_KEYWORDS = [
   "luxury vacation cabins",
   "walland tn cabin rentals",
   "large group cabins sevierville",
-  "luxury airbnb smoky mountains"
+  "luxury airbnb smoky mountains",
+  "chalet du lac",
+  "chalet du lac charlotte",
+  "chalet du lac lake norman",
+  "shoreside oasis",
+  "shoreside oasis charlotte",
+  "shoreside oasis lake norman",
+  "halftime hideaway",
+  "halftime hideaway sevierville",
+  "halftime hideaway smoky mountains",
+  "cabin at the summit with mountain views",
+  "cabin at the summit sevierville",
+  "grand prix getaway",
+  "grand prix getaway smoky mountains",
+  "evergreen escape",
+  "evergreen escape sevierville",
+  "the grand sumeru",
+  "the grand sumeru smoky mountains",
+  "nirvana luxe retreat",
+  "nirvana luxe cabin",
+  "nirvana cabin sevierville"
 ];
 
 export const DEFAULT_OG_IMAGE = "/logo512.png";
