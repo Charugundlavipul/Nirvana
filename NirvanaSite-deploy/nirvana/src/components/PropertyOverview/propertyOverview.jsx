@@ -237,11 +237,11 @@ const PropertyOverview = ({ initialProperties = [] }) => {
 
       {/* Search Section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 pt-8 pb-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg md:p-6">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr_1fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-lg md:p-6">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 md:p-3">
+            <div className="grid grid-cols-1 gap-2 md:gap-3 lg:grid-cols-[1.6fr_1fr_1fr]">
               <div className="group">
-                <div className="relative flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="relative flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaMapMarkerAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -287,7 +287,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -305,7 +305,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -323,9 +323,9 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+            <div className="mt-2 md:mt-3 grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3 lg:grid-cols-[1fr_1fr_auto]">
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaUserFriends className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -348,7 +348,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               </div>
 
               <div>
-                <div className="flex h-full items-center gap-3 rounded-xl border border-transparent bg-white px-4 py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
                   <FaBed className="flex-shrink-0 text-lg text-accent" />
                   <div className="flex-1">
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -372,7 +372,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-4 font-bold text-white shadow-lg transition-all hover:bg-accent/90 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 lg:min-w-[180px]"
+                className="col-span-2 lg:col-span-1 flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 md:py-4 font-bold text-white shadow-lg transition-all hover:bg-accent/90 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 lg:min-w-[180px]"
               >
                 <FaSearch />
                 <span>{isSearching ? "Searching..." : "Search"}</span>

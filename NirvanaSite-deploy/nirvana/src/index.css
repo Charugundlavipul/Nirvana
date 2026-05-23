@@ -22,7 +22,7 @@
 }
 
 :root {
-  --site-header-height: 5.5rem;
+  --site-header-height: 5.75rem;
 }
 
 /* Custom Utility Classes */
@@ -47,7 +47,6 @@
 
   .site-hero {
     position: relative;
-    margin-top: calc(-1 * var(--site-header-height));
     padding-top: var(--site-header-height);
   }
 
@@ -60,7 +59,7 @@
   }
 
   .site-hero--lg {
-    min-height: clamp(22rem, 55svh, 34rem);
+    min-height: clamp(28rem, 70svh, 42rem);
   }
 
   @media (min-width: 768px) {
@@ -103,4 +102,10 @@ body {
 .main-content {
   min-height: 100svh;
   padding-top: var(--site-header-height);
+}
+
+/* When a page starts with a full-bleed hero, remove the top padding
+   so the hero sits flush against the bottom of the fixed navbar */
+.main-content:has(.site-hero) {
+  padding-top: 0;
 }

@@ -139,7 +139,10 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
 
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-4 pb-10 pt-20 text-center text-white sm:px-6 sm:pb-12 md:pt-24">
+                <div
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-start px-4 pb-10 text-center text-white sm:px-6 sm:pb-12 md:justify-center"
+                    style={{ paddingTop: 'var(--site-header-height)' }}
+                >
                     <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">Luxury Retreat</p>
                     <h1 className="mb-3 max-w-4xl text-4xl font-bold leading-none drop-shadow-lg sm:text-5xl sm:leading-tight md:mb-4 md:text-7xl">{property.name}</h1>
 
@@ -233,29 +236,29 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
 
                         {/* Quick Stats */}
                         <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-5 sm:gap-5 md:grid-cols-5 md:gap-4 md:pt-6">
-                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">
                                   {property.bedroom_count || '-'}
                                 </p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Bedrooms</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Bedrooms</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">
                                   {property.bed_count || '-'}
                                 </p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Beds</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Beds</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">{fullBathCount || '-'}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Full Baths</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Full Baths</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">{halfBathCount || '-'}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Half Baths</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Half Baths</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-4 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
+                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
                                 <p className="text-2xl font-bold text-accent sm:text-3xl">{property.guests_max || '-'}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 sm:text-sm sm:tracking-wider">Guests</p>
+                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Guests</p>
                             </div>
                         </div>
                     </div>

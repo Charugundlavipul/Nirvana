@@ -177,6 +177,16 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
   const handleDateClick = (dateStr) => {
       const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
       if (isPast) return;
+
+      const status = calendarData[dateStr];
+      if (status === 'check-in' && !checkInDate) {
+          setError("This date is only available for checkout (another guest is arriving). Please select an earlier check-in date.");
+          setTimeout(() => {
+              setError(null);
+          }, 6000);
+          return;
+      }
+
       if (isDateUnavailable(dateStr)) return;
 
       if (!checkInDate || (checkInDate && checkOutDate)) {
@@ -266,6 +276,26 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                 status = 'past';
               }
 
+              const isCheckoutOnly = status === 'check-in' && !checkInDate && !isPast;
+              const isUnavailableDate = isDateUnavailable(dateStr);
+              let wrapperClass = "aspect-square flex items-center justify-center";
+              let cellClass = "w-full h-full flex items-center justify-center text-sm transition-colors duration-150 rounded-full";
+              let cellStyle = {};
+              let tooltip = "";
+
+              // Tooltip text for accessibility and clarity
+              if (isPast) {
+                  tooltip = "Past date";
+              } else if (status === 'unavailable') {
+                  tooltip = "Unavailable (Booked)";
+              } else if (status === 'check-in') {
+                  tooltip = "Checkout only (Next guest arriving)";
+              } else if (status === 'check-out') {
+                  tooltip = "Check-in only (Previous guest leaving)";
+              } else {
+                  tooltip = "Available";
+              }
+
               let isSelected = dateStr === checkInDate || dateStr === checkOutDate;
               let isBetween = false;
               if (checkInDate && checkOutDate) {
@@ -274,13 +304,16 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                   isBetween = dateStr > checkInDate && dateStr <= hoverDate && status !== 'unavailable' && status !== 'past';
               }
 
-              const isUnavailableDate = isDateUnavailable(dateStr);
-              let wrapperClass = "aspect-square flex items-center justify-center";
-              let cellClass = "w-full h-full flex items-center justify-center text-sm transition-colors duration-150 rounded-full";
-
               // Blocked — either truly unavailable, or contextually blocked (e.g. check-in day when user already picked check-in)
               if (isPast) {
                   cellClass += " text-slate-300 cursor-default";
+              } else if (isCheckoutOnly) {
+                  // Checkout-only (Airbnb style diagonal split)
+                  cellClass += " text-slate-600 font-medium cursor-pointer";
+                  cellStyle = {
+                      background: 'linear-gradient(135deg, transparent 49.9%, #e2e8f0 49.9%, #e2e8f0 50.1%, #f1f5f9 50.1%)',
+                      borderRadius: '50%',
+                  };
               } else if (isUnavailableDate) {
                   cellClass += " text-slate-300 cursor-default line-through decoration-slate-300/70";
               }
@@ -308,8 +341,10 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                 <div key={dateStr} className={wrapperClass}>
                   <div
                     className={cellClass}
+                    style={cellStyle}
                     onClick={() => handleDateClick(dateStr)}
                     onMouseEnter={() => handleDateHover(dateStr)}
+                    title={tooltip}
                   >
                     {day}
                   </div>
@@ -387,14 +422,28 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     {/* Selection Info Bar */}
                     {(checkInDate || checkOutDate) && (
                       <div className="mt-6 bg-accent/5 border border-accent/15 rounded-xl p-4 transition-all animate-in fade-in duration-300">
-                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-accent/70 mb-2">
-                          <FaClock size={10} />
-                          <span>Your Selected Stay</span>
-                          {nightsCount > 0 && (
-                            <span className="ml-2 bg-accent/20 text-accent font-bold px-2 py-0.5 rounded-full tracking-normal">
-                              {nightsCount} Night{nightsCount !== 1 ? 's' : ''}
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wider font-semibold text-accent/70 mb-2">
+                          <div className="flex items-center gap-2">
+                            <FaClock size={10} />
+                            <span>Your Selected Stay</span>
+                            {nightsCount > 0 && (
+                              <span className="ml-2 bg-accent/20 text-accent font-bold px-2.5 py-0.5 rounded-full tracking-normal text-[10px]">
+                                {nightsCount} Night{nightsCount !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCheckInDate(null);
+                              setCheckOutDate(null);
+                              setQuote(null);
+                              setQuoteError(null);
+                            }}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-all uppercase tracking-wider bg-white hover:bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 cursor-pointer focus:outline-none flex items-center gap-1"
+                          >
+                            <FaTimes size={8} /> Clear
+                          </button>
                         </div>
                         <div className="flex items-center gap-3 flex-wrap">
                           <div className="flex items-center gap-2">

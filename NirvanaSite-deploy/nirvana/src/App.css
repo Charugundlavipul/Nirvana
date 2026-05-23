@@ -38,7 +38,7 @@
 }
 
 .main-content {
-  padding-top: 12vh; /* Adjust this value based on the height of your navbar */
+  /* padding-top handled by index.css via --site-header-height */
 }
 
 .admin-main-content {
