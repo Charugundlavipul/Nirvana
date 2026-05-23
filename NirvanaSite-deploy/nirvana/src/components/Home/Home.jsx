@@ -347,9 +347,9 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               {getVisibleReviews().map((review, idx) => {
                 const cardId = review.id || `${review.author || 'guest'}-${idx}`;
                 return (
-                  <PremiumReviewCard 
-                    key={cardId} 
-                    review={review} 
+                  <PremiumReviewCard
+                    key={cardId}
+                    review={review}
                     isExpanded={expandedReviewId === cardId}
                     onToggleExpand={() => setExpandedReviewId(expandedReviewId === cardId ? null : cardId)}
                   />
@@ -364,8 +364,8 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
                   const review = getVisibleReviews()[0];
                   const cardId = review.id || `${review.author || 'guest'}-mobile`;
                   return (
-                    <PremiumReviewCard 
-                      review={review} 
+                    <PremiumReviewCard
+                      review={review}
                       isExpanded={expandedReviewId === cardId}
                       onToggleExpand={() => setExpandedReviewId(expandedReviewId === cardId ? null : cardId)}
                     />
@@ -504,9 +504,8 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
             {images.slice(0, 5).map((_, idx) => (
               <div
                 key={idx}
-                className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${
-                  idx === safeIndex % 5 ? "w-3 bg-white" : "w-1.5 bg-white/60"
-                }`}
+                className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${idx === safeIndex % 5 ? "w-3 bg-white" : "w-1.5 bg-white/60"
+                  }`}
               />
             ))}
           </div>
@@ -522,7 +521,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
         <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
           <span className="flex items-center gap-1.5">
-            <FaBed className="text-accent" /> {stats.bedrooms} {stats.bedrooms === 1 ? 'bdrm' : 'bdrms'}
+            <FaBed className="text-accent" /> {stats.bedrooms} {stats.bedrooms === 1 ? 'bed room' : 'bed rooms'}
           </span>
           {stats.beds > 0 && (
             <span className="flex items-center gap-1.5">
@@ -611,17 +610,17 @@ const PremiumReviewCard = ({ review, isExpanded, onToggleExpand }) => {
       </div>
 
       <div className="flex-grow flex flex-col text-left">
-          <p className={`text-gray-600 leading-relaxed italic transition-all ${isExpanded ? '' : 'line-clamp-4'}`}>
-            "{review.text}"
-          </p>
-          {review.text && review.text.length > 130 && (
-              <button 
-                  onClick={onToggleExpand} 
-                  className="text-accent text-sm font-semibold mt-2 hover:underline text-left self-start focus:outline-none"
-              >
-                  {isExpanded ? 'Read less' : 'Read full review'}
-              </button>
-          )}
+        <p className={`text-gray-600 leading-relaxed italic transition-all ${isExpanded ? '' : 'line-clamp-4'}`}>
+          "{review.text}"
+        </p>
+        {review.text && review.text.length > 130 && (
+          <button
+            onClick={onToggleExpand}
+            className="text-accent text-sm font-semibold mt-2 hover:underline text-left self-start focus:outline-none"
+          >
+            {isExpanded ? 'Read less' : 'Read full review'}
+          </button>
+        )}
       </div>
 
       <div className="mt-4 pt-4 border-t border-slate-100">
@@ -656,7 +655,7 @@ const HeroSearch = ({ router, properties = [] }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-          inputRef.current && !inputRef.current.contains(e.target)) {
+        inputRef.current && !inputRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     };
@@ -682,7 +681,7 @@ const HeroSearch = ({ router, properties = [] }) => {
     if (checkInDate) params.append("checkIn", checkInDate);
     if (checkOutDate) params.append("checkOut", checkOutDate);
     if (guests) params.append("guests", guests);
-    
+
     router.push(`/properties?${params.toString()}`);
   };
 
@@ -693,16 +692,16 @@ const HeroSearch = ({ router, properties = [] }) => {
       {/* Desktop Search Bar — positioned to overlap hero bottom edge like VRBO */}
       <div className="hidden md:block absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-20 w-full max-w-5xl px-6">
         <div className="bg-white rounded-full shadow-xl border border-gray-200 flex items-stretch">
-          
+
           {/* Where */}
           <div className="flex-[1.3] flex items-center gap-3 pl-6 pr-4 py-4 border-r border-gray-200 rounded-l-full hover:bg-gray-50 transition-colors cursor-pointer relative">
             <FaMapMarkerAlt className="text-gray-400 text-lg flex-shrink-0" />
-            <input 
+            <input
               id="home-search-location-desktop"
               ref={inputRef}
-              type="text" 
+              type="text"
               aria-label="Search by destination or property"
-              placeholder="Where to?" 
+              placeholder="Where to?"
               value={searchLocation}
               onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
@@ -728,14 +727,14 @@ const HeroSearch = ({ router, properties = [] }) => {
               </div>
             )}
           </div>
-          
+
           {/* Dates */}
           <div className="flex-[1.5] flex items-center gap-3 px-4 py-4 border-r border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
             <FaCalendarAlt className="text-gray-400 text-base flex-shrink-0" />
             <div className="flex items-center gap-1 w-full">
               <div className="flex flex-col flex-1">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check in</span>
-                <input 
+                <input
                   id="home-search-check-in-desktop"
                   type="date"
                   aria-label="Check-in date"
@@ -752,7 +751,7 @@ const HeroSearch = ({ router, properties = [] }) => {
               <span className="text-gray-300 mx-1">—</span>
               <div className="flex flex-col flex-1">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check out</span>
-                <input 
+                <input
                   id="home-search-check-out-desktop"
                   type="date"
                   aria-label="Check-out date"
@@ -765,13 +764,13 @@ const HeroSearch = ({ router, properties = [] }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Guests */}
           <div className="flex-1 flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
             <FaUsers className="text-gray-400 text-lg flex-shrink-0" />
             <div className="flex flex-col w-full">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Guests</span>
-              <select 
+              <select
                 id="home-search-guests-desktop"
                 aria-label="Guests"
                 value={guests}
@@ -790,7 +789,7 @@ const HeroSearch = ({ router, properties = [] }) => {
 
           {/* Search Button */}
           <div className="flex items-center pr-3">
-            <button 
+            <button
               onClick={handleSearch}
               className="bg-accent hover:bg-accent/90 text-white rounded-full px-8 py-3.5 flex items-center gap-2.5 transition-all font-semibold text-[15px] shadow-md hover:shadow-lg"
             >
@@ -805,14 +804,14 @@ const HeroSearch = ({ router, properties = [] }) => {
       {/* Mobile Search Bar */}
       <div className="relative z-20 -mt-6 px-4 md:hidden">
         <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl">
-          
+
           <div className="relative flex items-center gap-3 border border-gray-200 rounded-xl p-3">
             <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
-            <input 
+            <input
               id="home-search-location-mobile"
-              type="text" 
+              type="text"
               aria-label="Search by destination or property"
-              placeholder="Where to?" 
+              placeholder="Where to?"
               value={searchLocation}
               onChange={(e) => { setSearchLocation(e.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
@@ -826,7 +825,7 @@ const HeroSearch = ({ router, properties = [] }) => {
                 {filteredProperties.map((property) => (
                   <button
                     key={property.id || property.slug}
-                    onPointerDown={(e) => { e.preventDefault(); handlePropertySelect(property); }}
+                    onClick={() => handlePropertySelect(property)}
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
                   >
                     {(property.primary_image || property.image) && (
@@ -846,7 +845,7 @@ const HeroSearch = ({ router, properties = [] }) => {
           <div className="grid grid-cols-3 gap-2">
             <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check in</span>
-              <input 
+              <input
                 id="home-search-check-in-mobile"
                 type="date"
                 aria-label="Check-in date"
@@ -860,10 +859,10 @@ const HeroSearch = ({ router, properties = [] }) => {
                 className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none cursor-pointer"
               />
             </div>
-            
+
             <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check out</span>
-              <input 
+              <input
                 id="home-search-check-out-mobile"
                 type="date"
                 aria-label="Check-out date"
@@ -877,7 +876,7 @@ const HeroSearch = ({ router, properties = [] }) => {
 
             <div className="rounded-xl border border-gray-200 p-2.5">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Guests</span>
-              <select 
+              <select
                 id="home-search-guests-mobile"
                 aria-label="Guests"
                 value={guests}
@@ -894,7 +893,7 @@ const HeroSearch = ({ router, properties = [] }) => {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={handleSearch}
             className="w-full bg-accent text-white rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-transform"
           >

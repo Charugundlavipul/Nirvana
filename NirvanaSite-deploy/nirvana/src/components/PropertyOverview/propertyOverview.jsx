@@ -265,8 +265,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
                         {dropdownSuggestions.map((property) => (
                           <button
                             key={property.id || property.slug}
-                            onPointerDown={(e) => {
-                              e.preventDefault();
+                            onClick={() => {
                               setSearchLocation(property.title || property.name || '');
                               setShowDropdown(false);
                             }}

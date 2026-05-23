@@ -713,7 +713,7 @@ BEGIN
     ELSIF req.entity_type = 'blog' THEN
         IF req.action = 'create' THEN
             INSERT INTO public.blogs (
-                slug, title, category, author_id, author_name, author_image_url, excerpt, content, cover_image, published, published_at
+                slug, title, category, author_id, author_name, author_image_url, excerpt, content, cover_image, published, published_at, draft_comment
             ) VALUES (
                 req.payload->>'slug',
                 req.payload->>'title',
@@ -725,7 +725,8 @@ BEGIN
                 req.payload->>'content',
                 req.payload->>'cover_image',
                 COALESCE((req.payload->>'published')::boolean, false),
-                CASE WHEN (req.payload->>'published')::boolean = true THEN NOW() ELSE NULL END
+                CASE WHEN (req.payload->>'published')::boolean = true THEN NOW() ELSE NULL END,
+                req.payload->>'draft_comment'
             );
         ELSIF req.action = 'update' THEN
             UPDATE public.blogs
@@ -740,6 +741,7 @@ BEGIN
                 cover_image = req.payload->>'cover_image',
                 published = COALESCE((req.payload->>'published')::boolean, false),
                 published_at = CASE WHEN (req.payload->>'published')::boolean = true AND published_at IS NULL THEN NOW() ELSE published_at END,
+                draft_comment = COALESCE(req.payload->>'draft_comment', draft_comment),
                 updated_at = NOW()
             WHERE id = req.entity_id;
         ELSIF req.action = 'delete' THEN
@@ -1821,9 +1823,11 @@ CREATE TABLE IF NOT EXISTS public.blogs (
     read_time TEXT DEFAULT '5 min read',
     published BOOLEAN DEFAULT false,
     published_at TIMESTAMPTZ,
+    draft_comment TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE public.blogs ADD COLUMN IF NOT EXISTS draft_comment TEXT;
 
 UPDATE public.blogs
 SET

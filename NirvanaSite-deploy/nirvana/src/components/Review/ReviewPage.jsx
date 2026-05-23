@@ -181,7 +181,7 @@ const ReviewsPage = ({ initialProperties = [], initialReviews = [], initialSlug 
 
                   <div className="max-h-64 overflow-y-auto">
                     <button
-                      onPointerDown={(e) => { e.preventDefault(); handlePropertySelect("all"); }}
+                      onClick={() => handlePropertySelect("all")}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${selectedProperty === "all" ? 'bg-accent/5' : ''}`}
                     >
                       <span className="font-medium text-slate-900">All Properties</span>
@@ -194,7 +194,7 @@ const ReviewsPage = ({ initialProperties = [], initialReviews = [], initialSlug 
                       filteredProperties.map((property) => (
                         <button
                           key={property.slug}
-                          onPointerDown={(e) => { e.preventDefault(); handlePropertySelect(property.slug); }}
+                          onClick={() => handlePropertySelect(property.slug)}
                           className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${selectedProperty === property.slug ? 'bg-accent/5' : ''}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">

@@ -131,7 +131,7 @@ const FAQ = ({ initialProperties = [], initialSlug = null, initialFaqs = [] }) =
                     {filteredProperties.length > 0 ? filteredProperties.map((property) => (
                       <button
                         key={property.slug}
-                        onPointerDown={(e) => { e.preventDefault(); handlePropertySelect(property.slug); }}
+                        onClick={() => handlePropertySelect(property.slug)}
                         className={'w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ' + (selectedSlug === property.slug ? 'bg-accent/5' : '')}
                       >
                         <div className="flex items-center gap-3 min-w-0">

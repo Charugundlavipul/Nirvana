@@ -1420,32 +1420,34 @@ const DiffPreview = ({ req, enableImagePreview = false, onPreviewImage = null, p
   };
 
   return (
-    <table style={tableStyle}>
-      <thead>
-        <tr style={{ borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
-          <th style={{ padding: "6px 4px" }}>Field</th>
-          <th style={{ padding: "6px 4px" }}>Current</th>
-          <th style={{ padding: "6px 4px" }}>Requested</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
-            <td style={{ padding: "6px 4px", fontWeight: 600 }}>{row.key}</td>
-            <td style={{ padding: "6px 4px", color: "#475569" }}>
-              {row.key === "spaces"
-                ? renderSpacesCell(row, "current")
-                : renderCell(row.key, row.oldValue, row.oldRaw)}
-            </td>
-            <td style={{ padding: "6px 4px", color: "#0f766e" }}>
-              {row.key === "spaces"
-                ? renderSpacesCell(row, "requested")
-                : renderCell(row.key, row.newValue, row.newRaw)}
-            </td>
+    <div className="overflow-x-auto w-full border border-slate-100 rounded-lg my-2">
+      <table style={{ ...tableStyle, minWidth: "500px" }}>
+        <thead>
+          <tr style={{ borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
+            <th style={{ padding: "6px 4px" }}>Field</th>
+            <th style={{ padding: "6px 4px" }}>Current</th>
+            <th style={{ padding: "6px 4px" }}>Requested</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={{ padding: "6px 4px", fontWeight: 600 }}>{row.key}</td>
+              <td style={{ padding: "6px 4px", color: "#475569" }}>
+                {row.key === "spaces"
+                  ? renderSpacesCell(row, "current")
+                  : renderCell(row.key, row.oldValue, row.oldRaw)}
+              </td>
+              <td style={{ padding: "6px 4px", color: "#0f766e" }}>
+                {row.key === "spaces"
+                  ? renderSpacesCell(row, "requested")
+                  : renderCell(row.key, row.newValue, row.newRaw)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
@@ -1638,22 +1640,24 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
 
   return (
     <div style={{ ...cardStyle, borderLeft: isRevision ? "4px solid #f59e0b" : undefined }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
         <div>
           <strong>{friendlyFieldName(req.entity_type)}</strong> - <span>{req.action}</span>
         </div>
-        <span
-          style={{
-            ...badge,
-            fontSize: "11px",
-            fontWeight: 700,
-            padding: "4px 8px",
-            borderRadius: "999px",
-            textTransform: "uppercase",
-          }}
-        >
-          {friendlyStatus(req.status)}
-        </span>
+        <div className="self-start sm:self-auto">
+          <span
+            style={{
+              ...badge,
+              fontSize: "11px",
+              fontWeight: 700,
+              padding: "4px 8px",
+              borderRadius: "999px",
+              textTransform: "uppercase",
+            }}
+          >
+            {friendlyStatus(req.status)}
+          </span>
+        </div>
       </div>
       <div style={{ marginTop: "6px", fontSize: "12px", color: "#64748b" }}>
         Submitted: {formatDateTime(req.submitted_at)}
@@ -2054,7 +2058,7 @@ const ApprovalQueue = () => {
           </div>
         </div>
 
-        <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 160px 160px", gap: "8px" }}>
+        <div className="mt-2.5 grid grid-cols-1 md:grid-cols-[1fr_160px_160px] gap-2">
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -2102,7 +2106,7 @@ const ApprovalQueue = () => {
           const hidePropertyPreviewForSpaces = isPropertyRequest && hasSpacesChange;
           return (
             <div key={req.id} style={cardStyle}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+              <div className="flex flex-col sm:flex-row justify-between gap-2 mb-2">
                 <div>
                   <strong>{req.entity_type}</strong> - <span>{req.action}</span>
                   <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
@@ -2110,7 +2114,7 @@ const ApprovalQueue = () => {
                   </div>
                   <div style={{ fontSize: "12px", color: "#666" }}>Request ID: {req.id}</div>
                 </div>
-                <div>
+                <div className="self-start sm:self-auto">
                   <span
                     style={{
                       ...statusBadgeStyle(req.status),
@@ -2190,62 +2194,68 @@ const ApprovalQueue = () => {
 
               {showRaw[req.id] ? <pre style={preStyle}>{JSON.stringify(req.payload || {}, null, 2)}</pre> : null}
 
-              <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "8px", alignItems: "center" }}>
+              <div className="mt-2.5 flex flex-col md:flex-row gap-2 items-stretch md:items-center">
                 <input
                   value={comment[req.id] || ""}
                   onChange={(e) => setComment((prev) => ({ ...prev, [req.id]: e.target.value }))}
                   placeholder="Message back to editor (optional)..."
                   style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
+                  className="flex-1 min-w-0"
                 />
-                <button
-                  onClick={() => handleDecision(req, "rejected")}
-                  disabled={workingId === req.id}
-                  style={{
-                    padding: "10px 12px",
-                    border: "1px solid #ef4444",
-                    color: "#ef4444",
-                    background: "#fff",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => {
-                    if (!comment[req.id]?.trim()) {
-                      alert("Please add a message explaining what needs to be revised.");
-                      return;
-                    }
-                    handleDecision(req, "revision_requested");
-                  }}
-                  disabled={workingId === req.id}
-                  style={{
-                    padding: "10px 12px",
-                    border: "1px solid #f59e0b",
-                    color: "#fff",
-                    background: "#f59e0b",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                  }}
-                >
-                  Request Revision
-                </button>
-                <button
-                  onClick={() => handleDecision(req, "approved")}
-                  disabled={workingId === req.id}
-                  style={{
-                    padding: "10px 12px",
-                    border: "1px solid #10b981",
-                    color: "#fff",
-                    background: "#10b981",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Approve & Publish
-                </button>
+                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full md:w-auto">
+                  <button
+                    onClick={() => handleDecision(req, "rejected")}
+                    disabled={workingId === req.id}
+                    style={{
+                      padding: "10px 12px",
+                      border: "1px solid #ef4444",
+                      color: "#ef4444",
+                      background: "#fff",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                    className="flex-1 sm:flex-none text-center"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!comment[req.id]?.trim()) {
+                        alert("Please add a message explaining what needs to be revised.");
+                        return;
+                      }
+                      handleDecision(req, "revision_requested");
+                    }}
+                    disabled={workingId === req.id}
+                    style={{
+                      padding: "10px 12px",
+                      border: "1px solid #f59e0b",
+                      color: "#fff",
+                      background: "#f59e0b",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                    className="flex-1 sm:flex-none text-center"
+                  >
+                    Request Revision
+                  </button>
+                  <button
+                    onClick={() => handleDecision(req, "approved")}
+                    disabled={workingId === req.id}
+                    style={{
+                      padding: "10px 12px",
+                      border: "1px solid #10b981",
+                      color: "#fff",
+                      background: "#10b981",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                    className="flex-1 sm:flex-none text-center"
+                  >
+                    Approve & Publish
+                  </button>
+                </div>
               </div>
             </div>
           )

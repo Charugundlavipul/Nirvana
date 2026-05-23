@@ -445,7 +445,7 @@ const BlogManager = () => {
     if (isEditing) {
         return (
             <AdminLayout title={formData.id ? "Edit Post" : "New Post"}>
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     <button onClick={() => setIsEditing(false)} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors">
                         <FaChevronLeft /> Back to List
                     </button>
@@ -499,13 +499,13 @@ const BlogManager = () => {
                                 </div>
                                 <div className={formStyles.fieldGroup}>
                                     <label>Author Profile Pic</label>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-wrap items-center gap-4 w-full">
                                         {formData.author_image_url && (
-                                            <div className="w-10 h-10 rounded-full shadow-sm overflow-hidden border">
+                                            <div className="w-10 h-10 rounded-full shadow-sm overflow-hidden border flex-shrink-0">
                                                 <img src={formData.author_image_url} className="w-full h-full object-cover" alt="author" />
                                             </div>
                                         )}
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, "author_image_url")} disabled={uploading} />
+                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, "author_image_url")} disabled={uploading} className="text-sm w-full sm:w-auto" />
                                     </div>
                                 </div>
                             </div>
@@ -525,15 +525,15 @@ const BlogManager = () => {
                                 </div>
                                 <div className={formStyles.fieldGroup}>
                                     <label>Cover Image</label>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-wrap items-center gap-4 w-full">
                                         {formData.cover_image && (
-                                            <div className="w-16 h-16 rounded shadow-sm overflow-hidden border">
+                                            <div className="w-16 h-16 rounded shadow-sm overflow-hidden border flex-shrink-0">
                                                 <img src={formData.cover_image} className="w-full h-full object-cover" alt="cover" />
                                             </div>
                                         )}
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, "cover_image")} disabled={uploading} />
+                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, "cover_image")} disabled={uploading} className="text-sm w-full sm:w-auto" />
                                     </div>
-                                    {uploading && <span className="text-xs text-slate-400">Compressing & Uploading...</span>}
+                                    {uploading && <span className="text-xs text-slate-400 mt-1 block">Compressing & Uploading...</span>}
                                 </div>
                             </div>
 
@@ -548,9 +548,9 @@ const BlogManager = () => {
                             </div>
 
                             <div className={formStyles.fieldGroup}>
-                                <div className="flex items-center justify-between gap-4 mb-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                                     <label className="mb-0">Content</label>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <button
                                             type="button"
                                             className={formStyles.richToolbarBtn}
@@ -633,9 +633,9 @@ const BlogManager = () => {
                                 </div>
                             </div>
 
-                            <div className={formStyles.actionBar}>
-                                <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Discard</button>
-                                <button type="submit" className={formStyles.saveBtn}>
+                            <div className={`${formStyles.actionBar} flex flex-col-reverse sm:flex-row gap-3 sm:gap-4`}>
+                                <button type="button" className={`${formStyles.cancelBtn} w-full sm:w-auto`} onClick={() => setIsEditing(false)}>Discard</button>
+                                <button type="submit" className={`${formStyles.saveBtn} w-full sm:w-auto`}>
                                     {isSuper
                                         ? (formData.id ? "Save Changes" : "Create Post")
                                         : (formData.draft_request_id ? "Update Draft" : "Submit for Approval")}
@@ -650,8 +650,8 @@ const BlogManager = () => {
 
     return (
         <AdminLayout title="Journal & Blogs" subtitle="Manage your travel guides and informational content.">
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-8">
+            <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
                     <div>
                         <h2 className="text-xl font-bold text-slate-800">All Articles</h2>
                         <p className="text-sm text-slate-500">
@@ -662,13 +662,14 @@ const BlogManager = () => {
                     </div>
                     <button
                         onClick={handleCreate}
-                        className="flex items-center gap-2 bg-[#60BD68] text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors shadow-lg font-bold"
+                        className="flex items-center justify-center gap-2 bg-[#60BD68] text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors shadow-lg font-bold w-full sm:w-auto"
                     >
                         <FaPlus /> Create New Post
                     </button>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                {/* Desktop view: Table */}
+                <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <table className="w-full text-left border-collapse font-sans">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
                             <tr>
@@ -739,6 +740,72 @@ const BlogManager = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile view: Cards list */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {loading ? (
+                        <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+                            Loading Journal...
+                        </div>
+                    ) : blogs.length === 0 ? (
+                        <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+                            <div className="mb-4 text-slate-300"><FaImage size={48} className="mx-auto" /></div>
+                            {isSuper
+                                ? "Your journal is empty. Let's write the first post!"
+                                : "You have no published posts or draft submissions yet."}
+                        </div>
+                    ) : (
+                        blogs.map((blog) => (
+                            <div key={blog.row_id || blog.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                                <div className="flex gap-3">
+                                    {blog.cover_image && (
+                                        <img src={blog.cover_image} className="w-16 h-16 rounded object-cover shadow-sm flex-shrink-0" alt="thumb" />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-slate-900 leading-snug break-words">{blog.title}</div>
+                                        <div className="text-[10px] text-slate-400 mt-0.5">/{blog.slug}</div>
+                                        <div className="text-xs text-slate-500 mt-1">{blog.category}</div>
+                                    </div>
+                                </div>
+                                {blog.draft_comment && blog.is_draft_request && (
+                                    <div className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg italic">
+                                        Note: {blog.draft_comment}
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                                    <div>
+                                        {blog.is_draft_request ? (
+                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 transition-all ${getDraftStatusStyles(blog)}`}>
+                                                {blog.draft_status === 'revision_requested' ? <FaTimes size={8} /> : <FaCheck size={8} />}
+                                                {getDraftStatusLabel(blog)}
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={() => togglePublish(blog.id, blog.published)}
+                                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 transition-all ${getDraftStatusStyles(blog)}`}
+                                            >
+                                                {blog.published ? <FaCheck size={8} /> : <FaTimes size={8} />}
+                                                {getDraftStatusLabel(blog)}
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-slate-500">
+                                        {blog.draft_action !== 'delete' && (
+                                            <button onClick={() => handleEdit(blog)} className="p-2 bg-slate-50 hover:bg-slate-100 hover:text-amber-500 rounded-lg transition-all" title={blog.is_draft_request ? "Edit Draft" : "Edit Article"}>
+                                                <FaEdit size={16} />
+                                            </button>
+                                        )}
+                                        {blog.id && !blog.is_draft_request && (
+                                            <button onClick={() => deleteBlog(blog.id)} className="p-2 bg-slate-50 hover:bg-slate-100 hover:text-red-500 rounded-lg transition-all" title="Delete Article">
+                                                <FaTrash size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </AdminLayout>
