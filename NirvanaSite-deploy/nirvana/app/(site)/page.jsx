@@ -6,7 +6,7 @@ import { SITE_NAME, SITE_TITLE, absoluteUrl } from "../../src/lib/siteConfig";
 
 export const revalidate = 1800;
 
-export const metadata = buildMetadata({
+const baseMetadata = buildMetadata({
   title: "Nirvana Luxe - Luxury Vacation Rentals",
   description:
     "Book luxury cabins & lakefront homes directly in Smoky Mountains, TN & Lake Norman, NC. Best rates, no platform fees. Check availability now.",
@@ -29,6 +29,13 @@ export const metadata = buildMetadata({
     "grandprix getaway",
   ],
 });
+
+export const metadata = {
+  ...baseMetadata,
+  title: {
+    absolute: "Nirvana Luxe - Luxury Vacation Rentals",
+  },
+};
 
 export default async function HomePage() {
   const [properties, reviews] = await Promise.all([getProperties(), getReviews()]);
