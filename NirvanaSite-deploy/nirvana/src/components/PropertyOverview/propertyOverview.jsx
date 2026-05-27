@@ -229,7 +229,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
             Discover Your Next Luxury Vacation Rental
           </h1>
-          <p className="mt-2 max-w-lg text-sm text-slate-500 sm:text-base">
+          <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
             Browse handpicked luxury vacation rentals — from lakefront homes on Lake Norman to cabin rentals in Sevierville — all available for direct booking.
           </p>
         </div>
