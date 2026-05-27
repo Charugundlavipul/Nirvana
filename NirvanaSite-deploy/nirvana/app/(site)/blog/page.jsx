@@ -2,8 +2,8 @@ import BlogFeed from "../../../src/components/Blog/BlogFeed";
 import { buildMetadata } from "../../../src/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "The NirvanaLuxe Journal — Luxury Travel Blog",
-  description: "Stay updated with luxury travel guides, Smoky Mountain destination tips, Lake Norman getaways, and vacation planning advice from NirvanaLuxe.",
+  title: "Nirvana Luxe Journal - Luxury Travel & Tips",
+  description: "Explore luxury travel guides, Smoky Mountain tips & Lake Norman getaway ideas from Nirvana Luxe. Plan your perfect escape with expert advice.",
   pathname: "/blog",
   keywords: [
     "luxury travel blog",

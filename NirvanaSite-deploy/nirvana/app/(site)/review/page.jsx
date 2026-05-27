@@ -6,8 +6,8 @@ import { buildMetadata, buildReviewCollectionJsonLd } from "../../../src/lib/seo
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "Guest Reviews — Verified Vacation Rental Testimonials",
-  description: "Read verified 5-star guest reviews for Nirvana Luxe luxury vacation rentals in the Smoky Mountains and Lake Norman. See what real guests are saying.",
+  title: "5-Star Guest Reviews - Nirvana Luxe Rentals",
+  description: "100+ verified 5-star reviews for Nirvana Luxe cabins & lake homes. Real guests. Real experiences. See why families & groups come back.",
   pathname: "/review",
   keywords: [
     "guest reviews",

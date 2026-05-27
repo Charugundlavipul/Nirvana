@@ -6,8 +6,8 @@ import { buildFaqJsonLd, buildMetadata } from "../../../src/lib/seo";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "FAQ — Check-In, Amenities, Booking & House Rules",
-  description: "Find answers to common questions about booking, check-in times, cancellation policies, amenities, pet policies, and house rules for Nirvana Luxe vacation rentals.",
+  title: "FAQ - Booking, Check-In & Amenities | Nirvana",
+  description: "Got questions? Find answers about booking, cancellation, check-in, amenities, pets & more for your Nirvana Luxe luxury rental stay.",
   pathname: "/faq",
   keywords: [
     "vacation rental FAQ",

@@ -4,8 +4,8 @@ import { buildMetadata } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
-  title: "About Nirvana Luxe — Our Story & Hospitality",
-  description: "Learn about Nirvana Luxe, our curated luxury vacation rental collection in the Smoky Mountains and Lake Norman, and the hospitality behind every stay.",
+  title: "About Nirvana Luxe - Luxury Rental Hosts",
+  description: "Meet the team behind Nirvana Luxe - curating luxury vacation rentals in Smoky Mountains & Lake Norman since 2020. Personal service guaranteed.",
   pathname: "/about",
   keywords: [
     "about Nirvana Luxe",

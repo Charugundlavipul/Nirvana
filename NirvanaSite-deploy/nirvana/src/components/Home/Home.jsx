@@ -211,7 +211,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
           <div className="relative z-10 mx-auto max-w-4xl px-4 pb-6 pt-10 text-center sm:px-6 sm:pb-12 sm:pt-16 md:pb-16 md:pt-0">
-            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">The Nirvana Luxe Collection</p>
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-accent sm:mb-4 sm:text-sm sm:tracking-[0.3em]">THE NIRVANA LUXE COLLECTION</p>
             <h1 className="mb-3 text-3xl font-bold leading-[1.05] text-white drop-shadow-lg sm:text-5xl sm:leading-[1.1] md:mb-5 md:text-6xl md:leading-[1.15] lg:text-[4rem]">
               Nirvana Luxe <br /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
@@ -219,7 +219,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
             </p>
             <p className="mx-auto mt-2 max-w-2xl text-sm font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
-              Browse the official Nirvana Luxe collection of premium cabins, lakefront homes, and large-group vacation rentals.
+              Discover premium vacation homes and luxury vacation rentals — from Lake Norman lakefront retreats to cabins in Sevierville TN — designed for unforgettable family getaways, group retreats, and elevated short-term stays.
             </p>
           </div>
         </div>
@@ -237,10 +237,10 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">Handpicked Luxury</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 drop-shadow-sm">Nirvana Luxe Signature Retreats</h2>
+            <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">HANDPICKED LUXURY VACATION RENTALS</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 drop-shadow-sm">Nirvana Luxe Signature Vacation Rental Homes</h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto font-light">
-              Each Nirvana Luxe property is curated for high-end stays, direct booking, and memorable group travel.
+              Each Nirvana Luxe vacation rental home is curated for luxury — from lake cabin rentals and lakefront retreats to large group vacation homes across North Carolina and Tennessee.
             </p>
           </div>
 
@@ -420,23 +420,23 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/60"></div>
 
         <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.24em] text-accent sm:text-sm sm:tracking-[0.3em]">Ready to Experience Luxury?</p>
-          <h2 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">Your Dream Escape Awaits</h2>
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.24em] text-accent sm:text-sm sm:tracking-[0.3em]">READY TO BOOK LUXURY VACATION RENTALS?</p>
+          <h2 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">Your Dream Vacation Rental Awaits</h2>
           <p className="mb-10 text-lg font-light leading-relaxed text-gray-300 sm:text-xl">
-            Book your stay and create memories that last a lifetime
+            Book directly with Nirvana Luxe and enjoy luxury vacation rentals, lakefront vacation homes, premium cabins, and large group retreats — all designed for unforgettable escapes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => router.push("/book")}
               className="bg-accent hover:bg-accent/90 text-white font-bold py-4 px-12 text-lg shadow-2xl transition-all uppercase tracking-widest"
             >
-              Book Now
+              BOOK NOW
             </button>
             <button
               onClick={() => router.push("/properties")}
               className="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-4 px-12 text-lg transition-all uppercase tracking-widest"
             >
-              View Properties
+              VIEW PROPERTIES
             </button>
           </div>
         </div>

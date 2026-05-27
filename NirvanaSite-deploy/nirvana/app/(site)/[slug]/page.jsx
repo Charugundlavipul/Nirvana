@@ -22,6 +22,28 @@ export async function generateMetadata({ params }) {
     });
   }
 
+  // Per-property optimized SEO overrides
+  const propertyMeta = {
+    nirvana: {
+      title: "Nirvana Cabin - 4BR Luxury Smokies | 14 Guests",
+      description: "4BR luxury cabin near Pigeon Forge - private pool, hot tub & mountain views for 14 guests. Book direct & save vs. Airbnb. Check dates now.",
+    },
+    "shoreside-oasis": {
+      title: "Shoreside Oasis - 5BR Lake Norman | 12 Guests",
+      description: "5BR lakefront luxury home on Lake Norman, Mooresville NC - private dock, stunning views, 12 guests. Book direct for best rate. Reserve now.",
+    },
+    "halftime-hideaway": {
+      title: "Halftime Hideaway - 5BR Cabin | 22 Guests TN",
+      description: "22-guest luxury cabin in Sevierville TN - 5BR, 6 full baths, game room & mountain views. Ideal for large groups. Book direct & save.",
+    },
+    "grand-prix-getaway": {
+      title: "Grand Prix Getaway - 6BR Cabin | 26 Guests",
+      description: "26-guest luxury cabin in Sevierville TN - 6BR, 7 full baths, racing-themed décor & mountain views. Ultimate large-group escape. Book now.",
+    },
+  };
+
+  const override = propertyMeta[slug];
+
   const location = property.location || "Luxury Vacation Rental";
   const locationKeywords = location.toLowerCase().includes("sevierville")
     ? ["Sevierville TN cabin", "Smoky Mountains luxury cabin", "cabin rental near Dollywood", "Tennessee vacation home"]
@@ -30,8 +52,8 @@ export async function generateMetadata({ params }) {
     : ["luxury vacation rental", "premium vacation home"];
 
   return buildMetadata({
-    title: `${property.name} — ${location}`,
-    description: descriptionFromRichText(property.description, 160) || `Book ${property.name} in ${location}. Direct booking luxury vacation rental with Nirvana Luxe.`,
+    title: override?.title || `${property.name} — ${location}`,
+    description: override?.description || descriptionFromRichText(property.description, 160) || `Book ${property.name} in ${location}. Direct booking luxury vacation rental with Nirvana Luxe.`,
     pathname: `/${property.slug}`,
     images: [property.curated?.bg || property.curated?.home || "/logo512.png"],
     type: "article",

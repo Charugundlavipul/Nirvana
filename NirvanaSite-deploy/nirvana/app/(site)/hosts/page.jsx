@@ -4,9 +4,9 @@ import { buildMetadata } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
-  title: "Property Owners & Hosts — Acquisition & Management | Nirvana Luxe",
+  title: "List With Nirvana Luxe - Property Management",
   description:
-    "Partner with NirvanaLuxe for vacation rental property acquisition, market analysis, and end-to-end Airbnb property management in Sevierville, Tennessee and the Charlotte region.",
+    "Earn more from your vacation rental. Nirvana Luxe offers full-service STR management in Sevierville TN & Lake Norman NC. Get a free analysis.",
   pathname: "/hosts",
   keywords: [
     "vacation rental property management",

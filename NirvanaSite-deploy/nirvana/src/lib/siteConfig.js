@@ -1,7 +1,7 @@
 export const SITE_NAME = "Nirvana Luxe";
-export const SITE_TITLE = "Luxury Vacation Rentals in the Smokies and Lake Norman";
+export const SITE_TITLE = "Luxury Vacation Rentals";
 export const SITE_DESCRIPTION =
-  "Book luxury vacation rentals with Nirvana Luxe in Sevierville, Tennessee and Lake Norman, North Carolina.";
+  "Book luxury cabins & lakefront homes directly in Smoky Mountains, TN & Lake Norman, NC. Best rates, no platform fees. Check availability now.";
 export const SITE_KEYWORDS = [
   "vacation rentals",
   "luxury vacation rentals",

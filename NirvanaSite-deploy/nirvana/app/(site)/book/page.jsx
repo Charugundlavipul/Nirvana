@@ -5,8 +5,8 @@ import { buildMetadata } from "../../../src/lib/seo";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "Book Your Luxury Vacation Rental — Direct Booking",
-  description: "Book directly with Nirvana Luxe and save. Choose from luxury cabins in the Smoky Mountains and lakefront homes on Lake Norman. Best rate guaranteed.",
+  title: "Book Direct - Luxury Cabins & Lake Homes | Save",
+  description: "Skip Airbnb fees - book your Smoky Mountain cabin or Lake Norman home directly with Nirvana Luxe. Best rate guaranteed. Real-time availability.",
   pathname: "/book",
   keywords: [
     "book vacation rental",

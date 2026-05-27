@@ -7,8 +7,8 @@ import { absoluteUrl } from "../../../src/lib/siteConfig";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "Luxury Vacation Rental Properties — Smoky Mountains & Lake Norman",
-  description: "Browse the Nirvana Luxe collection of luxury vacation rentals in Sevierville, Tennessee, and Lake Norman, North Carolina. Direct booking available.",
+  title: "Luxury Rentals - Smokies & Lake Norman | Book",
+  description: "Browse 8 luxury cabins & lakefront homes in Sevierville TN & Lake Norman NC. Sleep up to 26 guests. Direct booking, best rate guaranteed.",
   pathname: "/properties",
   keywords: [
     "vacation rental properties",

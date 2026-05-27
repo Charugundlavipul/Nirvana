@@ -4,8 +4,8 @@ import { buildMetadata } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
-  title: "Contact Nirvana Luxe — Booking Inquiries & Support",
-  description: "Contact Nirvana Luxe for booking questions, property details, availability, group trip planning, and vacation rental support.",
+  title: "Contact Nirvana Luxe - Inquiries & Booking",
+  description: "Questions about booking, availability or group trips? Contact the Nirvana Luxe team - we typically respond within 1 hour. Reach us now.",
   pathname: "/contact",
   keywords: [
     "contact Nirvana Luxe",

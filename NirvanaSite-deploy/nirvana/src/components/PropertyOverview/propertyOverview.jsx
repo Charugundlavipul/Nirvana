@@ -224,13 +224,13 @@ const PropertyOverview = ({ initialProperties = [] }) => {
         <div className="relative z-10 mx-auto max-w-7xl">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5">
             <FaMapMarkerAlt className="text-accent text-xs" />
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Nirvana Luxe Collection</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">NIRVANA LUXE VACATION RENTALS</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
-            Discover Your Next Stay
+            Discover Your Next Luxury Vacation Rental
           </h1>
           <p className="mt-2 max-w-lg text-sm text-slate-500 sm:text-base">
-            Browse luxury cabins, lakefront homes, and large-group vacation rentals — all available for direct booking.
+            Browse handpicked luxury vacation rentals — from lakefront homes on Lake Norman to cabin rentals in Sevierville — all available for direct booking.
           </p>
         </div>
       </section>
