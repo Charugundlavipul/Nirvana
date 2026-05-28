@@ -19,7 +19,6 @@ export async function generateMetadata({ params }) {
     return buildMetadata({
       title: "Blog Post Not Found",
       pathname: `/blog/${slug}`,
-      noindex: true,
     });
   }
 
