@@ -18,7 +18,8 @@ import {
     FaArrowRight,
     FaBookOpen,
     FaClipboardList,
-    FaExclamationTriangle
+    FaExclamationTriangle,
+    FaPen
 } from "react-icons/fa";
 import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, parseApprovalObject } from "../../lib/adminApi";
 
@@ -420,6 +421,13 @@ const Dashboard = () => {
                         icon={FaEdit}
                         to="/admin/admins"
                         color="#0ea5e9"
+                    />
+                    <QuickAction
+                        title="Email Signatures"
+                        description="Copy team email signatures"
+                        icon={FaPen}
+                        to="/admin/signatures"
+                        color="#d4a843"
                     />
                 </div>
             </section>

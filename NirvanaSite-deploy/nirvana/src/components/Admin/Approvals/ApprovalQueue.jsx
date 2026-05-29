@@ -425,10 +425,111 @@ const AmenityPreviewTile = ({ label, data }) => {
   );
 };
 
+const BlogPreviewCard = ({ req }) => {
+  if (!req) return null;
+  const action = String(req.action || "").toLowerCase();
+  const payload = parseSnapshot(req.payload);
+  const before = parseSnapshot(req.before_snapshot);
+  const merged = { ...before, ...payload };
+  const source = action === "delete" ? before : merged;
+
+  const title = source.title || "Untitled";
+  const excerpt = source.excerpt || "";
+  const content = source.content || "";
+  const category = source.category || "";
+  const authorName = source.author_name || "";
+  const authorImage = source.author_image_url || "";
+  const coverImage = source.cover_image || "";
+  const isPublished = source.published;
+
+  const previewStyle = {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    background: "#f8fafc",
+    padding: "16px",
+    marginBottom: "12px",
+  };
+
+  return (
+    <div style={previewStyle}>
+      <div style={{ marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <strong style={{ fontSize: "12px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+          Blog
+        </strong>
+        <span style={{ fontSize: "13px", color: "#334155" }}>{title}</span>
+      </div>
+
+      {action === "delete" && (
+        <div style={{ marginBottom: "8px", fontSize: "12px", color: "#991b1b", fontWeight: 600 }}>
+          This request deletes the current article.
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
+        {coverImage && (
+          <img
+            src={coverImage}
+            alt="cover"
+            style={{ width: "140px", height: "90px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e2e8f0", flexShrink: 0 }}
+          />
+        )}
+        <div style={{ flex: 1, minWidth: "200px" }}>
+          <h4 style={{ margin: "0 0 6px", fontSize: "16px", color: "#0f172a", fontWeight: 700 }}>{title}</h4>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", marginBottom: "6px" }}>
+            {category && (
+              <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 10px", borderRadius: "999px", background: "#ede9fe", color: "#5b21b6" }}>
+                {category}
+              </span>
+            )}
+            {typeof isPublished === "boolean" && (
+              <span style={{
+                fontSize: "11px", fontWeight: 600, padding: "2px 10px", borderRadius: "999px",
+                background: isPublished ? "#d1fae5" : "#fef3c7",
+                color: isPublished ? "#065f46" : "#b45309"
+              }}>
+                {isPublished ? "Published" : "Draft"}
+              </span>
+            )}
+          </div>
+          {authorName && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#64748b" }}>
+              {authorImage && (
+                <img src={authorImage} alt="" style={{ width: "20px", height: "20px", borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" }} />
+              )}
+              <span>{authorName}</span>
+            </div>
+          )}
+          {source.slug && (
+            <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>/{source.slug}</div>
+          )}
+        </div>
+      </div>
+
+      {excerpt && (
+        <div style={{ marginTop: "12px", padding: "10px", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "#94a3b8" }}>Excerpt</strong>
+          <div style={{ marginTop: "4px", fontSize: "13px", color: "#334155", lineHeight: 1.5 }}>{excerpt}</div>
+        </div>
+      )}
+
+      {content && (
+        <div style={{ marginTop: "8px", padding: "10px", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", maxHeight: "200px", overflow: "auto" }}>
+          <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "#94a3b8" }}>Content Preview</strong>
+          <div
+            style={{ marginTop: "4px", fontSize: "13px", color: "#334155", lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RequestEntityPreviewCard = ({ req, onPreviewImage = null, propertyNamesById = {} }) => {
   if (!req) return null;
   const entityType = String(req.entity_type || "").toLowerCase();
   if (entityType === "property") return null;
+  if (entityType === "blog") return <BlogPreviewCard req={req} />;
 
   const action = String(req.action || "").toLowerCase();
   const payload = parseSnapshot(req.payload);

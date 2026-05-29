@@ -102,3 +102,37 @@
     cursor: not-allowed;
     transform: none;
 }
+
+.success {
+    background-color: #e6f9e6;
+    color: #1a7a1a;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    border: 1px solid #b2e0b2;
+}
+
+.toggleLink {
+    display: inline-block;
+    margin-top: 20px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+    padding: 0;
+}
+
+.toggleLink:hover {
+    color: #171717;
+}
+
+.divider {
+    height: 1px;
+    background: #eee;
+    margin: 4px 0;
+}

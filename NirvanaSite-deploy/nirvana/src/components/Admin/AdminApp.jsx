@@ -13,6 +13,7 @@ import AdminUsersManager from "./Users/AdminUsersManager";
 import SubscribersManager from "./Subscribers/SubscribersManager";
 import KnowledgeHubManager from "./Knowledge/KnowledgeHubManager";
 import BlogManager from "./Blogs/BlogManager";
+import AdminSignatures from "./Signatures/AdminSignatures";
 
 const AdminApp = () => {
   return (
@@ -29,6 +30,7 @@ const AdminApp = () => {
           <Route path="approvals" element={<ApprovalQueue />} />
           <Route path="subscribers" element={<SubscribersManager />} />
           <Route path="admins" element={<AdminUsersManager />} />
+          <Route path="signatures" element={<AdminSignatures />} />
         </Route>
       </Routes>
     </BrowserRouter>
