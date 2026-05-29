@@ -24,10 +24,12 @@ const genericHTML = `
                                 style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
                                 <tbody>
                                     <tr>
-                                        <td width="100" style="vertical-align: middle;"><span
-                                                style="margin-right: 20px; display: block;"><img
+                                        <td style="vertical-align: middle; padding-right: 12px;"><span
+                                                style="display: inline-flex; align-items: center; gap: 8px;"><img
                                                     src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
-                                                    role="presentation" width="80" style="max-width: 80px;" /></span></td>
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /><img
+                                                    src="/assets/nirvana_signature_logo.jpg"
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /></span></td>
                                         <td style="vertical-align: middle;">
                                             <h2
                                                 style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
@@ -114,8 +116,53 @@ const genericHTML = `
                                                                 style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.vkr-ventures.com</span></a>
                                                         </td>
                                                     </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0"
+                                                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td style="vertical-align: bottom;"><span
+                                                                                style="display: inline-block; background-color: rgb(247, 201, 99);"><img
+                                                                                    src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png"
+                                                                                    alt="nirvanaluxe" width="18"
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="https://www.nirvanaluxe.co"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                        </td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="padding-top: 10px; padding-bottom: 6px; text-align: left;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tbody>
+                                    <tr>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-dark-2x.png" alt="IG" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 28px;"><a
+                                                href="https://www.instagram.com/nirvanaluxevacations/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>@nirvanaluxevacations</span></a>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-dark-2x.png" alt="FB" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle;"><a
+                                                href="https://www.facebook.com/NirvanaLuxe/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>NirvanaLuxe</span></a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -132,16 +179,7 @@ const genericHTML = `
                                     received this email by mistake, please notify the sender immediately and do not
                                     disclose the
                                     contents to anyone or make copies thereof.</p>
-                                <br/>
-                                <p style="font-size: inherit; margin: 0px;">​ATTN: By law all Real Estate Agents/Brokers
-                                    are
-                                    required to provide each consumer with the Working With Real Estate Agents Brochure.
-                                    Please
-                                    click on the link below to view the publication.</p>
-                                <p style="font-size: inherit; margin: 0px;"><a
-                                        href="http://www.ncrec.gov/Brochures/Work"
-                                        style="color: #60BD68; text-decoration: underline;">http://www.ncrec.gov/Brochures/Work</a>
-                                </p>
+
                             </div>
                         </td>
                     </tr>
@@ -170,10 +208,12 @@ const supportHTML = `
                                 style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
                                 <tbody>
                                     <tr>
-                                        <td width="100" style="vertical-align: middle;"><span
-                                                style="margin-right: 20px; display: block;"><img
+                                        <td style="vertical-align: middle; padding-right: 12px;"><span
+                                                style="display: inline-flex; align-items: center; gap: 8px;"><img
                                                     src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
-                                                    role="presentation" width="80" style="max-width: 80px;" /></span></td>
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /><img
+                                                    src="/assets/nirvana_signature_logo.jpg"
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /></span></td>
                                         <td style="vertical-align: middle;">
                                             <h2
                                                 style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
@@ -181,8 +221,7 @@ const supportHTML = `
                                             </h2>
                                             <div
                                                 style="margin: 0px; font-weight: 500; color: rgb(0, 0, 0); font-size: 14px; line-height: 22px;">
-                                                <span>Customer Support</span><span>&nbsp;| </span><span>VKR Ventures
-                                                    LLC</span>
+                                                <span>VKR Ventures LLC</span>
                                             </div>
                                         </td>
                                         <td width="30" aria-label="Vertical Spacer">
@@ -261,8 +300,41 @@ const supportHTML = `
                                                                 style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.vkr-ventures.com</span></a>
                                                         </td>
                                                     </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;"><tbody><tr><td style="vertical-align: bottom;"><span style="display: inline-block; background-color: rgb(247, 201, 99);"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png" alt="nirvanaluxe" width="18" style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span></td></tr></tbody></table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="https://www.nirvanaluxe.co"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                        </td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="padding-top: 10px; padding-bottom: 6px; text-align: left;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tbody>
+                                    <tr>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-dark-2x.png" alt="IG" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 28px;"><a
+                                                href="https://www.instagram.com/nirvanaluxevacations/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>@nirvanaluxevacations</span></a>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-dark-2x.png" alt="FB" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle;"><a
+                                                href="https://www.facebook.com/NirvanaLuxe/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>NirvanaLuxe</span></a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -279,16 +351,7 @@ const supportHTML = `
                                     received this email by mistake, please notify the sender immediately and do not
                                     disclose the
                                     contents to anyone or make copies thereof.</p>
-                                <br/>
-                                <p style="font-size: inherit; margin: 0px;">​ATTN: By law all Real Estate Agents/Brokers
-                                    are
-                                    required to provide each consumer with the Working With Real Estate Agents Brochure.
-                                    Please
-                                    click on the link below to view the publication.</p>
-                                <p style="font-size: inherit; margin: 0px;"><a
-                                        href="http://www.ncrec.gov/Brochures/Work"
-                                        style="color: #60BD68; text-decoration: underline;">http://www.ncrec.gov/Brochures/Work</a>
-                                </p>
+
                             </div>
                         </td>
                     </tr>
@@ -317,10 +380,12 @@ const reservationsHTML = `
                                 style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
                                 <tbody>
                                     <tr>
-                                        <td width="100" style="vertical-align: middle;"><span
-                                                style="margin-right: 20px; display: block;"><img
+                                        <td style="vertical-align: middle; padding-right: 12px;"><span
+                                                style="display: inline-flex; align-items: center; gap: 8px;"><img
                                                     src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
-                                                    role="presentation" width="80" style="max-width: 80px;" /></span></td>
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /><img
+                                                    src="/assets/nirvana_signature_logo.jpg"
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /></span></td>
                                         <td style="vertical-align: middle;">
                                             <h2
                                                 style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
@@ -328,8 +393,7 @@ const reservationsHTML = `
                                             </h2>
                                             <div
                                                 style="margin: 0px; font-weight: 500; color: rgb(0, 0, 0); font-size: 14px; line-height: 22px;">
-                                                <span>Reservations</span><span>&nbsp;| </span><span>VKR Ventures
-                                                    LLC</span>
+                                                <span>VKR Ventures LLC</span>
                                             </div>
                                         </td>
                                         <td width="30" aria-label="Vertical Spacer">
@@ -408,8 +472,41 @@ const reservationsHTML = `
                                                                 style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.vkr-ventures.com</span></a>
                                                         </td>
                                                     </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;"><tbody><tr><td style="vertical-align: bottom;"><span style="display: inline-block; background-color: rgb(247, 201, 99);"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png" alt="nirvanaluxe" width="18" style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span></td></tr></tbody></table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="https://www.nirvanaluxe.co"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                        </td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="padding-top: 10px; padding-bottom: 6px; text-align: left;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tbody>
+                                    <tr>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-dark-2x.png" alt="IG" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 28px;"><a
+                                                href="https://www.instagram.com/nirvanaluxevacations/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>@nirvanaluxevacations</span></a>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-dark-2x.png" alt="FB" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle;"><a
+                                                href="https://www.facebook.com/NirvanaLuxe/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>NirvanaLuxe</span></a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -426,16 +523,7 @@ const reservationsHTML = `
                                     received this email by mistake, please notify the sender immediately and do not
                                     disclose the
                                     contents to anyone or make copies thereof.</p>
-                                <br/>
-                                <p style="font-size: inherit; margin: 0px;">​ATTN: By law all Real Estate Agents/Brokers
-                                    are
-                                    required to provide each consumer with the Working With Real Estate Agents Brochure.
-                                    Please
-                                    click on the link below to view the publication.</p>
-                                <p style="font-size: inherit; margin: 0px;"><a
-                                        href="http://www.ncrec.gov/Brochures/Work"
-                                        style="color: #60BD68; text-decoration: underline;">http://www.ncrec.gov/Brochures/Work</a>
-                                </p>
+
                             </div>
                         </td>
                     </tr>
