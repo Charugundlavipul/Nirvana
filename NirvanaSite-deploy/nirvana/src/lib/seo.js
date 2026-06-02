@@ -151,12 +151,37 @@ export function buildReviewCollectionJsonLd({ name, pathname, reviews = [] }) {
     validReviews.length
   ).toFixed(1);
 
+  const isProperty = pathname.startsWith("/review/") && pathname !== "/review";
+
+  if (isProperty) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "VacationRental",
+      "name": name.replace(" Reviews", ""),
+      "url": absoluteUrl(pathname),
+      "image": absoluteUrl("/logo512.png"),
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        ratingValue,
+        reviewCount: validReviews.length,
+        bestRating: "5",
+        worstRating: "1",
+      },
+    };
+  }
+
   return {
     "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name,
-    url: absoluteUrl(pathname),
-    aggregateRating: {
+    "@type": "Product",
+    "name": "Nirvana Luxe Vacation Rentals",
+    "description": "Verified guest reviews and ratings for Nirvana Luxe luxury vacation rentals.",
+    "image": absoluteUrl("/logo512.png"),
+    "url": absoluteUrl(pathname),
+    "brand": {
+      "@type": "Brand",
+      "name": "Nirvana Luxe",
+    },
+    "aggregateRating": {
       "@type": "AggregateRating",
       ratingValue,
       reviewCount: validReviews.length,
