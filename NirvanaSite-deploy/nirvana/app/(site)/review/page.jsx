@@ -1,7 +1,8 @@
 import ReviewsPage from "../../../src/components/Review/ReviewPage";
 import StructuredData from "../../../src/components/StructuredData";
 import { getPropertyCards, getReviews } from "../../../src/lib/serverContentApi";
-import { buildMetadata, buildReviewCollectionJsonLd } from "../../../src/lib/seo";
+import { buildMetadata, buildReviewCollectionJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 1800;
 
@@ -24,6 +25,17 @@ export const metadata = buildMetadata({
 export default async function ReviewPage() {
   const [properties, reviews] = await Promise.all([getPropertyCards(), getReviews()]);
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Reviews", url: absoluteUrl("/review") },
+  ]);
+
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: "Guest Reviews - Nirvana Luxe",
+    pathname: "/review",
+    description: "Verified 5-star guest reviews for Nirvana Luxe luxury vacation rentals. Real guests, real experiences.",
+  });
+
   return (
     <>
       <StructuredData
@@ -33,6 +45,8 @@ export default async function ReviewPage() {
           reviews,
         })}
       />
+      <StructuredData data={breadcrumbJsonLd} />
+      <StructuredData data={webPageJsonLd} />
       <ReviewsPage initialProperties={properties} initialReviews={reviews} />
     </>
   );

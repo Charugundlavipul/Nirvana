@@ -1,6 +1,6 @@
 import HostsPage from "../../../src/components/Hosts/HostsPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata } from "../../../src/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
@@ -31,6 +31,11 @@ export default function HostsPage_Route() {
     url: absoluteUrl("/hosts"),
     description:
       "Partner with NirvanaLuxe for vacation rental property acquisition, market analysis, and full-service Airbnb property management.",
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
+    },
     mainEntity: {
       "@type": "Organization",
       name: SITE_NAME,
@@ -40,9 +45,15 @@ export default function HostsPage_Route() {
     },
   };
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Hosts", url: absoluteUrl("/hosts") },
+  ]);
+
   return (
     <>
       <StructuredData data={jsonLd} />
+      <StructuredData data={breadcrumbJsonLd} />
       <HostsPage />
     </>
   );

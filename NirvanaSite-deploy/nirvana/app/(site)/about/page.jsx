@@ -1,6 +1,6 @@
 import AboutUs from "../../../src/components/AboutUs/AboutUs";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata } from "../../../src/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
@@ -30,9 +30,23 @@ export default function AboutPage() {
     sameAs: SOCIAL_LINKS,
   };
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "About Us", url: absoluteUrl("/about") },
+  ]);
+
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: "About Nirvana Luxe",
+    pathname: "/about",
+    description: "Meet the team behind Nirvana Luxe - curating luxury vacation rentals in Smoky Mountains & Lake Norman.",
+    type: "AboutPage",
+  });
+
   return (
     <>
       <StructuredData data={jsonLd} />
+      <StructuredData data={breadcrumbJsonLd} />
+      <StructuredData data={webPageJsonLd} />
       <AboutUs />
     </>
   );

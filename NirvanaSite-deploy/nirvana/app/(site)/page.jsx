@@ -1,7 +1,12 @@
 import Home from "../../src/components/Home/Home";
 import StructuredData from "../../src/components/StructuredData";
 import { getProperties, getReviews } from "../../src/lib/serverContentApi";
-import { buildMetadata } from "../../src/lib/seo";
+import {
+  buildMetadata,
+  buildBreadcrumbJsonLd,
+  buildOrganizationJsonLd,
+  buildSiteNavigationJsonLd,
+} from "../../src/lib/seo";
 import { SITE_NAME, SITE_TITLE, absoluteUrl } from "../../src/lib/siteConfig";
 
 export const revalidate = 1800;
@@ -40,27 +45,25 @@ export const metadata = {
 export default async function HomePage() {
   const [properties, reviews] = await Promise.all([getProperties(), getReviews()]);
 
+  // Enhanced WebSite schema with SearchAction — helps trigger sitelinks search box
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
     alternateName: ["NirvanaLuxe", "Nirvana Luxe Vacation Rentals"],
     url: absoluteUrl("/"),
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl("/properties")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: SITE_NAME,
-    alternateName: ["NirvanaLuxe", "Nirvana Luxe Vacation Rentals"],
-    url: absoluteUrl("/"),
-    logo: absoluteUrl("/logo512.png"),
-    sameAs: [
-      "https://www.instagram.com/nirvanaluxevacations/",
-      "https://www.facebook.com/NirvanaLuxe",
-      "https://www.youtube.com/@nirvanaaluxe",
-    ],
-  };
+  // Enhanced Organization with contact info, areas served, and aggregate rating
+  const organizationJsonLd = buildOrganizationJsonLd(reviews);
 
   const webpageJsonLd = {
     "@context": "https://schema.org",
@@ -92,13 +95,24 @@ export default async function HomePage() {
     })),
   };
 
+  // SiteNavigationElement — strongly encourages Google to show sitelink buttons
+  const siteNavJsonLd = buildSiteNavigationJsonLd();
+
+  // Breadcrumbs for homepage
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+  ]);
+
   return (
     <>
       <StructuredData data={organizationJsonLd} />
       <StructuredData data={websiteJsonLd} />
       <StructuredData data={webpageJsonLd} />
       <StructuredData data={propertyListJsonLd} />
+      <StructuredData data={siteNavJsonLd} />
+      <StructuredData data={breadcrumbJsonLd} />
       <Home initialProperties={properties} initialReviews={reviews} />
     </>
   );
 }
+

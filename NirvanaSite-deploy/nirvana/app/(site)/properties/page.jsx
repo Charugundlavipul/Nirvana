@@ -1,7 +1,7 @@
 import PropertyOverview from "../../../src/components/PropertyOverview/propertyOverview";
 import StructuredData from "../../../src/components/StructuredData";
 import { getPropertyCards } from "../../../src/lib/serverContentApi";
-import { buildMetadata } from "../../../src/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 1800;
@@ -42,10 +42,24 @@ export default async function PropertiesPage() {
     },
   };
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Properties", url: absoluteUrl("/properties") },
+  ]);
+
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: "Luxury Vacation Rental Properties",
+    pathname: "/properties",
+    description: "Browse luxury cabins & lakefront homes in Sevierville TN & Lake Norman NC. Direct booking, best rate guaranteed.",
+  });
+
   return (
     <>
       <StructuredData data={jsonLd} />
+      <StructuredData data={breadcrumbJsonLd} />
+      <StructuredData data={webPageJsonLd} />
       <PropertyOverview initialProperties={properties} />
     </>
   );
 }
+

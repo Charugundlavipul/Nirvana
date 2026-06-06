@@ -1,6 +1,6 @@
 import ContactUs from "../../../src/components/Contact/ContactUs";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata } from "../../../src/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const metadata = buildMetadata({
@@ -33,9 +33,23 @@ export default function ContactPage() {
     },
   };
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Contact", url: absoluteUrl("/contact") },
+  ]);
+
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: "Contact Nirvana Luxe",
+    pathname: "/contact",
+    description: "Contact the Nirvana Luxe team for booking inquiries, availability, and group trip planning.",
+    type: "ContactPage",
+  });
+
   return (
     <>
       <StructuredData data={jsonLd} />
+      <StructuredData data={breadcrumbJsonLd} />
+      <StructuredData data={webPageJsonLd} />
       <ContactUs />
     </>
   );

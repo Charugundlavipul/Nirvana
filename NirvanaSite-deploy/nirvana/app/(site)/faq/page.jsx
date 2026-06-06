@@ -1,7 +1,8 @@
 import FAQ from "../../../src/components/FAQ/FAQ";
 import StructuredData from "../../../src/components/StructuredData";
 import { getFaqsBySlug, getPropertyCards } from "../../../src/lib/serverContentApi";
-import { buildFaqJsonLd, buildMetadata } from "../../../src/lib/seo";
+import { buildFaqJsonLd, buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 1800;
 
@@ -27,9 +28,22 @@ export default async function FaqPage() {
   const selectedSlug = properties[0]?.slug || null;
   const faqs = selectedSlug ? await getFaqsBySlug(selectedSlug) : [];
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "FAQ", url: absoluteUrl("/faq") },
+  ]);
+
+  const webPageJsonLd = buildWebPageJsonLd({
+    name: "Frequently Asked Questions - Nirvana Luxe",
+    pathname: "/faq",
+    description: "Answers about booking, check-in, amenities, pets & cancellation for Nirvana Luxe luxury vacation rentals.",
+  });
+
   return (
     <>
       <StructuredData data={buildFaqJsonLd(faqs)} />
+      <StructuredData data={breadcrumbJsonLd} />
+      <StructuredData data={webPageJsonLd} />
       <FAQ initialProperties={properties} initialSlug={selectedSlug} initialFaqs={faqs} />
     </>
   );
