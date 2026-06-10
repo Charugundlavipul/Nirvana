@@ -100,8 +100,12 @@ export default async function HomePage() {
 
   // Breadcrumbs for homepage
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: "Home", url: absoluteUrl("/") },
+    { name: "Properties", url: absoluteUrl("/properties") },
+    { name: "About", url: absoluteUrl("/about") },
+    { name: "Reviews", url: absoluteUrl("/review") },
+    { name: "Book Now", url: absoluteUrl("/book") },
   ]);
+
 
   return (
     <>
