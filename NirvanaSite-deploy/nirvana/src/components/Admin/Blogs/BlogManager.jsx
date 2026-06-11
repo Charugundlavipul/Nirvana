@@ -211,7 +211,8 @@ const BlogManager = () => {
             else fetchBlogs();
         } else {
             const publishedBlog = blogs.find((blog) => blog.id === id && !blog.is_draft_request) || {};
-            const payload = { published: !currentStatus };
+            const { row_id, is_draft_request, draft_request_id, draft_action, draft_status, draft_comment, base_snapshot, ...cleanBlog } = publishedBlog;
+            const payload = { ...cleanBlog, published: !currentStatus };
             await submitOrUpdateApproval({
                 entityType: 'blog',
                 action: 'update',
