@@ -22,7 +22,12 @@ async function getGoogleAccessToken() {
   _lastAuthError = null;
   if (!_authClient) {
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const key = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "").replace(/\\n/g, "\n");
+    let key = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "");
+
+    // Remove surrounding quotes if present (Vercel sometimes keeps them)
+    key = key.replace(/^["']|["']$/g, "");
+    // Replace literal \n strings with actual newlines
+    key = key.replace(/\\n/g, "\n");
 
     if (!email || !key) { _lastAuthError = "Missing email or key env var"; return null; }
 
