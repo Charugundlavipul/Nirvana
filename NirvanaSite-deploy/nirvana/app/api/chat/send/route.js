@@ -53,10 +53,11 @@ async function getGoogleAccessToken() {
  * Send a message to a Google Chat space, creating a thread per conversation.
  * Uses the conversation ID as the threadKey so follow-ups go to the same thread.
  */
-async function sendToGoogleChat(accessToken, spaceId, { threadKey, guestName, message, isNewConversation }) {
+async function sendToGoogleChat(accessToken, spaceId, { threadKey, guestName, guestEmail, message, isNewConversation }) {
+  const emailText = guestEmail ? ` (${guestEmail})` : "";
   const body = {
     text: isNewConversation
-      ? `🟢 *New chat from ${guestName}*\n\n${message}`
+      ? `🟢 *New chat from ${guestName}${emailText}*\n\n${message}`
       : `💬 *${guestName}*: ${message}`,
     thread: { threadKey },
   };
@@ -173,6 +174,7 @@ export async function POST(request) {
           const threadName = await sendToGoogleChat(accessToken, spaceId, {
             threadKey: convId, // Use conversation ID as thread key
             guestName: guestName || "Guest",
+            guestEmail,
             message: message.trim(),
             isNewConversation,
           });
