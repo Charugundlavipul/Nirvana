@@ -14,31 +14,34 @@ function getSupabaseAdmin() {
  * POST /api/chat/google-webhook
  *
  * Receives webhook payloads from Google Chat when a team member replies.
- * Verifies the event and routes the reply to the corresponding guest conversation
- * via Supabase Realtime.
  */
 export async function POST(request) {
   try {
     const payload = await request.json();
 
-    // Google Chat expects a synchronous response. For messages, we can return text if we want,
-    // but typically we just acknowledge.
+    console.log("[GChat Webhook] Received event type:", payload.type);
+    console.log("[GChat Webhook] Full payload:", JSON.stringify(payload, null, 2));
+
     if (payload.type === "ADDED_TO_SPACE") {
       return NextResponse.json({ text: "Hello! I am the NirvanaLuxe Chat bridge. I will forward website guest inquiries here." });
     }
 
     if (payload.type === "MESSAGE") {
       const messageText = payload.message?.text || "";
-      const threadName = payload.message?.thread?.name || ""; // e.g. spaces/XXX/threads/YYY
+      const threadName = payload.message?.thread?.name || "";
       const senderType = payload.message?.sender?.type || "HUMAN";
       const messageId = payload.message?.name || "";
 
-      // Ignore messages from bots (to prevent infinite loops if the bot sends a message)
+      console.log("[GChat Webhook] MESSAGE details:", { messageText, threadName, senderType, messageId });
+
+      // Ignore messages from bots (to prevent infinite loops)
       if (senderType === "BOT") {
+        console.log("[GChat Webhook] Ignoring BOT message");
         return NextResponse.json({});
       }
 
       if (!messageText.trim() || !threadName) {
+        console.log("[GChat Webhook] Empty text or no thread, skipping");
         return NextResponse.json({});
       }
 
@@ -49,37 +52,39 @@ export async function POST(request) {
         const { data: existing } = await supabase
           .from("chat_messages")
           .select("id")
-          .eq("hospitable_message_id", messageId) // Reusing this column for external message IDs
+          .eq("hospitable_message_id", messageId)
           .maybeSingle();
 
         if (existing) {
+          console.log("[GChat Webhook] Duplicate message, skipping:", messageId);
           return NextResponse.json({});
         }
       }
 
       // ── Find the conversation linked to this Google Chat thread ──────────
-      // We stored the threadName in the hospitable_inquiry_id column
-      const { data: conv } = await supabase
+      const { data: conv, error: convErr } = await supabase
         .from("chat_conversations")
-        .select("id")
+        .select("id, hospitable_inquiry_id")
         .eq("hospitable_inquiry_id", threadName)
         .eq("status", "open")
         .single();
 
+      console.log("[GChat Webhook] Conversation lookup:", { threadName, conv, convErr: convErr?.message });
+
       if (!conv) {
-        console.warn(`Google Chat Webhook: No open conversation found for thread ${threadName}`);
-        // Optional: you could return a message back to the Google Chat thread telling the team
-        // that the conversation is closed or not found.
+        console.warn(`[GChat Webhook] No open conversation found for thread ${threadName}`);
         return NextResponse.json({});
       }
 
       // ── Insert host reply into the guest conversation ──────────────────
-      await supabase.from("chat_messages").insert({
+      const { error: insertErr } = await supabase.from("chat_messages").insert({
         conversation_id: conv.id,
         sender_type: "host",
         body: messageText.trim(),
         hospitable_message_id: messageId || null,
       });
+
+      console.log("[GChat Webhook] Insert result:", { success: !insertErr, error: insertErr?.message });
 
       // Update the last message timestamp
       await supabase
@@ -87,13 +92,13 @@ export async function POST(request) {
         .update({ last_message_at: new Date().toISOString() })
         .eq("id", conv.id);
 
-      // We just return empty JSON to acknowledge the event without posting a reply back to GC.
+      console.log("[GChat Webhook] Reply saved successfully for conversation:", conv.id);
       return NextResponse.json({});
     }
 
     return NextResponse.json({});
   } catch (err) {
-    console.error("Google Chat webhook error:", err);
+    console.error("[GChat Webhook] Error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Webhook error" },
       { status: 500 }
