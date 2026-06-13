@@ -152,9 +152,13 @@ export async function POST(request) {
 
     // ── Forward to Google Chat ───────────────────────────────────────────
     const spaceId = (process.env.GOOGLE_CHAT_SPACE_ID || "").trim();
+    let gchatDebug = { spaceId: spaceId || "(empty)", hasEmail: !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL, hasKey: !!(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "").trim() };
+
     if (spaceId) {
       try {
         const accessToken = await getGoogleAccessToken();
+        gchatDebug.gotToken = !!accessToken;
+
         if (accessToken) {
           const threadName = await sendToGoogleChat(accessToken, spaceId, {
             threadKey: convId, // Use conversation ID as thread key
@@ -162,6 +166,9 @@ export async function POST(request) {
             message: message.trim(),
             isNewConversation,
           });
+
+          gchatDebug.threadName = threadName;
+          gchatDebug.success = true;
 
           // Store the Google Chat thread name for routing replies back
           if (threadName && isNewConversation) {
@@ -172,12 +179,12 @@ export async function POST(request) {
           }
         }
       } catch (gcErr) {
-        // Non-fatal — the message is already saved locally
+        gchatDebug.error = gcErr.message;
         console.warn("Google Chat forwarding failed:", gcErr.message);
       }
     }
 
-    return NextResponse.json({ conversationId: convId, ok: true });
+    return NextResponse.json({ conversationId: convId, ok: true, gchatDebug });
   } catch (err) {
     console.error("Chat send error:", err);
     return NextResponse.json(
