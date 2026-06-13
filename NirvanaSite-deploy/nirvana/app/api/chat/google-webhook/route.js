@@ -13,88 +13,107 @@ function getSupabaseAdmin() {
 /**
  * POST /api/chat/google-webhook
  *
- * Receives webhook payloads from Google Chat when a team member replies.
+ * Receives webhook payloads from Google Chat (Workspace Add-on format).
+ * The payload structure nests data under payload.chat.messagePayload.
  */
 export async function POST(request) {
   try {
     const payload = await request.json();
 
-    console.log("[GChat Webhook] Received event type:", payload.type);
-    console.log("[GChat Webhook] Full payload:", JSON.stringify(payload, null, 2));
+    // ── Handle both payload formats ─────────────────────────────────────
+    // Google Workspace Add-on format: payload.chat.messagePayload.message
+    // Legacy Chat API format: payload.message (with payload.type)
+    const chatPayload = payload.chat?.messagePayload;
+    const message = chatPayload?.message || payload.message;
+    const eventType = payload.type || (chatPayload ? "MESSAGE" : null);
 
-    if (payload.type === "ADDED_TO_SPACE") {
+    // Handle ADDED_TO_SPACE
+    if (eventType === "ADDED_TO_SPACE") {
       return NextResponse.json({ text: "Hello! I am the NirvanaLuxe Chat bridge. I will forward website guest inquiries here." });
     }
 
-    if (payload.type === "MESSAGE") {
-      const messageText = payload.message?.text || "";
-      const threadName = payload.message?.thread?.name || "";
-      const senderType = payload.message?.sender?.type || "HUMAN";
-      const messageId = payload.message?.name || "";
+    if (!message) {
+      return NextResponse.json({});
+    }
 
-      console.log("[GChat Webhook] MESSAGE details:", { messageText, threadName, senderType, messageId });
+    const messageText = message.argumentText?.trim() || message.text || "";
+    const threadKey = message.thread?.threadKey || "";
+    const threadName = message.thread?.name || "";
+    const senderType = message.sender?.type || payload.chat?.user?.type || "HUMAN";
+    const messageId = message.name || "";
 
-      // Ignore messages from bots (to prevent infinite loops)
-      if (senderType === "BOT") {
-        console.log("[GChat Webhook] Ignoring BOT message");
+    // Ignore messages from bots (to prevent infinite loops)
+    if (senderType === "BOT") {
+      return NextResponse.json({});
+    }
+
+    if (!messageText.trim()) {
+      return NextResponse.json({});
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    // ── Deduplicate ──────────────────────────────────────────────────────
+    if (messageId) {
+      const { data: existing } = await supabase
+        .from("chat_messages")
+        .select("id")
+        .eq("hospitable_message_id", messageId)
+        .maybeSingle();
+
+      if (existing) {
         return NextResponse.json({});
       }
+    }
 
-      if (!messageText.trim() || !threadName) {
-        console.log("[GChat Webhook] Empty text or no thread, skipping");
-        return NextResponse.json({});
-      }
+    // ── Find the conversation ────────────────────────────────────────────
+    // Try threadKey first (this is the conversation UUID we set when sending)
+    // Fall back to threadName stored in hospitable_inquiry_id
+    let conv = null;
 
-      const supabase = getSupabaseAdmin();
-
-      // ── Deduplicate ──────────────────────────────────────────────────────
-      if (messageId) {
-        const { data: existing } = await supabase
-          .from("chat_messages")
-          .select("id")
-          .eq("hospitable_message_id", messageId)
-          .maybeSingle();
-
-        if (existing) {
-          console.log("[GChat Webhook] Duplicate message, skipping:", messageId);
-          return NextResponse.json({});
-        }
-      }
-
-      // ── Find the conversation linked to this Google Chat thread ──────────
-      const { data: conv, error: convErr } = await supabase
+    if (threadKey) {
+      const { data } = await supabase
         .from("chat_conversations")
-        .select("id, hospitable_inquiry_id")
+        .select("id")
+        .eq("id", threadKey)
+        .eq("status", "open")
+        .single();
+      conv = data;
+    }
+
+    if (!conv && threadName) {
+      const { data } = await supabase
+        .from("chat_conversations")
+        .select("id")
         .eq("hospitable_inquiry_id", threadName)
         .eq("status", "open")
         .single();
+      conv = data;
+    }
 
-      console.log("[GChat Webhook] Conversation lookup:", { threadName, conv, convErr: convErr?.message });
-
-      if (!conv) {
-        console.warn(`[GChat Webhook] No open conversation found for thread ${threadName}`);
-        return NextResponse.json({});
-      }
-
-      // ── Insert host reply into the guest conversation ──────────────────
-      const { error: insertErr } = await supabase.from("chat_messages").insert({
-        conversation_id: conv.id,
-        sender_type: "host",
-        body: messageText.trim(),
-        hospitable_message_id: messageId || null,
-      });
-
-      console.log("[GChat Webhook] Insert result:", { success: !insertErr, error: insertErr?.message });
-
-      // Update the last message timestamp
-      await supabase
-        .from("chat_conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", conv.id);
-
-      console.log("[GChat Webhook] Reply saved successfully for conversation:", conv.id);
+    if (!conv) {
+      console.warn("[GChat Webhook] No conversation found for threadKey:", threadKey, "threadName:", threadName);
       return NextResponse.json({});
     }
+
+    // ── Insert host reply into the guest conversation ──────────────────
+    const { error: insertErr } = await supabase.from("chat_messages").insert({
+      conversation_id: conv.id,
+      sender_type: "host",
+      body: messageText.trim(),
+      hospitable_message_id: messageId || null,
+    });
+
+    if (insertErr) {
+      console.error("[GChat Webhook] Insert failed:", insertErr.message);
+      return NextResponse.json({});
+    }
+
+    // Update the last message timestamp
+    await supabase
+      .from("chat_conversations")
+      .update({ last_message_at: new Date().toISOString() })
+      .eq("id", conv.id);
 
     return NextResponse.json({});
   } catch (err) {
