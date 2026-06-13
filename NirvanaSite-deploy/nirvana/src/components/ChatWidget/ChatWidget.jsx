@@ -165,19 +165,10 @@ export default function ChatWidget() {
     setTimeout(() => inputRef.current?.focus(), 300);
   };
 
-  // ── Send message ───────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || sending) return;
 
-    // Optimistic update
-    const optimisticMsg = {
-      id: `temp-${Date.now()}`,
-      sender_type: 'guest',
-      body: text,
-      created_at: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, optimisticMsg]);
     setInput('');
     setSending(true);
 
@@ -205,8 +196,6 @@ export default function ChatWidget() {
       }
     } catch (err) {
       console.error('Send failed:', err);
-      // Remove the optimistic message on failure
-      setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       setInput(text); // Restore the text
     } finally {
       setSending(false);
