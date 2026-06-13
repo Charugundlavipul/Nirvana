@@ -8,7 +8,7 @@ export default function SiteLayout({ children }) {
       <Navbar />
       <main className="main-content">{children}</main>
       <Footer />
-      {/* <ChatWidget /> */}
+      <ChatWidget />
     </>
   );
 }
