@@ -17,12 +17,14 @@ function getSupabaseAdmin() {
  * Get a Google Chat API access token using service account credentials.
  */
 let _authClient = null;
+let _lastAuthError = null;
 async function getGoogleAccessToken() {
+  _lastAuthError = null;
   if (!_authClient) {
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const key = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "").replace(/\\n/g, "\n");
 
-    if (!email || !key) return null;
+    if (!email || !key) { _lastAuthError = "Missing email or key env var"; return null; }
 
     _authClient = new GoogleAuth({
       credentials: { client_email: email, private_key: key },
@@ -35,6 +37,8 @@ async function getGoogleAccessToken() {
     const tokenRes = await client.getAccessToken();
     return tokenRes?.token || null;
   } catch (err) {
+    _lastAuthError = err.message;
+    _authClient = null; // Reset so next attempt re-creates
     console.error("Google auth failed:", err.message);
     return null;
   }
@@ -158,6 +162,7 @@ export async function POST(request) {
       try {
         const accessToken = await getGoogleAccessToken();
         gchatDebug.gotToken = !!accessToken;
+        gchatDebug.authError = _lastAuthError;
 
         if (accessToken) {
           const threadName = await sendToGoogleChat(accessToken, spaceId, {
@@ -184,7 +189,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ conversationId: convId, ok: true, gchatDebug });
+    return NextResponse.json({ conversationId: convId, ok: true, gchatOk: !!gchatDebug.success, gchatDebug });
   } catch (err) {
     console.error("Chat send error:", err);
     return NextResponse.json(

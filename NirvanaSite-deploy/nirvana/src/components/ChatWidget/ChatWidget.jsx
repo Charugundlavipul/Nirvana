@@ -194,8 +194,32 @@ export default function ChatWidget() {
       if (data.conversationId && !conversationId) {
         setConversationId(data.conversationId);
       }
+
+      // Show error if message didn't reach Google Chat
+      if (data.ok && !data.gchatOk) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `err-${Date.now()}`,
+            sender_type: 'system',
+            body: '⚠️ Something went wrong — your message may not have reached our team. Please try again or start a new conversation.',
+            created_at: new Date().toISOString(),
+            isError: true,
+          },
+        ]);
+      }
     } catch (err) {
       console.error('Send failed:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender_type: 'system',
+          body: '⚠️ Failed to send message. Please check your connection and try again.',
+          created_at: new Date().toISOString(),
+          isError: true,
+        },
+      ]);
       setInput(text); // Restore the text
     } finally {
       setSending(false);
@@ -230,7 +254,18 @@ export default function ChatWidget() {
   };
 
   // ── New chat ───────────────────────────────────────────────────────
-  const handleNewChat = () => {
+  const handleNewChat = async () => {
+    // Close the old conversation in the database
+    if (conversationId) {
+      try {
+        await fetch('/api/chat/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId }),
+        });
+      } catch { /* non-fatal */ }
+    }
+
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch { /* */ }
@@ -344,7 +379,7 @@ export default function ChatWidget() {
                   {messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`nlchat-msg nlchat-msg--${msg.sender_type}`}
+                      className={`nlchat-msg nlchat-msg--${msg.isError ? 'error' : msg.sender_type}`}
                     >
                       {msg.sender_type === 'host' && (
                         <div className="nlchat-msg-avatar">
