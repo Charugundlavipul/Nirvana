@@ -175,7 +175,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
   };
 
   const handleDateClick = (dateStr) => {
-      const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
+      const isPast = new Date(dateStr + "T00:00:00") < new Date(new Date().setHours(0,0,0,0));
       if (isPast) return;
 
       const status = calendarData[dateStr];
@@ -271,7 +271,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
               const isToday = dateStr === todayDateStr;
               let status = calendarData[dateStr] || 'available';
               
-              const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
+              const isPast = new Date(dateStr + "T00:00:00") < new Date(new Date().setHours(0,0,0,0));
               if (isPast && status === 'available') {
                 status = 'past';
               }
