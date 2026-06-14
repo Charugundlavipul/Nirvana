@@ -12,7 +12,7 @@ export const metadata = buildMetadata({
     "Smoky Mountains travel guide",
     "Lake Norman vacation tips",
     "Sevierville Tennessee travel",
-    "NirvanaLuxe journal",
+    "Nirvana Luxe journal",
     "cabin rental guide",
     "vacation planning",
     "luxury getaway ideas",

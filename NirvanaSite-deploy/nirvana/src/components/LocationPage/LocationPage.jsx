@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaChevronRight } from 'react-icons/fa';
+import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
 
 // SEO Template for Location-Based Landing Pages
 // Aimed to rank for: "[Location] luxury vacation rentals", "Cabins in [Location]"
@@ -16,7 +17,7 @@ const LocationPage = () => {
     
     // Dynamic SEO update for Client-Side Rendering
     useEffect(() => {
-        document.title = `Luxury Cabins & Vacation Rentals in ${locationName} | NirvanaLuxe`;
+        document.title = `Luxury Cabins & Vacation Rentals in ${locationName} | ${SITE_NAME}`;
         
         let metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
@@ -36,7 +37,7 @@ const LocationPage = () => {
         "itemListElement": properties.map((prop, index) => ({
             "@type": "ListItem",
             "position": index + 1,
-            "url": `https://www.nirvanaluxe.com/properties/${prop.slug}`
+            "url": absoluteUrl(`/${prop.slug}`)
         }))
     };
 
@@ -128,7 +129,7 @@ const LocationPage = () => {
                 <div className="max-w-4xl mx-auto px-6 prose prose-slate lg:prose-lg">
                     <h2>Why Choose a Luxury Cabin in {locationName}?</h2>
                     <p>
-                        When booking a vacation rental in {locationName}, settling for an average stay means missing out on the spectacular mountain views and premium amenities that make a trip unforgettable. At NirvanaLuxe, our cabins in {locationName} feature private hot tubs, expansive decks, game rooms, and meticulously designed interiors.
+                        When booking a vacation rental in {locationName}, settling for an average stay means missing out on the spectacular mountain views and premium amenities that make a trip unforgettable. At {SITE_NAME}, our cabins in {locationName} feature private hot tubs, expansive decks, game rooms, and meticulously designed interiors.
                     </p>
                     <h3>Top Attractions Near {locationName}</h3>
                     <ul>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '../../supabaseClient';
 import { FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFacebook, FaTwitter, FaLink } from 'react-icons/fa';
 import RichTextContent from '../common/RichTextContent';
+import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
 
 // SEO Optimized Blog Post
 // Targeted at specific long-tail informational queries and deep linking.
@@ -40,7 +41,7 @@ const BlogPost = ({ slug: propSlug }) => {
         title: propSlug ? propSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'The Ultimate Luxury Guide',
         content: '<p>Loading latest mountain insights...</p>',
         excerpt: 'Your guide to luxury stays.',
-        author: 'NirvanaLuxe Team',
+        author: `${SITE_NAME} Team`,
         date: new Date().toLocaleDateString(),
         category: 'Travel Guides',
         imageUrl: BLOG_FALLBACK_LOGO,
@@ -49,7 +50,7 @@ const BlogPost = ({ slug: propSlug }) => {
 
     // Dynamic SEO update for Client-Side Rendering
     useEffect(() => {
-        document.title = `${displayPost.title} | NirvanaLuxe Journal`;
+        document.title = `${displayPost.title} | ${SITE_NAME} Journal`;
         
         let metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
@@ -66,13 +67,13 @@ const BlogPost = ({ slug: propSlug }) => {
         "@type": "Article",
         "headline": displayPost.title,
         "image": [
-            `https://www.nirvanaluxe.com${displayPost.cover_image || displayPost.imageUrl || BLOG_FALLBACK_LOGO}`
+            absoluteUrl(displayPost.cover_image || displayPost.imageUrl || BLOG_FALLBACK_LOGO)
         ],
         "datePublished": displayPost.created_at || "2026-10-15T08:00:00+08:00",
         "author": [{
             "@type": "Organization",
-            "name": displayPost.author || "NirvanaLuxe Team",
-            "url": "https://www.nirvanaluxe.com"
+            "name": displayPost.author_name || displayPost.author || `${SITE_NAME} Team`,
+            "url": absoluteUrl("/")
         }],
         "description": displayPost.excerpt
     };

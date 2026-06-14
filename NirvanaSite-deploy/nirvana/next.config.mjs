@@ -18,6 +18,28 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'nirvanaluxe.com' }],
+        destination: 'https://www.nirvanaluxe.co/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.nirvanaluxe.com' }],
+        destination: 'https://www.nirvanaluxe.co/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'nirvanaluxe.co' }],
+        destination: 'https://www.nirvanaluxe.co/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

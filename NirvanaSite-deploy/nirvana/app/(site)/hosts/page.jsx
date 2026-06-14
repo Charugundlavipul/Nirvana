@@ -18,7 +18,7 @@ export const metadata = buildMetadata({
     "property management services",
     "Smoky Mountains investment properties",
     "Lake Norman rental management",
-    "NirvanaLuxe hosts",
+    "Nirvana Luxe hosts",
     "STR property manager",
   ],
 });
@@ -30,7 +30,7 @@ export default function HostsPage_Route() {
     name: "Property Owners & Hosts — Acquisition & Management",
     url: absoluteUrl("/hosts"),
     description:
-      "Partner with NirvanaLuxe for vacation rental property acquisition, market analysis, and full-service Airbnb property management.",
+      "Partner with Nirvana Luxe for vacation rental property acquisition, market analysis, and full-service Airbnb property management.",
     isPartOf: {
       "@type": "WebSite",
       name: SITE_NAME,

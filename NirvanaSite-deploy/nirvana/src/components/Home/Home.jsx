@@ -215,11 +215,8 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <h1 className="mb-3 text-3xl font-bold leading-[1.05] text-white drop-shadow-lg sm:text-5xl sm:leading-[1.1] md:mb-5 md:text-6xl md:leading-[1.15] lg:text-[4rem]">
               Nirvana Luxe <br /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
-            <p className="sr-only">
-              Nirvana Luxe, also searched as NirvanaLuxe, offers direct booking for luxury vacation rentals in the Smokies, Sevierville, Tennessee, and Lake Norman, North Carolina.
-            </p>
             <p className="mx-auto mt-2 max-w-2xl text-sm font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
-              Discover premium vacation homes and luxury vacation rentals — from Lake Norman lakefront retreats to cabins in Sevierville TN — designed for unforgettable family getaways, group retreats, and elevated short-term stays.
+              The official Nirvana Luxe direct-booking site for premium vacation homes and luxury vacation rentals, from Lake Norman lakefront retreats to cabins in Sevierville TN.
             </p>
           </div>
         </div>

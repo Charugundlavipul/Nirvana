@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FaChevronRight, FaCalendarAlt } from 'react-icons/fa';
 import { supabase } from '../../supabaseClient';
+import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
 
 // SEO Optimized Blog Feed
 // Intercepts travelers during the "planning" phase.
@@ -41,7 +42,7 @@ const BlogFeed = () => {
 
     // Dynamic SEO update for Client-Side Rendering
     useEffect(() => {
-        document.title = 'Smoky Mountain Luxury Travel Blog & Guides | NirvanaLuxe';
+        document.title = `Smoky Mountain Luxury Travel Blog & Guides | ${SITE_NAME}`;
         
         let metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
@@ -49,19 +50,19 @@ const BlogFeed = () => {
             metaDescription.name = "description";
             document.head.appendChild(metaDescription);
         }
-        metaDescription.content = `Plan your next premium vacation with NirvanaLuxe's expert travel guides, destination comparisons, and luxury cabin tips for the Smoky Mountains area.`;
+        metaDescription.content = `Plan your next premium vacation with ${SITE_NAME}'s expert travel guides, destination comparisons, and luxury cabin tips for the Smoky Mountains area.`;
     }, []);
 
     // JSON-LD Schema for Blog Feed / ItemList
     const feedSchema = {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        "name": "NirvanaLuxe Luxury Travel Blog",
+        "name": `${SITE_NAME} Luxury Travel Blog`,
         "description": "Expert travel guides and tips for Smoky Mountain luxury vacations.",
         "itemListElement": posts.map((post, index) => ({
             "@type": "ListItem",
             "position": index + 1,
-            "url": `https://www.nirvanaluxe.com/blog/${post.slug}`
+            "url": absoluteUrl(`/blog/${post.slug}`)
         }))
     };
 
@@ -77,7 +78,7 @@ const BlogFeed = () => {
             <section className="bg-slate-900 py-24 px-6 md:px-12 text-center text-white">
                 <div className="max-w-4xl mx-auto mt-16">
                     <p className="text-accent uppercase tracking-[0.3em] text-sm font-semibold mb-4">Inspiration & Guides</p>
-                    <h1 className="text-5xl md:text-6xl font-bold mb-6">The NirvanaLuxe Journal</h1>
+                    <h1 className="text-5xl md:text-6xl font-bold mb-6">The Nirvana Luxe Journal</h1>
                     <p className="text-xl text-slate-300 font-light max-w-2xl mx-auto">
                         Curated experiences, travel tips, and deep dives into the finest mountain retreats in Tennessee.
                     </p>

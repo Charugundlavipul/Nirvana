@@ -1,7 +1,13 @@
 export const SITE_NAME = "Nirvana Luxe";
+export const SITE_LEGAL_NAME = "VKR Ventures LLC";
+export const SITE_ALTERNATE_NAMES = [
+  "NirvanaLuxe",
+  "Nirvana Luxe Vacation Rentals",
+  "Nirvana Luxe Luxury Vacation Rentals",
+];
 export const SITE_TITLE = "Luxury Vacation Rentals";
 export const SITE_DESCRIPTION =
-  "Book luxury cabins & lakefront homes directly in Smoky Mountains, TN & Lake Norman, NC. Best rates, no platform fees. Check availability now.";
+  "Nirvana Luxe is the official direct-booking site for luxury cabins and lakefront vacation rentals in the Smoky Mountains, TN and Lake Norman, NC.";
 export const SITE_KEYWORDS = [
   "vacation rentals",
   "luxury vacation rentals",

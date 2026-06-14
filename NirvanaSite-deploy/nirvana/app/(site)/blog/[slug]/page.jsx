@@ -33,7 +33,7 @@ export async function generateMetadata({ params }) {
       post.category || "luxury travel",
       "Smoky Mountains travel guide",
       "vacation rental blog",
-      "NirvanaLuxe journal",
+      "Nirvana Luxe journal",
     ].filter(Boolean),
   });
 }
@@ -51,7 +51,7 @@ export default async function BlogPostPage({ params }) {
     datePublished: post.created_at,
     author: [{
       "@type": "Organization",
-      name: post.author_name || post.author || "NirvanaLuxe Team",
+      name: post.author_name || post.author || "Nirvana Luxe Team",
       url: absoluteUrl("/"),
     }],
     publisher: {

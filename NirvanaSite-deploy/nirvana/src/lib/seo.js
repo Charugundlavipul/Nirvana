@@ -3,9 +3,11 @@ import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
   SITE_NAME,
+  SITE_LEGAL_NAME,
   SITE_TITLE,
   SITE_EMAIL,
   SITE_PHONE,
+  SITE_ALTERNATE_NAMES,
   SOCIAL_LINKS,
   absoluteUrl,
 } from "./siteConfig";
@@ -383,8 +385,7 @@ export function buildPropertyJsonLd(property, bundle = null, reviews = [], hospi
     additionalType: getVacationRentalType(property, hospitableProperty),
     identifier: hospitableProperty?.id || property.hospitable_property_id || property.id || property.slug,
     brand: {
-      "@type": "Brand",
-      name: SITE_NAME,
+      "@id": absoluteUrl("/#organization"),
     },
     name: property.name,
     description: descriptionFromRichText(property.description, 220),
@@ -536,11 +537,15 @@ export function buildOrganizationJsonLd(allReviews = []) {
 
   return {
     "@context": "https://schema.org",
+    "@id": absoluteUrl("/#organization"),
     "@type": "Organization",
     name: SITE_NAME,
-    alternateName: ["NirvanaLuxe", "Nirvana Luxe Vacation Rentals"],
+    legalName: SITE_LEGAL_NAME,
+    alternateName: SITE_ALTERNATE_NAMES,
+    description: SITE_DESCRIPTION,
     url: absoluteUrl("/"),
     logo: absoluteUrl("/logo512.png"),
+    image: absoluteUrl("/logo512.png"),
     email: SITE_EMAIL,
     telephone: SITE_PHONE,
     contactPoint: {
