@@ -19,7 +19,7 @@ function Navbar() {
   useEffect(() => {
     if (!isOpen) return;
     const closeMenuOnResize = () => {
-      if (window.innerWidth >= 768) setIsOpen(false);
+      if (window.innerWidth >= 1024) setIsOpen(false);
     };
     window.addEventListener("resize", closeMenuOnResize);
     return () => window.removeEventListener("resize", closeMenuOnResize);
@@ -72,7 +72,7 @@ function Navbar() {
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -95,7 +95,7 @@ function Navbar() {
             </Link>
           </div>
 
-          <div className="md:hidden z-[60] flex items-center">
+          <div className="lg:hidden z-[60] flex items-center">
             <button
               onClick={toggleMenu}
               className="focus:outline-none transition-colors text-gray-800"
@@ -112,14 +112,14 @@ function Navbar() {
       </nav>
 
       <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 md:hidden ${isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 lg:hidden ${isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
         onClick={() => setIsOpen(false)}
         aria-hidden="true"
       />
 
       <aside
         id="mobile-nav-drawer"
-        className={`fixed top-0 right-0 z-40 flex h-dvh w-[min(18rem,100vw)] max-w-full flex-col justify-center gap-8 border-l border-gray-200 bg-white px-8 pt-20 pb-10 shadow-2xl transition-transform duration-300 md:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed top-0 right-0 z-40 flex h-dvh w-[min(18rem,100vw)] max-w-full flex-col justify-center gap-8 border-l border-gray-200 bg-white px-8 pt-20 pb-10 shadow-2xl transition-transform duration-300 lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         aria-label="Mobile navigation"
         inert={!isOpen}
       >
