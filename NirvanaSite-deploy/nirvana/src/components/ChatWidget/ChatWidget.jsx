@@ -376,6 +376,19 @@ export default function ChatWidget() {
               /* ── Messages Area ──────────────────────────────────── */
               <>
                 <div className="nlchat-messages">
+                  {messages.length === 0 && (
+                    <div className="nlchat-msg nlchat-msg--host">
+                      <div className="nlchat-msg-avatar">
+                        <img src="/favicon.png" alt="" width={28} height={28} />
+                      </div>
+                      <div className="nlchat-msg-content">
+                        <div className="nlchat-msg-bubble">
+                          Hi {guestInfo.name || 'there'}! 👋 How can we help you today?
+                        </div>
+                        <span className="nlchat-msg-time">Just now</span>
+                      </div>
+                    </div>
+                  )}
                   {messages.map((msg) => (
                     <div
                       key={msg.id}
