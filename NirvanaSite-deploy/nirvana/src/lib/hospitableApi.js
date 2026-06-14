@@ -198,7 +198,7 @@ export async function fetchPropertyCalendar(propertyId, startDate, endDate) {
   }
   return Array.isArray(payload?.data) ? payload.data : [];
 }
-export async function fetchHospitableProperties() {
+export async function fetchHospitableProperties({ cache = "no-store", next } = {}) {
   const token = getHospitableToken();
   if (!token) {
     throw new Error("Missing Hospitable API token.");
@@ -212,15 +212,22 @@ export async function fetchHospitableProperties() {
   do {
     url.searchParams.set("page", `${currentPage}`);
 
-    const response = await fetch(url.toString(), {
+    const fetchOptions = {
       method: "GET",
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      cache: "no-store",
-    });
+    };
+
+    if (next) {
+      fetchOptions.next = next;
+    } else if (cache) {
+      fetchOptions.cache = cache;
+    }
+
+    const response = await fetch(url.toString(), fetchOptions);
 
     if (!response.ok) {
       const errorText = await response.text();

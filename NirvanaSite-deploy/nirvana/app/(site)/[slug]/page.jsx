@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import PropertyPage from "../../../src/components/PropertyPage/PropertyPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
+import { getHospitablePropertyById, getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
 import { buildMetadata, buildPropertyJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 import { SITE_NAME, absoluteUrl } from "../../../src/lib/siteConfig";
 
@@ -98,6 +98,10 @@ export default async function PropertyDetailPage({ params }) {
 
   if (!bundle?.property) notFound();
 
+  const hospitableProperty = await getHospitablePropertyById(
+    bundle.property.hospitable_property_id
+  );
+
   // Breadcrumbs: Home > Properties > [Property Name]
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", url: absoluteUrl("/") },
@@ -113,11 +117,10 @@ export default async function PropertyDetailPage({ params }) {
 
   return (
     <>
-      <StructuredData data={buildPropertyJsonLd(bundle.property, bundle, reviews)} />
+      <StructuredData data={buildPropertyJsonLd(bundle.property, bundle, reviews, hospitableProperty)} />
       <StructuredData data={breadcrumbJsonLd} />
       <StructuredData data={webPageJsonLd} />
       <PropertyPage slug={slug} initialBundle={bundle} initialReviews={reviews} initialActivities={activities} />
     </>
   );
 }
-

@@ -1,5 +1,7 @@
 import { cache } from "react";
 import { supabase } from "../supabaseClient";
+import { fetchHospitableProperties } from "./hospitableApi";
+import { normalizeHospitablePropertyId } from "./hospitablePropertyId";
 import {
   fetchActivitiesBySlug,
   fetchFaqsBySlug,
@@ -19,6 +21,27 @@ export const getPropertyBundleBySlug = cache(async (slug) => fetchPropertyBundle
 export const getFaqsBySlug = cache(async (slug) => fetchFaqsBySlug(slug));
 export const getActivitiesBySlug = cache(async (slug) => fetchActivitiesBySlug(slug));
 export const getReviews = cache(async (options = {}) => fetchReviews(options));
+
+export const getHospitableProperties = cache(async () => {
+  try {
+    return await fetchHospitableProperties({ next: { revalidate: 1800 } });
+  } catch (error) {
+    console.error("Unable to load Hospitable properties for structured data:", error);
+    return [];
+  }
+});
+
+export const getHospitablePropertyById = cache(async (propertyId) => {
+  const normalizedPropertyId = normalizeHospitablePropertyId(propertyId);
+  if (!normalizedPropertyId) return null;
+
+  const properties = await getHospitableProperties();
+  return (
+    properties.find(
+      (property) => normalizeHospitablePropertyId(property?.id) === normalizedPropertyId
+    ) || null
+  );
+});
 
 export const getPropertySlugs = cache(async () => {
   const properties = await fetchPropertiesWithCurated();
@@ -54,14 +77,14 @@ export const getLegalPageContent = cache(async (pageKey) => {
 export const getBlogBySlug = cache(async (slug) => {
   const { data, error } = await supabase
     .from("blogs")
-    .select("slug, title, excerpt, cover_image, author_name, author, category, created_at, read_time")
+    .select("slug, title, excerpt, cover_image, author_name, category, created_at, read_time")
     .eq("slug", slug)
     .maybeSingle();
 
   if (error && error.code !== "PGRST116") {
     console.error("Error fetching blog by slug:", error);
   }
-  return data || null;
+  return data ? { ...data, author: data.author_name } : null;
 });
 
 export const getBlogSlugs = cache(async () => {
