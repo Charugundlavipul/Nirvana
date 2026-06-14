@@ -285,23 +285,25 @@ export function buildReviewCollectionJsonLd({ name, pathname, reviews = [] }) {
 
   return {
     "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Nirvana Luxe Vacation Rentals",
-    "description": "Verified guest reviews and ratings for Nirvana Luxe luxury vacation rentals.",
-    "image": absoluteUrl("/logo512.png"),
-    "url": absoluteUrl(pathname),
-    "brand": {
-      "@type": "Brand",
-      "name": "Nirvana Luxe",
+    "@type": "CollectionPage",
+    name,
+    description: "Verified guest reviews for Nirvana Luxe luxury vacation rentals.",
+    url: absoluteUrl(pathname),
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      ratingValue,
-      reviewCount: validReviews.length,
-      bestRating: "5",
-      worstRating: "1",
+    about: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
     },
-    ...(reviewItems.length ? { review: reviewItems } : {}),
+    mainEntity: {
+      "@type": "ItemList",
+      name,
+      numberOfItems: validReviews.length,
+    },
   };
 }
 
