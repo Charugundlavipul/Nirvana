@@ -22,9 +22,15 @@ export const metadata = {
     google: "zkMdqKWIHLTe8_TrkPvJmoWx-edj8tfAzrji-c81y8U",
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.png",
-    apple: "/logo192.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/logo192.png", sizes: "192x192", type: "image/png" },
+    ],
   },
   manifest: "/manifest.json",
   openGraph: {
