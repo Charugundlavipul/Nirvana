@@ -612,6 +612,77 @@
   background: #f0fdf4;
 }
 
+/* ── Session Expired Banner ─────────────────────────────────────────── */
+.nlchat-session-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  margin: 8px 0;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid #fde68a;
+  border-radius: 16px;
+  text-align: center;
+  animation: nlchat-msg-in 0.4s var(--nlchat-transition);
+}
+
+.nlchat-session-banner-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.nlchat-session-banner p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #92400e;
+  margin: 0;
+}
+
+.nlchat-session-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--nlchat-accent), var(--nlchat-accent-dark));
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 0.02em;
+}
+
+.nlchat-session-banner-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--nlchat-accent-glow);
+}
+
+.nlchat-session-banner-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Session Loading / Reconnecting ────────────────────────────────── */
+.nlchat-session-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  animation: nlchat-msg-in 0.3s var(--nlchat-transition);
+}
+
+.nlchat-session-loading p {
+  font-size: 13px;
+  color: var(--nlchat-text-muted);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
 /* ── Mobile Responsiveness ──────────────────────────────────────────── */
 @media (max-width: 480px) {
   .nlchat-panel {

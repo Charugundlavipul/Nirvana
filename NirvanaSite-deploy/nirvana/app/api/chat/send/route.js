@@ -6,11 +6,42 @@ export const dynamic = "force-dynamic";
 
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
 
+/** Max age in milliseconds before a conversation is considered expired (24 hours) */
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Missing Supabase env vars.");
   return createClient(url, key);
+}
+
+/**
+ * Check if a conversation is still valid (open + within TTL).
+ * Returns { valid, conv } where conv is the conversation row if valid.
+ */
+async function checkConversationHealth(supabase, conversationId) {
+  const { data: conv } = await supabase
+    .from("chat_conversations")
+    .select("id, status, last_message_at, created_at, guest_name, guest_email, property_slug")
+    .eq("id", conversationId)
+    .maybeSingle();
+
+  if (!conv) return { valid: false, reason: "not_found" };
+  if (conv.status === "closed" || conv.status === "archived") return { valid: false, reason: "closed", conv };
+
+  const lastActivity = new Date(conv.last_message_at || conv.created_at).getTime();
+  const age = Date.now() - lastActivity;
+  if (age > SESSION_MAX_AGE_MS) {
+    // Auto-close the expired conversation
+    await supabase
+      .from("chat_conversations")
+      .update({ status: "closed" })
+      .eq("id", conversationId);
+    return { valid: false, reason: "expired", conv };
+  }
+
+  return { valid: true, conv };
 }
 
 /**
@@ -105,8 +136,20 @@ export async function POST(request) {
     const supabase = getSupabaseAdmin();
     let convId = conversationId;
     let isNewConversation = false;
+    let sessionRenewed = false;
 
-    // ── Create or fetch conversation ─────────────────────────────────────
+    // ── Validate existing conversation or create new ─────────────────────
+    if (convId) {
+      const health = await checkConversationHealth(supabase, convId);
+      if (!health.valid) {
+        // Session is stale/closed/expired — transparently create a new one
+        console.log(`[Chat] Session ${convId} is ${health.reason}, creating new conversation`);
+        convId = null;
+        isNewConversation = true;
+        sessionRenewed = true;
+      }
+    }
+
     if (!convId) {
       isNewConversation = true;
 
@@ -196,7 +239,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ conversationId: convId, ok: true, gchatOk: !!gchatDebug.success, gchatDebug });
+    return NextResponse.json({ conversationId: convId, ok: true, gchatOk: !!gchatDebug.success, sessionRenewed, gchatDebug });
   } catch (err) {
     console.error("Chat send error:", err);
     return NextResponse.json(

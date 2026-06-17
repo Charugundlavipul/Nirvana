@@ -39,7 +39,9 @@ const MinimizeIcon = () => (
 /* ────────────────────────── Main Component ──────────────────────────── */
 
 const STORAGE_KEY = 'nlchat_conversation_id';
+const STORAGE_TIMESTAMP_KEY = 'nlchat_last_activity';
 const GUEST_INFO_KEY = 'nlchat_guest_info';
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours — must match server
 
 export default function ChatWidget() {
   const pathname = usePathname();
@@ -55,30 +57,94 @@ export default function ChatWidget() {
   const [guestInfo, setGuestInfo] = useState({ name: '', email: '' });
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [typingDots, setTypingDots] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [validatingSession, setValidatingSession] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const subscriptionRef = useRef(null);
 
-  // ── Restore from localStorage ──────────────────────────────────────
-  useEffect(() => {
+  // ── Helper: clear stale session from local storage ────────────────
+  const clearSession = useCallback(() => {
     try {
-      const savedConvId = localStorage.getItem(STORAGE_KEY);
-      const savedGuest = localStorage.getItem(GUEST_INFO_KEY);
-      if (savedConvId) {
-        setConversationId(savedConvId);
-        setShowIntro(false);
-      }
-      if (savedGuest) {
-        setGuestInfo(JSON.parse(savedGuest));
-      }
-    } catch { /* ignore */ }
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
+    } catch { /* */ }
+    setConversationId(null);
+    setMessages([]);
   }, []);
 
-  // ── Persist conversation ID ────────────────────────────────────────
+  // ── Restore from localStorage + validate session ──────────────────
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const savedGuest = localStorage.getItem(GUEST_INFO_KEY);
+        if (savedGuest) {
+          setGuestInfo(JSON.parse(savedGuest));
+        }
+
+        const savedConvId = localStorage.getItem(STORAGE_KEY);
+        if (!savedConvId) return;
+
+        // Quick client-side TTL check before hitting the server
+        const savedTimestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
+        if (savedTimestamp) {
+          const age = Date.now() - parseInt(savedTimestamp, 10);
+          if (age > SESSION_MAX_AGE_MS) {
+            console.log('[Chat] Session expired (client-side TTL check)');
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
+            if (!cancelled) setSessionExpired(true);
+            return;
+          }
+        }
+
+        // Validate with the server
+        if (!cancelled) setValidatingSession(true);
+
+        const res = await fetch(`/api/chat/status?conversationId=${savedConvId}`);
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (data.valid) {
+          // Session is still alive — restore it
+          setConversationId(savedConvId);
+          setShowIntro(false);
+        } else {
+          // Session is stale — clear and notify
+          console.log(`[Chat] Session invalid: ${data.reason}`);
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
+          setSessionExpired(true);
+        }
+      } catch (err) {
+        console.warn('Session validation failed:', err);
+        // On network error, still try to restore (offline-friendly)
+        try {
+          const savedConvId = localStorage.getItem(STORAGE_KEY);
+          if (savedConvId && !cancelled) {
+            setConversationId(savedConvId);
+            setShowIntro(false);
+          }
+        } catch { /* */ }
+      } finally {
+        if (!cancelled) setValidatingSession(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Persist conversation ID + timestamp ────────────────────────────
   useEffect(() => {
     if (conversationId) {
-      try { localStorage.setItem(STORAGE_KEY, conversationId); } catch { /* */ }
+      try {
+        localStorage.setItem(STORAGE_KEY, conversationId);
+        localStorage.setItem(STORAGE_TIMESTAMP_KEY, String(Date.now()));
+      } catch { /* */ }
     }
   }, [conversationId]);
 
@@ -171,6 +237,7 @@ export default function ChatWidget() {
 
     setInput('');
     setSending(true);
+    setSessionExpired(false);
 
     // Show typing indicator briefly
     setTypingDots(true);
@@ -191,8 +258,20 @@ export default function ChatWidget() {
 
       const data = await res.json();
 
-      if (data.conversationId && !conversationId) {
+      // Server renewed the session (old one was stale)
+      if (data.sessionRenewed && data.conversationId) {
+        console.log('[Chat] Session was renewed by server, switching to new conversation');
+        setMessages([]); // Clear old messages
         setConversationId(data.conversationId);
+        // Update the activity timestamp
+        try { localStorage.setItem(STORAGE_TIMESTAMP_KEY, String(Date.now())); } catch { /* */ }
+      } else if (data.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
+      }
+
+      // Update activity timestamp on successful send
+      if (data.ok) {
+        try { localStorage.setItem(STORAGE_TIMESTAMP_KEY, String(Date.now())); } catch { /* */ }
       }
 
       // Show error if message didn't reach Google Chat
@@ -268,10 +347,12 @@ export default function ChatWidget() {
 
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
     } catch { /* */ }
     setConversationId(null);
     setMessages([]);
     setShowIntro(true);
+    setSessionExpired(false);
   };
 
   return (
@@ -376,7 +457,24 @@ export default function ChatWidget() {
               /* ── Messages Area ──────────────────────────────────── */
               <>
                 <div className="nlchat-messages">
-                  {messages.length === 0 && (
+                  {/* Session expired banner */}
+                  {sessionExpired && (
+                    <div className="nlchat-session-banner">
+                      <div className="nlchat-session-banner-icon">🔄</div>
+                      <p>Your previous session has expired. Start a new conversation to continue chatting with our team.</p>
+                      <button onClick={handleNewChat} className="nlchat-session-banner-btn">
+                        Start New Chat
+                      </button>
+                    </div>
+                  )}
+                  {/* Validating session spinner */}
+                  {validatingSession && (
+                    <div className="nlchat-session-loading">
+                      <div className="nlchat-typing"><span /><span /><span /></div>
+                      <p>Reconnecting…</p>
+                    </div>
+                  )}
+                  {messages.length === 0 && !sessionExpired && !validatingSession && (
                     <div className="nlchat-msg nlchat-msg--host">
                       <div className="nlchat-msg-avatar">
                         <img src="/favicon.png" alt="" width={28} height={28} />
