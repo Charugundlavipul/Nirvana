@@ -48,10 +48,13 @@ export const metadata = {
   },
 };
 
+import DomainMigrationBanner from "../src/components/DomainMigrationBanner/DomainMigrationBanner";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <DomainMigrationBanner />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-XE6P41ERZ5"
           strategy="afterInteractive"

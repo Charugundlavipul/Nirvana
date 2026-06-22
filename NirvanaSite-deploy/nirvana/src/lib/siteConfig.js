@@ -124,7 +124,7 @@ export function getSiteUrl() {
   return (
     normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
     normalizeUrl(process.env.SITE_URL) ||
-    "https://www.nirvanaluxe.co"
+    "https://www.nirvanaluxevacations.com"
   );
 }
 

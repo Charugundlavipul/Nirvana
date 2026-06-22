@@ -133,8 +133,8 @@ const genericHTML = `
                                                             </table>
                                                         </td>
                                                         <td style="padding: 0px; color: rgb(0, 0, 0);"><a
-                                                                href="https://www.nirvanaluxe.co"
-                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                                href="https://www.nirvanaluxevacations.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxevacations.com</span></a>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -305,8 +305,8 @@ const supportHTML = `
                                                             <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;"><tbody><tr><td style="vertical-align: bottom;"><span style="display: inline-block; background-color: rgb(247, 201, 99);"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png" alt="nirvanaluxe" width="18" style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span></td></tr></tbody></table>
                                                         </td>
                                                         <td style="padding: 0px; color: rgb(0, 0, 0);"><a
-                                                                href="https://www.nirvanaluxe.co"
-                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                                href="https://www.nirvanaluxevacations.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxevacations.com</span></a>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -477,8 +477,8 @@ const reservationsHTML = `
                                                             <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;"><tbody><tr><td style="vertical-align: bottom;"><span style="display: inline-block; background-color: rgb(247, 201, 99);"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png" alt="nirvanaluxe" width="18" style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span></td></tr></tbody></table>
                                                         </td>
                                                         <td style="padding: 0px; color: rgb(0, 0, 0);"><a
-                                                                href="https://www.nirvanaluxe.co"
-                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxe.co</span></a>
+                                                                href="https://www.nirvanaluxevacations.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxevacations.com</span></a>
                                                         </td>
                                                     </tr>
                                                 </tbody>
