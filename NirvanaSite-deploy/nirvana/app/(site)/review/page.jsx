@@ -4,7 +4,7 @@ import { getPropertyCards, getReviews } from "../../../src/lib/serverContentApi"
 import { buildMetadata, buildReviewCollectionJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 1800;
+export const revalidate = 21600;
 
 export const metadata = buildMetadata({
   title: "5-Star Guest Reviews - Nirvana Luxe Rentals",

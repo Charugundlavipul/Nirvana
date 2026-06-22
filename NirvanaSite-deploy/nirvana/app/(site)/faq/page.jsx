@@ -4,7 +4,7 @@ import { getFaqsBySlug, getPropertyCards } from "../../../src/lib/serverContentA
 import { buildFaqJsonLd, buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 1800;
+export const revalidate = 43200;
 
 export const metadata = buildMetadata({
   title: "FAQ - Booking, Check-In & Amenities | Nirvana",

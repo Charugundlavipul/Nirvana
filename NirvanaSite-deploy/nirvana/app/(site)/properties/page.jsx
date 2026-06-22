@@ -4,7 +4,7 @@ import { getPropertyCards } from "../../../src/lib/serverContentApi";
 import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 1800;
+export const revalidate = 3600;
 
 export const metadata = buildMetadata({
   title: "Luxury Rentals - Smokies & Lake Norman | Book",

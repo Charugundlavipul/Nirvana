@@ -1,7 +1,7 @@
 import { getPropertySlugs, getBlogSlugs } from "../src/lib/serverContentApi";
 import { getSiteUrl } from "../src/lib/siteConfig";
 
-export const revalidate = 1800;
+export const revalidate = 43200;
 
 export default async function sitemap() {
   const siteUrl = getSiteUrl();

@@ -2,7 +2,7 @@ import LegalPage from "../../../src/components/Legal/LegalPage";
 import { getLegalPageContent } from "../../../src/lib/serverContentApi";
 import { buildMetadata, descriptionFromRichText } from "../../../src/lib/seo";
 
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export async function generateMetadata() {
   const page = await getLegalPageContent("privacy_policy");

@@ -24,7 +24,7 @@ export const getReviews = cache(async (options = {}) => fetchReviews(options));
 
 export const getHospitableProperties = cache(async () => {
   try {
-    return await fetchHospitableProperties({ next: { revalidate: 1800 } });
+    return await fetchHospitableProperties({ next: { revalidate: 3600 } });
   } catch (error) {
     console.error("Unable to load Hospitable properties for structured data:", error);
     return [];
