@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 
-const OLD_DOMAINS = [
-  "nirvanaluxe.co",
-  "www.nirvanaluxe.co",
-  "nirvanaluxe.com",
-  "www.nirvanaluxe.com",
-];
+const OLD_DOMAIN = "nirvanaluxe.co";
+
+// Banner will stop appearing after this date — no code change needed.
+// Set to ~30 days from deployment. Adjust as needed.
+const MIGRATION_END_DATE = new Date("2026-07-21");
 
 /**
- * Shows a brief, elegant banner when a visitor arrives via a redirect from the
- * old domain. Auto-dismisses after 5 seconds. Only shows once per session.
+ * Shows a brief, elegant banner informing visitors about the domain change.
+ * Auto-dismisses after 5 seconds. Only shows once per session.
+ * Automatically stops showing after MIGRATION_END_DATE.
  *
  * Remove this component after the transition period (~6 months).
  */
@@ -20,16 +20,11 @@ export default function DomainMigrationBanner() {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
+    // Auto-disable after the migration period
+    if (new Date() > MIGRATION_END_DATE) return;
+
     // Only show once per session
     if (sessionStorage.getItem("domain_banner_shown")) return;
-
-    // Check if the visitor was redirected from an old domain
-    const referrer = document.referrer;
-    const cameFromOldDomain = OLD_DOMAINS.some(
-      (d) => referrer.includes(d)
-    );
-
-    if (!cameFromOldDomain) return;
 
     sessionStorage.setItem("domain_banner_shown", "1");
     setVisible(true);
