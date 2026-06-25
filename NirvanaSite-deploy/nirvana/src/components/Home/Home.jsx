@@ -404,37 +404,64 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Why Choose Nirvana Luxe — SEO content section */}
-      <section aria-label="Why Choose Nirvana Luxe" className="relative bg-slate-50 px-6 py-12 md:py-20 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
+      <section aria-label="Why Choose Nirvana Luxe" className="relative py-20 md:py-32 overflow-hidden bg-gray-900 border-y border-gray-800">
+        {/* Background Image & Overlays */}
+        <Image
+          src="/assets/aboutUs-indoor.avif"
+          alt="Luxury Vacation Rentals Interior"
+          fill
+          sizes="100vw"
+          className="object-cover opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-gray-900/80 to-gray-900/90"></div>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16 md:mb-24">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">THE NIRVANA LUXE DIFFERENCE</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Why Choose Nirvana Luxe Vacation Rentals</h2>
-            <p className="text-xl text-gray-500 max-w-3xl mx-auto font-light leading-relaxed">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-md">Why Choose Nirvana Luxe</h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed">
               We curate only the finest luxury vacation rentals in Tennessee and North Carolina — each property hand-selected for exceptional quality, premium amenities, and unforgettable guest experiences.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
-            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏔️</div>
-              <h3 className="text-xl font-bold text-gray-900">Smoky Mountain Luxury Cabins</h3>
-              <p className="text-gray-600 leading-relaxed">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-10 pb-8 lg:pb-16 items-start">
+            {/* Card 1 */}
+            <div className="group relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 shadow-2xl">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-accent/20 rounded-full blur-2xl group-hover:bg-accent/40 transition-all duration-500"></div>
+              
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                🏔️
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Smoky Mountain Luxury Cabins</h3>
+              <p className="text-gray-300 leading-relaxed font-light text-sm lg:text-base">
                 From romantic cabins for couples with mountain views to spacious lodges sleeping up to 26 guests, our Gatlinburg, Pigeon Forge, and Sevierville luxury cabin rentals feature private indoor pools, home theaters, and game rooms. Experience the pinnacle of Tennessee mountain luxury — perfectly situated near the serene beauty of Walland and the excitement of Dollywood. Ideal for family reunions and large group getaways.
               </p>
             </div>
 
-            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏡</div>
-              <h3 className="text-xl font-bold text-gray-900">Lakefront Vacation Homes</h3>
-              <p className="text-gray-600 leading-relaxed">
+            {/* Card 2 */}
+            <div className="group relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 shadow-2xl md:mt-12">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/40 transition-all duration-500"></div>
+              
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                🏡
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Lakefront Vacation Homes</h3>
+              <p className="text-gray-300 leading-relaxed font-light text-sm lg:text-base">
                 Our Lake Norman lakefront rentals near Charlotte NC offer private docks, stunning water views, and resort-style amenities. Whether you're planning a romantic lakeside retreat for couples or a summer vacation with the whole family, these luxury vacation homes deliver unmatched waterfront living.
               </p>
             </div>
 
-            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">💰</div>
-              <h3 className="text-xl font-bold text-gray-900">Best Rate — Book Direct</h3>
-              <p className="text-gray-600 leading-relaxed">
+            {/* Card 3 */}
+            <div className="group relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 shadow-2xl md:mt-24">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl group-hover:bg-emerald-500/40 transition-all duration-500"></div>
+              
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                💰
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Best Rate — Book Direct</h3>
+              <p className="text-gray-300 leading-relaxed font-light text-sm lg:text-base">
                 When you book direct with Nirvana Luxe instead of Airbnb or VRBO, you save on service fees and get personal concierge support, curated local recommendations, and our best rate guarantee. No middleman — just premium hospitality from a team that truly cares about your experience.
               </p>
             </div>
