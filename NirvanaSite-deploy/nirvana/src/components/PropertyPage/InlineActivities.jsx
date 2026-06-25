@@ -50,7 +50,7 @@ const InlineActivities = ({ activities = [], slug }) => {
     const prevActivity = () => setCurrentIndex(prev => (prev - 1 + activities.length) % activities.length);
 
     return (
-        <section className="pt-24 pb-32 bg-slate-50 relative overflow-hidden">
+        <section className="pt-24 pb-32 bg-white relative overflow-hidden">
             {/* Background Accent */}
             <div className="absolute top-0 right-0 -mr-24 -mt-24 w-96 h-96 bg-accent/5 rounded-full blur-3xl opacity-50"></div>
             <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-96 h-96 bg-accent/5 rounded-full blur-3xl opacity-50"></div>

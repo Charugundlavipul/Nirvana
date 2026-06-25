@@ -29,11 +29,8 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
   // Dynamic properties state
   const [properties, setProperties] = useState(initialProperties);
-  const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
   const [itemsToShow, setItemsToShow] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
-  const [visibleMobileCount, setVisibleMobileCount] = useState(3);
-  const [isPaused, setIsPaused] = useState(false);
   const [imageIndices, setImageIndices] = useState({});
   const [cardImagesBySlug, setCardImagesBySlug] = useState({});
 
@@ -48,7 +45,6 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
   useEffect(() => {
     const homeProperties = initialProperties || [];
     setProperties(homeProperties);
-    setCurrentPropertyIndex(0);
 
     const indices = {};
     const initialCardImages = {};
@@ -87,40 +83,11 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-scroll functionality (Desktop only)
-  useEffect(() => {
-    if (!properties.length || isPaused || isMobile) return;
-
-    const interval = setInterval(() => {
-      setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
-    }, 7000);
-
-    return () => clearInterval(interval);
-  }, [properties.length, isPaused, isMobile]);
-
-  const nextProperty = () => {
-    setCurrentPropertyIndex((prev) => (prev + 1) % properties.length);
-  };
-
-  const prevProperty = () => {
-    setCurrentPropertyIndex((prev) => (prev - 1 + properties.length) % properties.length);
-  };
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const getVisibleProperties = () => {
     if (!properties.length) return [];
-
-    // Mobile: Show first N items based on visibleMobileCount
-    if (isMobile) {
-      return properties.slice(0, visibleMobileCount); // Mobile: Load More list
-    }
-
-    // Desktop: Carousel logic
-    const result = [];
-    const count = Math.min(itemsToShow, properties.length);
-    for (let i = 0; i < count; i++) {
-      result.push(properties[(currentPropertyIndex + i) % properties.length]);
-    }
-    return result;
+    return properties.slice(0, visibleCount);
   };
 
   const filteredReviews = reviews.filter(r => {
@@ -216,7 +183,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               Nirvana Luxe <br /><span className="text-accent font-serif italic font-light">Luxury Vacation Rentals</span>
             </h1>
             <p className="mx-auto mt-2 max-w-2xl text-sm font-normal leading-relaxed text-white/90 sm:mt-4 sm:text-xl">
-              The official Nirvana Luxe direct-booking site for premium vacation homes and luxury vacation rentals, from Lake Norman lakefront retreats to cabins in Sevierville TN.
+              The official Nirvana Luxe direct-booking site for premium vacation homes and luxury vacation rentals, from Lake Norman and Lake Wylie lakefront retreats to cabins in Sevierville TN.
             </p>
           </div>
         </div>
@@ -241,70 +208,45 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             </p>
           </div>
 
-          {/* Carousel Controls & Grid */}
-          <div
-            className="relative"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            onTouchStart={() => setIsPaused(true)}
-            onTouchEnd={() => setIsPaused(false)}
-          >
-            <div className="flex items-center justify-center gap-4 xl:gap-8">
-              {/* Desktop Navigation Buttons */}
-              <button
-                onClick={prevProperty}
-                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white/60 backdrop-blur-md shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-                aria-label="Previous property"
-              >
-                <FaChevronLeft size={24} />
-              </button>
+          {/* Grid View */}
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
+              {getVisibleProperties().map((prop, index) => {
+                const images = getCardImages(prop);
+                const currentIndex = imageIndices[prop.id] || 0;
+                // Calculate the actual index in the full properties array for the badge
+                const originalIndex = properties.findIndex(p => p.id === prop.id);
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
-                {getVisibleProperties().map((prop, index) => {
-                  const images = getCardImages(prop);
-                  const currentIndex = imageIndices[prop.id] || 0;
-                  // Calculate the actual index in the full properties array for the badge
-                  const originalIndex = properties.findIndex(p => p.id === prop.id);
-
-                  return (
-                    <SignatureCard
-                      key={prop.id}
-                      title={prop.name}
-                      location={prop.location}
-                      images={images}
-                      currentIndex={currentIndex}
-                      onPrev={(e) => handleCardPrev(e, prop)}
-                      onNext={(e) => handleCardNext(e, prop)}
-                      link={`/${prop.slug}`}
-                      stats={{
-                        bedrooms: prop.bedroom_count || 0,
-                        beds: prop.bed_count || 0,
-                        baths: getCompactBathroomSummary(prop) || 0,
-                        guests: prop.guests_max || 0
-                      }}
-                      badge={BADGES[originalIndex] || "Featured"}
-                    />
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={nextProperty}
-                className="hidden md:flex flex-shrink-0 p-4 rounded-full bg-white/60 backdrop-blur-md shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-                aria-label="Next property"
-              >
-                <FaChevronRight size={24} />
-              </button>
+                return (
+                  <SignatureCard
+                    key={prop.id}
+                    title={prop.name}
+                    location={prop.location}
+                    images={images}
+                    currentIndex={currentIndex}
+                    onPrev={(e) => handleCardPrev(e, prop)}
+                    onNext={(e) => handleCardNext(e, prop)}
+                    link={`/${prop.slug}`}
+                    stats={{
+                      bedrooms: prop.bedroom_count || 0,
+                      beds: prop.bed_count || 0,
+                      baths: getCompactBathroomSummary(prop) || 0,
+                      guests: prop.guests_max || 0
+                    }}
+                    badge={BADGES[originalIndex] || "Featured"}
+                  />
+                );
+              })}
             </div>
 
-            {/* Mobile "Show More" Button */}
-            {isMobile && visibleMobileCount < properties.length && (
-              <div className="mt-12 flex justify-center lg:hidden">
+            {/* "Show More" Button */}
+            {visibleCount < properties.length && (
+              <div className="mt-12 flex justify-center">
                 <button
-                  onClick={() => setVisibleMobileCount(prev => prev + 5)}
+                  onClick={() => setVisibleCount(prev => prev + 6)}
                   className="px-8 py-3 bg-white border border-slate-200 shadow-md text-gray-600 font-semibold rounded-full hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 uppercase tracking-widest text-sm"
                 >
-                  Show More
+                  Show More Properties
                 </button>
               </div>
             )}
@@ -449,7 +391,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">Lakefront Vacation Homes</h3>
               <p className="text-gray-300 leading-relaxed font-light text-sm lg:text-base grow">
-                Our Lake Norman lakefront rentals near Charlotte NC offer private docks, stunning water views, and resort-style amenities. Whether you're planning a romantic lakeside retreat for couples or a summer vacation with the whole family, these luxury vacation homes deliver unmatched waterfront living.
+                Our Lake Norman and Lake Wylie lakefront rentals near Charlotte NC offer private docks, stunning water views, and resort-style amenities. Whether you're planning a romantic lakeside retreat for couples or a summer vacation with the whole family, these luxury vacation homes deliver unmatched waterfront living.
               </p>
             </div>
 
@@ -470,8 +412,12 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Our Destinations — SEO internal linking section */}
-      <section aria-label="Explore Our Destinations" className="bg-white px-6 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto">
+      <section aria-label="Explore Our Destinations" className="relative overflow-hidden bg-slate-50 px-6 py-16 md:py-24">
+        {/* Luxury Decorative Background Elements */}
+        {/* Stronger grid pattern */}
+        <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">EXPLORE OUR DESTINATIONS</p>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Premium Vacation Rental Destinations</h2>
@@ -488,16 +434,20 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
               
-              <div className="relative z-10 text-white transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] translate-y-16 group-hover:translate-y-0">
-                <h3 className="text-3xl font-bold mb-4 tracking-wide text-shadow-sm">Sevierville, Gatlinburg &amp; Pigeon Forge, TN</h3>
+              <div className="relative z-10 text-white w-full">
+                <h3 className="text-3xl font-bold tracking-wide text-shadow-sm min-h-[5rem] lg:min-h-[6rem]">
+                  Sevierville, Gatlinburg &amp; Pigeon Forge, TN
+                </h3>
                 
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
-                  <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light">
-                    Discover luxury cabin rentals in the Great Smoky Mountains. Our properties place you minutes from the attractions of Gatlinburg and Pigeon Forge, while offering the peaceful seclusion of Sevierville and Walland.
-                  </p>
-                  <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20">
-                    Browse Rentals <FaChevronRight size={12} />
-                  </span>
+                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]">
+                  <div className="overflow-hidden min-h-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
+                    <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light mt-2">
+                      Discover luxury cabin rentals in the Great Smoky Mountains. Our properties place you minutes from the attractions of Gatlinburg and Pigeon Forge, while offering the peaceful seclusion of Sevierville and Walland.
+                    </p>
+                    <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20 mb-2">
+                      Browse Rentals <FaChevronRight size={12} />
+                    </span>
+                  </div>
                 </div>
               </div>
             </Link>
@@ -505,23 +455,27 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <Link href="/properties" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
               <Image 
                 src="/images/lake_norman.png" 
-                alt="Luxury lakefront home on Lake Norman" 
+                alt="Luxury lakefront home on Lake Norman or Lake Wylie" 
                 fill 
                 sizes="(max-width: 768px) 100vw, 50vw" 
                 className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]" 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
               
-              <div className="relative z-10 text-white transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] translate-y-16 group-hover:translate-y-0">
-                <h3 className="text-3xl font-bold mb-4 tracking-wide text-shadow-sm">Lake Norman &amp; Charlotte, NC</h3>
+              <div className="relative z-10 text-white w-full">
+                <h3 className="text-3xl font-bold tracking-wide text-shadow-sm min-h-[5rem] lg:min-h-[6rem]">
+                  Lake Norman &amp; Lake Wylie, NC
+                </h3>
                 
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
-                  <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light">
-                    Experience lakefront luxury on North Carolina's inland sea. Our waterfront vacation homes offer private boat docks, infinity-edge pool views, and upscale finishes throughout.
-                  </p>
-                  <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20">
-                    Browse Rentals <FaChevronRight size={12} />
-                  </span>
+                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]">
+                  <div className="overflow-hidden min-h-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
+                    <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light mt-2">
+                      Experience lakefront luxury on North Carolina's inland sea. Our waterfront vacation homes offer private boat docks, infinity-edge pool views, and upscale finishes throughout.
+                    </p>
+                    <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20 mb-2">
+                      Browse Rentals <FaChevronRight size={12} />
+                    </span>
+                  </div>
                 </div>
               </div>
             </Link>

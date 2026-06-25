@@ -18,7 +18,7 @@ export const metadata = buildMetadata({
     "property management services",
     "Smoky Mountains investment properties",
     "Lake Norman rental management",
-    "Nirvana Luxe hosts",
+    "Nirvana Luxe investors",
     "STR property manager",
   ],
 });
@@ -47,7 +47,7 @@ export default function HostsPage_Route() {
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", url: absoluteUrl("/") },
-    { name: "Hosts", url: absoluteUrl("/hosts") },
+    { name: "Investors", url: absoluteUrl("/hosts") },
   ]);
 
   return (

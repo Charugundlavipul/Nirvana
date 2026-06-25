@@ -349,8 +349,8 @@ const HostsPage = () => {
               },
               {
                 region: "Charlotte Region, NC",
-                tagline: "Lake Norman & Metro",
-                desc: "Rapidly growing metro with Lake Norman waterfront opportunities — ideal for premium vacation rentals.",
+                tagline: "Lake Norman & Lake Wylie",
+                desc: "Rapidly growing metro with Lake Norman and Lake Wylie waterfront opportunities — ideal for premium vacation rentals.",
                 gradient: "from-primary/10 to-slate-200/50",
               },
             ].map((m) => (
@@ -378,7 +378,7 @@ const HostsPage = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(96,189,104,0.15),transparent_60%)]" />
           <div className="relative z-10 text-center max-w-3xl mx-auto space-y-8 sm:space-y-10">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-              Why Hosts Choose Us
+              Why Investors Choose Us
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
               {[

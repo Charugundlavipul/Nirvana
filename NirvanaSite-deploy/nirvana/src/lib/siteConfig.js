@@ -7,7 +7,7 @@ export const SITE_ALTERNATE_NAMES = [
 ];
 export const SITE_TITLE = "Luxury Vacation Rentals";
 export const SITE_DESCRIPTION =
-  "Nirvana Luxe is the official direct-booking site for luxury cabins and vacation rentals in Gatlinburg, Pigeon Forge, Sevierville, and Walland, TN, as well as Lake Norman, NC.";
+  "Nirvana Luxe is the official direct-booking site for luxury cabins and vacation rentals in Gatlinburg, Pigeon Forge, Sevierville, and Walland, TN, as well as Lake Norman and Lake Wylie, NC.";
 export const SITE_KEYWORDS = [
   "vacation rentals",
   "luxury vacation rentals",

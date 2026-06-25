@@ -286,57 +286,6 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-            {/* Amenities Section */}
-            <section className="py-24 bg-white relative">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">What We Offer</p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Premium Amenities</h2>
-                        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light">Everything you need for an unforgettable stay</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                        {amenities.slice(0, 12).map((amenity) => (
-                            <div
-                                key={amenity.id}
-                                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-slate-100 hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer"
-                            >
-                                <div className="text-4xl text-accent group-hover:text-white transition-colors duration-300">
-                                    {getAmenityIcon(amenity.title, amenity.icon_key)}
-                                </div>
-                                <h4 className="text-sm font-semibold text-slate-700 group-hover:text-white text-center transition-colors duration-300">{amenity.title}</h4>
-                            </div>
-                        ))}
-                    </div>
-
-                    {amenities.length > 12 && (
-                        <div className="text-center mt-12">
-                            <button
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl"
-                                onClick={(e) => { e.preventDefault(); openLightbox(null, 'amenities'); }}
-                            >
-                                View All {amenities.length} Amenities
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            {/* Interactive Availability Calendar */}
-            {property.hospitable_property_id && (
-                <section className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
-                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Plan Your Stay</p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-b-2 border-accent/20 pb-4 inline-block mx-auto">Availability Calendar</h2>
-                    </div>
-                    <AvailabilityCalendar propertyId={property.hospitable_property_id} maxGuests={property.guests_max || 12} />
-                </section>
-            )}
-
-            {/* Custom Review & Activity Sections */}
-            <InlineReviews reviews={initialReviews} />
-            <InlineActivities activities={initialActivities} slug={slug} />
-
             {/* Photo Gallery - Modern Grid Layout */}
             <section id="gallery" className="py-16 md:py-24 bg-white">
                 <div className="text-center mb-10 md:mb-16 px-6">
@@ -428,13 +377,69 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-            {/* Inquire / Contact Section */}
-            <section className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-200 bg-slate-50">
-                <div className="text-center mb-16">
-                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Still have questions?</p>
-                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-accent/20 pb-4 inline-block mx-auto mb-4">Inquire About {property.name}</h2>
+            {/* Amenities Section */}
+            <section className="py-24 bg-slate-50 relative">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">What We Offer</p>
+                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Premium Amenities</h2>
+                        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light">Everything you need for an unforgettable stay</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                        {amenities.slice(0, 12).map((amenity) => (
+                            <div
+                                key={amenity.id}
+                                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-slate-100 hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer"
+                            >
+                                <div className="text-4xl text-accent group-hover:text-white transition-colors duration-300">
+                                    {getAmenityIcon(amenity.title, amenity.icon_key)}
+                                </div>
+                                <h4 className="text-sm font-semibold text-slate-700 group-hover:text-white text-center transition-colors duration-300">{amenity.title}</h4>
+                            </div>
+                        ))}
+                    </div>
+
+                    {amenities.length > 12 && (
+                        <div className="text-center mt-12">
+                            <button
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl"
+                                onClick={(e) => { e.preventDefault(); openLightbox(null, 'amenities'); }}
+                            >
+                                View All {amenities.length} Amenities
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <ContactForm />
+            </section>
+
+            {/* Interactive Availability Calendar */}
+            {property.hospitable_property_id && (
+                <section className="py-24 bg-white">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Plan Your Stay</p>
+                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-b-2 border-accent/20 pb-4 inline-block mx-auto">Availability Calendar</h2>
+                        </div>
+                        <AvailabilityCalendar propertyId={property.hospitable_property_id} maxGuests={property.guests_max || 12} />
+                    </div>
+                </section>
+            )}
+
+
+            {/* Custom Review & Activity Sections */}
+            <InlineReviews reviews={initialReviews} />
+            <InlineActivities activities={initialActivities} slug={slug} />
+
+            {/* Inquire / Contact Section */}
+            <section className="py-20 bg-slate-50 border-t border-slate-200">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Still have questions?</p>
+                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 border-accent/20 pb-4 inline-block mx-auto mb-4">Inquire About {property.name}</h2>
+                    </div>
+                    <ContactForm />
+                </div>
             </section>
 
             {/* Hospitable Direct Widget (for Google Vacation Rentals listing) */}
@@ -462,16 +467,16 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                     Book direct with Nirvana Luxe and enjoy the best rates on luxury Smoky Mountain cabin rentals — no service fees, personal concierge support, and curated local recommendations to make your Tennessee vacation truly extraordinary.
                                 </p>
                             </>
-                        ) : (property.location || '').toLowerCase().includes('norman') || (property.location || '').toLowerCase().includes('mooresville') || (property.location || '').toLowerCase().includes('charlotte') || (property.location || '').toLowerCase().includes('north carolina') ? (
+                        ) : (property.location || '').toLowerCase().includes('norman') || (property.location || '').toLowerCase().includes('wylie') || (property.location || '').toLowerCase().includes('mooresville') || (property.location || '').toLowerCase().includes('charlotte') || (property.location || '').toLowerCase().includes('north carolina') ? (
                             <>
                                 <p>
-                                    <strong>{property.name}</strong> is a premium lakefront vacation rental on Lake Norman, North Carolina's largest man-made lake. Located in the Charlotte metro area, Lake Norman offers over 520 miles of shoreline, pristine waters for boating and paddleboarding, and a thriving waterfront dining scene.
+                                    <strong>{property.name}</strong> is a premium lakefront vacation rental located in the Charlotte metro area, home to gorgeous waters like Lake Norman and Lake Wylie. Offering hundreds of miles of shoreline, pristine waters for boating and paddleboarding, and a thriving waterfront dining scene.
                                 </p>
                                 <p>
-                                    Perfect for couples seeking a romantic lakefront getaway or families looking for a luxury lake house with private dock access, Lake Norman vacation rentals combine natural beauty with upscale amenities. Enjoy sunset cruises, championship golf at nearby courses, or explore the charming towns of Mooresville and Davidson.
+                                    Perfect for couples seeking a romantic lakefront getaway or families looking for a luxury lake house with private dock access, our vacation rentals combine natural beauty with upscale amenities. Enjoy sunset cruises, championship golf at nearby courses, or explore the charming surrounding lake towns.
                                 </p>
                                 <p>
-                                    Book direct with Nirvana Luxe for the best rate guaranteed on luxury Lake Norman rentals — complete with personal concierge service and curated local guides.
+                                    Book direct with Nirvana Luxe for the best rate guaranteed on luxury Lake Norman and Lake Wylie rentals — complete with personal concierge service and curated local guides.
                                 </p>
                             </>
                         ) : (
@@ -571,51 +576,71 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             </section>
 
             {/* Lightbox */}
-            {(lightboxImage || lightboxType) && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" onClick={closeLightbox}>
-                    <button
-                        className="absolute top-6 right-6 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-all"
-                        onClick={closeLightbox}
-                    >
-                        <FaTimes size={28} />
-                    </button>
+                  {(lightboxImage || lightboxType) && (
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-8" onClick={closeLightbox}>
+                    {!lightboxType && (
+                        <button
+                            className="absolute top-6 right-6 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-all z-[110]"
+                            onClick={closeLightbox}
+                        >
+                            <FaTimes size={28} />
+                        </button>
+                    )}
 
-                    <div className="relative max-w-6xl max-h-screen p-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative max-w-6xl w-full max-h-[95vh] flex justify-center" onClick={(e) => e.stopPropagation()}>
                         {lightboxType === 'description' ? (
-                            <div className="bg-white rounded-3xl p-8 md:p-12 max-w-4xl max-h-[85vh] overflow-y-auto">
-                                <div className="text-center mb-8">
-                                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">About This Property</p>
-                                    <h3 className="text-4xl font-bold text-slate-900">{property.name}</h3>
+                            <div className="bg-white rounded-[2rem] w-full max-w-4xl max-h-[85vh] flex flex-col relative overflow-hidden shadow-2xl">
+                                <div className="flex justify-end p-4 md:p-6 z-10 bg-white">
+                                    <button className="text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 p-3 rounded-full transition-all" onClick={closeLightbox}>
+                                        <FaTimes size={20} />
+                                    </button>
                                 </div>
-                                <RichTextContent
-                                    value={property.description}
-                                    className="text-slate-700 leading-relaxed text-base md:text-lg [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-2 [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-xl [&_h3]:font-semibold [&_blockquote]:mb-4 [&_blockquote]:border-l-4 [&_blockquote]:border-accent/30 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-accent [&_a]:underline"
-                                />
+                                <div className="overflow-y-auto flex-1 mb-6 mr-2 md:mr-4" style={{ scrollbarWidth: 'thin' }}>
+                                    <div className="pl-6 md:pl-12 pr-4 md:pr-8 pb-4">
+                                        <div className="text-center mb-8 mt-[-20px]">
+                                            <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">About This Property</p>
+                                            <h3 className="text-4xl font-bold text-slate-900">{property.name}</h3>
+                                        </div>
+                                        <RichTextContent
+                                            value={property.description}
+                                            className="text-slate-700 leading-relaxed text-base md:text-lg [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-2 [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-xl [&_h3]:font-semibold [&_blockquote]:mb-4 [&_blockquote]:border-l-4 [&_blockquote]:border-accent/30 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-accent [&_a]:underline"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         ) : lightboxType === 'amenities' ? (
-                            <div className="bg-white rounded-3xl p-8 md:p-12 max-w-5xl max-h-[85vh] overflow-y-auto">
-                                <div className="text-center mb-10">
-                                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">Complete List</p>
-                                    <h3 className="text-4xl font-bold text-slate-900">All Amenities</h3>
+                            <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[85vh] flex flex-col relative overflow-hidden shadow-2xl">
+                                <div className="flex justify-end p-4 md:p-6 z-10 bg-white">
+                                    <button className="text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 p-3 rounded-full transition-all" onClick={closeLightbox}>
+                                        <FaTimes size={20} />
+                                    </button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {amenities.map((amenity) => (
-                                        <div key={amenity.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 hover:bg-accent/5 transition-colors">
-                                            <div className="text-2xl text-accent mt-0.5">
-                                                {getAmenityIcon(amenity.title, amenity.icon_key)}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-900">{amenity.title}</h4>
-                                                {amenity.description && <p className="text-sm text-slate-500 mt-1">{amenity.description}</p>}
-                                            </div>
+                                <div className="overflow-y-auto flex-1 mb-6 mr-2 md:mr-4" style={{ scrollbarWidth: 'thin' }}>
+                                    <div className="pl-6 md:pl-12 pr-4 md:pr-8 pb-4">
+                                        <div className="text-center mb-10 mt-[-20px]">
+                                            <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-2">Complete List</p>
+                                            <h3 className="text-4xl font-bold text-slate-900">All Amenities</h3>
                                         </div>
-                                    ))}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {amenities.map((amenity) => (
+                                                <div key={amenity.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 hover:bg-accent/5 transition-colors">
+                                                    <div className="text-2xl text-accent mt-0.5">
+                                                        {getAmenityIcon(amenity.title, amenity.icon_key)}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-900">{amenity.title}</h4>
+                                                        {amenity.description && <p className="text-sm text-slate-500 mt-1">{amenity.description}</p>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ) : lightboxImage ? (
-                            <div className="relative flex items-center justify-center">
+                            <div className="relative flex items-center justify-center w-full">
                                 <button
-                                    className="absolute -left-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full"
+                                    className="absolute left-0 md:-left-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full z-10"
                                     onClick={prevLightboxImage}
                                 >
                                     <FaArrowLeft size={32} />
@@ -629,7 +654,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                 />
                                 </div>
                                 <button
-                                    className="absolute -right-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full"
+                                    className="absolute right-0 md:-right-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full z-10"
                                     onClick={nextLightboxImage}
                                 >
                                     <FaArrowRight size={32} />
@@ -638,8 +663,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         ) : null}
                     </div>
                 </div>
-            )}
-        </div>
+            )}  </div>
     );
 };
 

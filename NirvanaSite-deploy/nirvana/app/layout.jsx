@@ -1,6 +1,6 @@
 import "../src/index.css";
 import Script from "next/script";
-import { Inter } from "next/font/google";
+import { Fira_Sans, Fira_Sans_Condensed } from "next/font/google";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
@@ -51,15 +51,23 @@ export const metadata = {
 
 import DomainMigrationBanner from "../src/components/DomainMigrationBanner/DomainMigrationBanner";
 
-const inter = Inter({
+const firaSans = Fira_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-fira-sans",
+  display: "swap",
+});
+
+const firaCondensed = Fira_Sans_Condensed({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-fira-condensed",
   display: "swap",
 });
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${firaSans.variable} ${firaCondensed.variable}`}>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
       </head>

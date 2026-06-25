@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import PropertyListingCard from "./PropertyListingCard";
+import CustomSelect from "../common/CustomSelect";
+import CustomDatePicker from "../common/CustomDatePicker";
 import {
   FaBed,
   FaCalendarAlt,
@@ -212,7 +214,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       {/* Light Hero Header */}
-      <section className="relative overflow-hidden bg-white px-4 pb-6 pt-28 sm:px-6 sm:pb-8 sm:pt-32 md:pb-10 md:pt-36">
+      <section className="hero-section relative overflow-hidden bg-white px-4 pb-4 pt-28 sm:px-6 sm:pb-4 sm:pt-28 md:pb-6 md:pt-28 border-b border-slate-100">
         {/* Decorative shapes */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/5 sm:h-[400px] sm:w-[400px]"></div>
@@ -221,7 +223,7 @@ const PropertyOverview = ({ initialProperties = [] }) => {
         </div>
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
 
-        <div className="relative z-10 mx-auto max-w-7xl">
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5">
             <FaMapMarkerAlt className="text-accent text-xs" />
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">NIRVANA LUXE VACATION RENTALS</span>
@@ -229,156 +231,127 @@ const PropertyOverview = ({ initialProperties = [] }) => {
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
             Discover Your Next Luxury Vacation Rental
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
-            Browse handpicked luxury vacation rentals — from lakefront homes on Lake Norman to cabin rentals in Sevierville — all available for direct booking.
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
+            Browse handpicked luxury vacation rentals — from lakefront homes on Lake Norman and Lake Wylie to cabin rentals in Sevierville — all available for direct booking.
           </p>
         </div>
       </section>
 
       {/* Search Section */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 pt-8 pb-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-lg md:p-6">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 md:p-3">
-            <div className="grid grid-cols-1 gap-2 md:gap-3 lg:grid-cols-[1.6fr_1fr_1fr]">
-              <div className="group">
-                <div className="relative flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-                  <FaMapMarkerAlt className="flex-shrink-0 text-lg text-accent" />
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Where
-                    </label>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      placeholder="Search destinations..."
-                      value={searchLocation}
-                      onChange={(event) => { setSearchLocation(event.target.value); setShowDropdown(true); }}
-                      onFocus={() => setShowDropdown(true)}
-                      className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
-                    />
-                    {showDropdown && dropdownSuggestions.length > 0 && (
-                      <div
-                        ref={dropdownRef}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 max-h-72 overflow-y-auto z-50"
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        {dropdownSuggestions.map((property) => (
-                          <button
-                            key={property.id || property.slug}
-                            onClick={() => {
-                              setSearchLocation(property.title || property.name || '');
-                              setShowDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                          >
-                            {(property.primary_image || property.image) && (
-                              <img src={property.primary_image || property.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 ring-1 ring-slate-200" />
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-slate-900 truncate">{property.title || property.name}</p>
-                              {property.location && <p className="text-xs text-slate-500 truncate">{property.location}</p>}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-                  <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Check In
-                    </label>
-                    <input
-                      type="date"
-                      min={todayString}
-                      value={checkInDate}
-                      onChange={(event) => handleCheckInChange(event.target.value)}
-                      className="w-full bg-transparent text-sm font-medium text-slate-900 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-                  <FaCalendarAlt className="flex-shrink-0 text-lg text-accent" />
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Check Out
-                    </label>
-                    <input
-                      type="date"
-                      min={checkInDate || todayString}
-                      value={checkOutDate}
-                      onChange={(event) => setCheckOutDate(event.target.value)}
-                      className="w-full bg-transparent text-sm font-medium text-slate-900 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-2 md:mt-3 grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3 lg:grid-cols-[1fr_1fr_auto]">
-              <div>
-                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-                  <FaUserFriends className="flex-shrink-0 text-lg text-accent" />
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Guests
-                    </label>
-                    <select
-                      value={guests}
-                      onChange={(event) => setGuests(event.target.value)}
-                      className="w-full cursor-pointer appearance-none bg-transparent text-sm font-medium text-slate-900 focus:outline-none"
-                    >
-                      <option value="">Any</option>
-                      <option value="2">2+ guests</option>
-                      <option value="4">4+ guests</option>
-                      <option value="6">6+ guests</option>
-                      <option value="8">8+ guests</option>
-                      <option value="10">10+ guests</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex h-full items-center gap-2 md:gap-3 rounded-xl border border-transparent bg-white px-3 py-2 md:px-4 md:py-3 shadow-sm transition-all hover:border-accent/30 hover:shadow-md focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-                  <FaBed className="flex-shrink-0 text-lg text-accent" />
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Bedrooms
-                    </label>
-                    <select
-                      value={bedrooms}
-                      onChange={(event) => setBedrooms(event.target.value)}
-                      className="w-full cursor-pointer appearance-none bg-transparent text-sm font-medium text-slate-900 focus:outline-none"
-                    >
-                      <option value="">Any</option>
-                      <option value="2">2+ bdrms</option>
-                      <option value="3">3+ bdrms</option>
-                      <option value="4">4+ bdrms</option>
-                      <option value="5">5+ bdrms</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="col-span-2 lg:col-span-1 flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 md:py-4 font-bold text-white shadow-lg transition-all hover:bg-accent/90 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 lg:min-w-[180px]"
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 md:px-8 pt-8 pb-6">
+        <div className="rounded-3xl md:rounded-[4rem] border border-slate-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:p-2 flex flex-col md:flex-row md:items-center divide-y md:divide-y-0 md:divide-x divide-slate-200 transition-all">
+          
+          {/* Where */}
+          <div className="relative flex-[1.5] px-5 py-4 md:py-3 md:px-8 hover:bg-slate-50 rounded-t-3xl md:rounded-l-[3rem] md:rounded-tr-none transition-colors cursor-text focus-within:bg-slate-50 group">
+            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1 group-hover:text-accent transition-colors">Where</label>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search destinations..."
+              value={searchLocation}
+              onChange={(event) => { setSearchLocation(event.target.value); setShowDropdown(true); }}
+              onFocus={() => setShowDropdown(true)}
+              className="w-full bg-transparent text-sm md:text-base font-semibold text-slate-900 placeholder-slate-400 focus:outline-none truncate"
+            />
+            {showDropdown && dropdownSuggestions.length > 0 && (
+              <div
+                ref={dropdownRef}
+                className="absolute top-full left-0 right-0 md:left-4 md:right-auto md:w-[350px] mt-4 bg-white rounded-3xl shadow-[0_10px_40px_rgb(0,0,0,0.1)] border border-slate-100 py-3 max-h-80 overflow-y-auto z-50"
+                onMouseDown={(e) => e.stopPropagation()}
               >
-                <FaSearch />
-                <span>{isSearching ? "Searching..." : "Search"}</span>
-              </button>
-            </div>
+                {dropdownSuggestions.map((property) => (
+                  <button
+                    key={property.id || property.slug}
+                    onClick={() => {
+                      setSearchLocation(property.title || property.name || '');
+                      setShowDropdown(false);
+                    }}
+                    className="w-full text-left px-5 py-3 hover:bg-slate-50 transition-colors flex items-center gap-4"
+                  >
+                    {(property.primary_image || property.image) && (
+                      <img src={property.primary_image || property.image} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{property.title || property.name}</p>
+                      {property.location && <p className="text-xs text-slate-500 truncate mt-0.5">{property.location}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Check In */}
+          <div className="flex-1 px-5 py-4 md:py-3 md:px-6 hover:bg-slate-50 transition-colors cursor-text focus-within:bg-slate-50 group z-[45]">
+            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1 group-hover:text-accent transition-colors">Check In</label>
+            <CustomDatePicker
+              value={checkInDate}
+              onChange={handleCheckInChange}
+              minDate={todayString}
+              placeholder="Add dates"
+            />
+          </div>
+
+          {/* Check Out */}
+          <div className="flex-1 px-5 py-4 md:py-3 md:px-6 hover:bg-slate-50 transition-colors cursor-text focus-within:bg-slate-50 group z-[44]">
+            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1 group-hover:text-accent transition-colors">Check Out</label>
+            <CustomDatePicker
+              value={checkOutDate}
+              onChange={setCheckOutDate}
+              minDate={checkInDate || todayString}
+              placeholder="Add dates"
+            />
+          </div>
+
+          {/* Guests */}
+          <div className="flex-1 px-5 py-4 md:py-3 md:px-6 hover:bg-slate-50 transition-colors cursor-pointer focus-within:bg-slate-50 group z-[43]">
+            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1 group-hover:text-accent transition-colors">Guests</label>
+            <CustomSelect
+              value={guests}
+              onChange={setGuests}
+              placeholder="Any"
+              options={[
+                { value: "", label: "Any" },
+                { value: "2", label: "2+ guests" },
+                { value: "4", label: "4+ guests" },
+                { value: "6", label: "6+ guests" },
+                { value: "8", label: "8+ guests" },
+                { value: "10", label: "10+ guests" }
+              ]}
+            />
+          </div>
+
+          {/* Bedrooms */}
+          <div className="flex-1 px-5 py-4 md:py-3 md:px-6 hover:bg-slate-50 transition-colors cursor-pointer focus-within:bg-slate-50 group z-[42]">
+            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1 group-hover:text-accent transition-colors">Bedrooms</label>
+            <CustomSelect
+              value={bedrooms}
+              onChange={setBedrooms}
+              placeholder="Any"
+              options={[
+                { value: "", label: "Any" },
+                { value: "3", label: "3+ bdrms" },
+                { value: "4", label: "4+ bdrms" },
+                { value: "5", label: "5+ bdrms" },
+                { value: "6", label: "6+ bdrms" },
+                { value: "7", label: "7+ bdrms" },
+                { value: "8", label: "8+ bdrms" }
+              ]}
+            />
+          </div>
+
+          {/* Search Button */}
+          <div className="p-3 shrink-0 md:ml-1 rounded-b-3xl md:rounded-b-none md:rounded-r-[3rem] hover:bg-slate-50 transition-colors">
+            <button
+              onClick={handleSearch}
+              disabled={isSearching}
+              className="w-full md:w-16 md:h-16 flex items-center justify-center gap-3 rounded-full bg-accent py-4 md:py-0 font-bold text-white shadow-lg shadow-accent/30 transition-all hover:bg-accent/90 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <FaSearch className="text-xl" />
+              <span className="md:hidden">Search Properties</span>
+            </button>
+          </div>
+        </div>
 
           {/* Status bar */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
@@ -420,7 +393,6 @@ const PropertyOverview = ({ initialProperties = [] }) => {
             </div>
           )}
         </div>
-      </div>
 
       {/* Property Grid */}
       <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-8">

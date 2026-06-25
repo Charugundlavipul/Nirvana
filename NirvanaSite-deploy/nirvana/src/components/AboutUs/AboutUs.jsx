@@ -4,33 +4,28 @@ import React, { useEffect, useRef } from "react";
 import { FaEnvelope, FaInstagram, FaFacebook, FaPhone } from 'react-icons/fa';
 
 const AboutUs = () => {
-  const heroRef = useRef(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.pageYOffset;
-      if (heroRef.current) {
-        heroRef.current.style.backgroundPositionY = `calc(50% + ${scrollPosition / 2}px)`;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans text-gray-800 pb-20">
-      <div
-        ref={heroRef}
-        className="site-hero site-hero--md w-full overflow-hidden bg-cover bg-center"
-        style={{
-          backgroundImage: `url(/assets/aboutUs-hero.avif)`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg">About Us</h1>
+      <section className="hero-section relative overflow-hidden bg-white px-4 pb-4 pt-28 sm:px-6 sm:pb-4 sm:pt-28 md:pb-6 md:pt-28 border-b border-slate-100">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/5 sm:h-96 sm:w-96"></div>
+          <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-emerald-50 sm:h-[420px] sm:w-[420px]"></div>
+          <div className="absolute right-1/4 top-1/3 h-40 w-40 rounded-full bg-amber-50/70 blur-2xl"></div>
         </div>
-      </div>
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Who We Are</span>
+          </div>
+          <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            About Us
+          </h1>
+          <p className="mx-auto max-w-xl text-sm text-slate-500 sm:text-base">
+            Driven by a passion for creating extraordinary getaway experiences.
+          </p>
+        </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-6 py-20 space-y-24">
         <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">

@@ -61,7 +61,7 @@ const FAQ = ({ initialProperties = [], initialSlug = null, initialFaqs = [] }) =
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       {/* Light Hero */}
-      <section className="relative overflow-hidden bg-white px-4 pb-10 pt-28 sm:px-6 sm:pb-14 sm:pt-32 md:pb-16 md:pt-36">
+      <section className="hero-section relative overflow-hidden bg-white px-4 pb-4 pt-28 sm:px-6 sm:pb-4 sm:pt-28 md:pb-6 md:pt-28 border-b border-slate-100">
         {/* Decorative shapes */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/5 sm:h-96 sm:w-96"></div>

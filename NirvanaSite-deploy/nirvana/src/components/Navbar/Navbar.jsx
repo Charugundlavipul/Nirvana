@@ -47,10 +47,10 @@ function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Properties', path: '/properties' },
+    { name: 'Investors', path: '/hosts', highlight: true },
     { name: 'FAQ', path: '/faq' },
     { name: 'Reviews', path: '/review' },
     { name: 'About', path: '/about' },
-    { name: 'Hosts', path: '/hosts' },
     { name: 'Contact', path: '/contact' },
   ];
 
@@ -79,9 +79,11 @@ function Navbar() {
                 key={link.name}
                 href={link.path}
                 onClick={handleLinkClick}
-                className={`text-sm font-medium uppercase tracking-widest transition-colors ${isActive(link.path)
-                  ? 'text-primary border-b-2 border-accent'
-                  : 'text-gray-600 hover:text-primary hover:border-b-2 hover:border-accent/50'
+                className={`text-sm font-medium uppercase tracking-widest transition-all ${link.highlight
+                  ? 'text-accent border border-accent/30 bg-accent/5 px-4 py-1.5 rounded-full hover:bg-accent hover:text-white'
+                  : isActive(link.path)
+                    ? 'text-primary border-b-2 border-accent'
+                    : 'text-gray-600 hover:text-primary hover:border-b-2 hover:border-accent/50'
                   }`}
               >
                 {link.name}
@@ -129,7 +131,7 @@ function Navbar() {
             key={link.name}
             href={link.path}
             onClick={handleLinkClick}
-            className={`text-2xl font-bold ${isActive(link.path) ? 'text-primary' : 'text-gray-800'
+            className={`text-2xl font-bold ${link.highlight ? 'text-accent' : isActive(link.path) ? 'text-primary' : 'text-gray-800'
               }`}
           >
             {link.name}

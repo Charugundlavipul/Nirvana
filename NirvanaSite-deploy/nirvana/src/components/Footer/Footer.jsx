@@ -65,7 +65,7 @@ const Footer = () => {
                         <div className="bg-white/95 inline-block p-3 rounded-2xl shadow-sm">
                             <Image
                                 src="/assets/nirvana_logo_transparent.png"
-                                alt="Nirvana Luxe — Luxury Vacation Rentals in the Smoky Mountains and Lake Norman"
+                                alt="Nirvana Luxe — Luxury Vacation Rentals in the Smoky Mountains, Lake Norman, and Lake Wylie"
                                 width={240}
                                 height={60}
                                 className="object-contain"
@@ -74,7 +74,7 @@ const Footer = () => {
                         <p className="max-w-xs text-sm leading-relaxed text-slate-300">
                             Luxury homes, curated locations, and elevated hospitality designed for unforgettable stays.
                         </p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Sevierville, TN and Lake Norman, NC</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Sevierville, TN and Lake Norman & Lake Wylie, NC</p>
                     </section>
 
                     <section>
