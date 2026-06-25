@@ -26,12 +26,7 @@ export async function generateMetadata({ params }) {
     title: `${property.name} FAQ`,
     description: `Answers to common questions about ${property.name}, including amenities, booking, and house rules.`,
     pathname: `/faq/${property.slug}`,
-    // Keep FAQ subpages out of search results so Google prefers the main property page.
-    // Revert by removing `canonicalPathname` and `noindex` if these pages should rank independently again.
-    canonicalPathname: `/${property.slug}`,
     images: [property.curated?.home || property.curated?.secondary || "/logo512.png"],
-    noindex: true,
-    follow: true,
   });
 }
 
