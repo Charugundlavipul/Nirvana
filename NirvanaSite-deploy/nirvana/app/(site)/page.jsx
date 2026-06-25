@@ -6,6 +6,7 @@ import {
   buildBreadcrumbJsonLd,
   buildOrganizationJsonLd,
   buildSiteNavigationJsonLd,
+  buildLocalBusinessJsonLd,
 } from "../../src/lib/seo";
 import { SITE_ALTERNATE_NAMES, SITE_NAME, absoluteUrl } from "../../src/lib/siteConfig";
 
@@ -116,6 +117,7 @@ export default async function HomePage() {
   return (
     <>
       <StructuredData data={organizationJsonLd} />
+      <StructuredData data={buildLocalBusinessJsonLd(reviews)} />
       <StructuredData data={websiteJsonLd} />
       <StructuredData data={webpageJsonLd} />
       <StructuredData data={propertyListJsonLd} />

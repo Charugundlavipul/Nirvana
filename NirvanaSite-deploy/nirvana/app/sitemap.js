@@ -30,6 +30,7 @@ export default async function sitemap() {
     `/${slug}/gallery`,
     `/book/${slug}`,
     `/activities/${slug}`,
+    `/faq/${slug}`,
   ]);
 
   const blogRoutes = blogSlugs.map((slug) => `/blog/${slug}`);
@@ -38,6 +39,6 @@ export default async function sitemap() {
     url: `${siteUrl}${pathname}`,
     lastModified: now,
     changeFrequency: pathname === "" ? "weekly" : pathname.startsWith("/blog") ? "weekly" : "monthly",
-    priority: pathname === "" ? 1 : pathname.startsWith("/book") ? 0.8 : pathname.startsWith("/blog/") ? 0.6 : 0.7,
+    priority: pathname === "" ? 1 : pathname.startsWith("/book") ? 0.8 : /^\/[a-z]/.test(pathname) && !pathname.includes("/", 1) ? 0.9 : pathname.startsWith("/blog/") ? 0.6 : pathname.startsWith("/faq/") ? 0.7 : 0.7,
   }));
 }

@@ -1,5 +1,6 @@
 import "../src/index.css";
 import Script from "next/script";
+import { Inter } from "next/font/google";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
@@ -50,16 +51,26 @@ export const metadata = {
 
 import DomainMigrationBanner from "../src/components/DomainMigrationBanner/DomainMigrationBanner";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
+      <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+      </head>
       <body>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100000] focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-sm focus:font-semibold">Skip to main content</a>
         <DomainMigrationBanner />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-XE6P41ERZ5"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

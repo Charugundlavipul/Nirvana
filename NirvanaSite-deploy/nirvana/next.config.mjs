@@ -18,6 +18,9 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizeCss: true,
+  },
   async redirects() {
     return [
       // --- Old .co domain → new domain ---

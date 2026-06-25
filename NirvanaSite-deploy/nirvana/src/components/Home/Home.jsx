@@ -224,7 +224,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </div>
 
       {/* Signature Retreats Section */}
-      <section className="relative overflow-hidden bg-slate-50 px-6 pb-16 pt-20 md:pt-36">
+      <section aria-label="Signature Properties" className="relative overflow-hidden bg-slate-50 px-6 pb-16 pt-20 md:pt-36">
         {/* Luxury Decorative Background Elements */}
         {/* Stronger grid pattern */}
         <div className="absolute inset-0 z-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(#0f172a 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>
@@ -313,7 +313,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Original Guest Experiences Section */}
-      <section className="pt-16 pb-28 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
+      <section aria-label="Guest Reviews" className="pt-16 pb-28 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
 
@@ -403,8 +403,85 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
         </div>
       </section>
 
+      {/* Why Choose Nirvana Luxe — SEO content section */}
+      <section aria-label="Why Choose Nirvana Luxe" className="relative bg-white px-6 py-16 md:py-24">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">THE NIRVANA LUXE DIFFERENCE</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Why Choose Nirvana Luxe Vacation Rentals</h2>
+            <p className="text-xl text-gray-500 max-w-3xl mx-auto font-light leading-relaxed">
+              We curate only the finest luxury vacation rentals in Tennessee and North Carolina — each property hand-selected for exceptional quality, premium amenities, and unforgettable guest experiences.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+            <div className="text-center space-y-4 p-6">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏔️</div>
+              <h3 className="text-xl font-bold text-gray-900">Smoky Mountain Luxury Cabins</h3>
+              <p className="text-gray-600 leading-relaxed">
+                From romantic cabins for couples with mountain views and hot tubs to spacious lodges sleeping up to 26 guests, our Sevierville and Pigeon Forge luxury cabin rentals feature private indoor pools, home theaters, game rooms, and more. Perfect for family reunions, bachelorette parties, and large group getaways in the Tennessee Smoky Mountains.
+              </p>
+            </div>
+
+            <div className="text-center space-y-4 p-6">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏡</div>
+              <h3 className="text-xl font-bold text-gray-900">Lakefront Vacation Homes</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Our Lake Norman lakefront rentals near Charlotte NC offer private docks, stunning water views, and resort-style amenities. Whether you're planning a romantic lakeside retreat for couples or a summer vacation with the whole family, these luxury vacation homes deliver unmatched waterfront living.
+              </p>
+            </div>
+
+            <div className="text-center space-y-4 p-6">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">💰</div>
+              <h3 className="text-xl font-bold text-gray-900">Best Rate — Book Direct</h3>
+              <p className="text-gray-600 leading-relaxed">
+                When you book direct with Nirvana Luxe instead of Airbnb or VRBO, you save on service fees and get personal concierge support, curated local recommendations, and our best rate guarantee. No middleman — just premium hospitality from a team that truly cares about your experience.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Destinations — SEO internal linking section */}
+      <section aria-label="Explore Our Destinations" className="bg-slate-50 px-6 py-16 md:py-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">EXPLORE OUR DESTINATIONS</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Premium Vacation Rental Destinations</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-md transition-all">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Sevierville &amp; Smoky Mountains, TN</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                Discover luxury cabin rentals in the Great Smoky Mountains — America's most-visited national park. Our Sevierville properties are minutes from Dollywood, Gatlinburg, and Pigeon Forge. Each cabin features premium amenities like private heated pools, hot tubs, game rooms with arcade games, and panoramic mountain views.
+              </p>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                Ideal for couples seeking a romantic mountain getaway, families looking for smoky mountain cabins with indoor pools, or large groups celebrating milestones in style.
+              </p>
+              <Link href="/properties" className="text-accent font-semibold hover:underline inline-flex items-center gap-2">
+                Browse Smoky Mountain Rentals <FaChevronRight size={12} />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-md transition-all">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Lake Norman &amp; Charlotte, NC</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                Experience lakefront luxury on Lake Norman — North Carolina's inland sea. Our waterfront vacation homes in Mooresville and Charlotte offer private boat docks, infinity-edge pool views, and upscale finishes throughout. Wake up to sunrise over the water and spend your days boating, paddleboarding, or exploring the local wine scene.
+              </p>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                Perfect for nature-loving couples, corporate retreats, and milestone celebrations on the water.
+              </p>
+              <Link href="/properties" className="text-accent font-semibold hover:underline inline-flex items-center gap-2">
+                Browse Lake Norman Rentals <FaChevronRight size={12} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="site-viewport-section relative flex items-center justify-center overflow-hidden bg-gray-900 px-4 text-white sm:px-6">
+      <section aria-label="Call to Action" className="site-viewport-section relative flex items-center justify-center overflow-hidden bg-gray-900 px-4 text-white sm:px-6">
         <Image
           src={CTA_IMAGE}
           alt=""
@@ -425,12 +502,14 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => router.push("/book")}
+              aria-label="Book your luxury vacation rental now"
               className="bg-accent hover:bg-accent/90 text-white font-bold py-4 px-12 text-lg shadow-2xl transition-all uppercase tracking-widest"
             >
               BOOK NOW
             </button>
             <button
               onClick={() => router.push("/properties")}
+              aria-label="View all Nirvana Luxe properties"
               className="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-4 px-12 text-lg transition-all uppercase tracking-widest"
             >
               VIEW PROPERTIES
@@ -455,7 +534,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
           <Image
             key={currentImage}
             src={currentImage}
-            alt={`${title} - image ${safeIndex + 1}`}
+            alt={`${title} — luxury vacation rental in ${location}`}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={65}

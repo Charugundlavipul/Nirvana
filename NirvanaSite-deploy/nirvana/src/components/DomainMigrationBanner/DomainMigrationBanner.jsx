@@ -44,6 +44,8 @@ export default function DomainMigrationBanner() {
   return (
     <div
       id="domain-migration-banner"
+      role="alert"
+      aria-live="polite"
       onClick={dismiss}
       style={{
         position: "fixed",

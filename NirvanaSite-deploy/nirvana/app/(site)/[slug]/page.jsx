@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import PropertyPage from "../../../src/components/PropertyPage/PropertyPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { getHospitablePropertyById, getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
+import { getHospitablePropertyById, getPropertyBundleBySlug, getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
 import { buildMetadata, buildPropertyJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 import { SITE_NAME, absoluteUrl } from "../../../src/lib/siteConfig";
 
@@ -28,36 +28,36 @@ export async function generateMetadata({ params }) {
   // bedroom counts. Bold features grab attention in search results.
   const propertyMeta = {
     nirvana: {
-      title: "Nirvana Cabin - Private Pool, Hot Tub & Mountain Views | 14 Guests",
-      description: "Luxury 4BR cabin with private heated pool, hot tub, mountain views & game room near Pigeon Forge. Sleeps 14. Book direct & save vs. Airbnb.",
+      title: "Nirvana Cabin - Private Pool, Hot Tub & Mountain Views | Luxury Smoky Mountain Rental",
+      description: "Luxury 4BR Smoky Mountain cabin with private heated pool, hot tub, mountain views & game room near Pigeon Forge. Best romantic cabin getaway for couples or families. Sleeps 14. Book direct & save.",
     },
     "shoreside-oasis": {
-      title: "Shoreside Oasis - Private Dock & Stunning Lake Views | 12 Guests",
-      description: "5BR lakefront luxury home on Lake Norman with private dock, infinity-edge views & resort amenities. Sleeps 12 in Mooresville NC. Book direct for best rate.",
+      title: "Shoreside Oasis - Lakefront Luxury Villa with Private Dock | Lake Norman NC",
+      description: "Best luxury villa for nature-loving couples on Lake Norman. 5BR lakefront home with private dock, infinity-edge views & resort amenities. Sleeps 12 in Mooresville NC. Book direct for best rate.",
     },
     "halftime-hideaway": {
-      title: "Halftime Hideaway - Indoor Pool, Hot Tub & Game Rooms | 22 Guests",
-      description: "Luxury 5BR cabin with private indoor heated pool, hot tub, home theater & multiple game rooms. Sleeps 22 in Sevierville TN. Book direct & save vs. Airbnb.",
+      title: "Halftime Hideaway - Indoor Pool, Hot Tub & Game Rooms | Smoky Mountain Cabin",
+      description: "Smoky mountain cabin rental with indoor pool — luxury 5BR cabin with private heated indoor pool, hot tub, home theater & game rooms. Most romantic cabin rental for couples or groups up to 22. Sevierville TN.",
     },
     "grand-prix-getaway": {
-      title: "Grand Prix Getaway - Racing Theme, Pool & Arcade | 26 Guests",
-      description: "Ultimate 6BR racing-themed cabin with private pool, arcade games, home theater & mountain views. Sleeps 26 in Sevierville TN. Book direct & save.",
+      title: "Grand Prix Getaway - Racing Theme Luxury Cabin with Pool & Arcade | Sevierville TN",
+      description: "Ultimate luxury cabin getaway — 6BR racing-themed cabin with private pool, arcade, home theater & mountain views. Smoky mountain cabins with pool for large groups up to 26. Book direct & save.",
     },
     "chalet-du-lac": {
-      title: "Chalet Du Lac - Lakefront Luxury on Lake Norman | Charlotte NC",
-      description: "Stunning lakefront chalet on Lake Norman with panoramic water views, private dock & luxury finishes. Perfect Charlotte getaway. Book direct for best rate.",
+      title: "Chalet Du Lac - Lakefront Luxury Chalet on Lake Norman | Charlotte NC",
+      description: "Stunning lakefront luxury vacation rental on Lake Norman with panoramic water views, private dock & luxury finishes. Best luxury villa for nature-loving couples near Charlotte. Book direct.",
     },
     "cabin-at-the-summit": {
-      title: "Cabin At The Summit - Panoramic Mountain Views | Smoky Mountains",
-      description: "Breathtaking mountain views from every room in this luxury Smoky Mountains cabin. Hot tub, game room & serene setting. Book direct & save vs. Airbnb.",
+      title: "Cabin At The Summit - Panoramic Mountain Views | Luxury Smoky Mountain Cabin Rental",
+      description: "Luxury vacation rental in Tennessee with breathtaking mountain views from every room. Hot tub, game room & serene setting. Most romantic cabin rental in the Smokies. Book direct & save.",
     },
     "evergreen-escape": {
-      title: "Evergreen Escape - Peaceful Mountain Retreat | Sevierville TN",
-      description: "Secluded luxury cabin surrounded by nature with hot tub, mountain views & modern amenities in Sevierville TN. Perfect couples or family getaway. Book direct.",
+      title: "Evergreen Escape - Peaceful Mountain Retreat | Luxury Cabin for Couples in Sevierville",
+      description: "Luxury cabin getaway for couples — secluded retreat surrounded by nature with hot tub, mountain views & modern amenities in Sevierville TN. Best romantic cabin rental. Book direct.",
     },
     "the-grand-sumeru": {
-      title: "The Grand Sumeru - Premium Mountain Lodge | Smoky Mountains",
-      description: "Spacious luxury mountain lodge with premium finishes, hot tub, game room & stunning Smoky Mountain views. Ideal for large groups. Book direct & save.",
+      title: "The Grand Sumeru - Premium Mountain Lodge | Luxury Vacation Rental Tennessee",
+      description: "Spacious luxury vacation rental in Tennessee — premium mountain lodge with hot tub, game room & stunning Smoky Mountain views. Ideal for large groups & family cabin getaways. Book direct & save.",
     },
   };
 
@@ -90,10 +90,11 @@ export async function generateMetadata({ params }) {
 
 export default async function PropertyDetailPage({ params }) {
   const { slug } = await params;
-  const [bundle, reviews, activities] = await Promise.all([
+  const [bundle, reviews, activities, allProperties] = await Promise.all([
     getPropertyBundleBySlug(slug),
     getReviews({ slug }),
     getActivitiesBySlug(slug),
+    getPropertyCards(),
   ]);
 
   if (!bundle?.property) notFound();
@@ -120,7 +121,7 @@ export default async function PropertyDetailPage({ params }) {
       <StructuredData data={buildPropertyJsonLd(bundle.property, bundle, reviews, hospitableProperty)} />
       <StructuredData data={breadcrumbJsonLd} />
       <StructuredData data={webPageJsonLd} />
-      <PropertyPage slug={slug} initialBundle={bundle} initialReviews={reviews} initialActivities={activities} />
+      <PropertyPage slug={slug} initialBundle={bundle} initialReviews={reviews} initialActivities={activities} allProperties={allProperties} />
     </>
   );
 }

@@ -13,7 +13,7 @@ import ContactForm from '../Contact/ContactForm';
 import HospitableWidget from '../common/HospitableWidget';
 import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
 
-const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [] }) => {
+const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [], allProperties = [] }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
     const heroRef = useRef(null);
@@ -266,9 +266,9 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     <div className="relative w-full flex-1 group">
                         <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-accent/20 to-transparent opacity-0 transition-opacity duration-500 md:-inset-4 group-hover:opacity-100"></div>
                         <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-                            <img
+                                <img
                                 src={introImageSrc}
-                                alt="Property Exterior"
+                                alt={`${property.name} — luxury vacation rental exterior in ${property.location || 'Smoky Mountains'}`}
                                 fetchPriority="high"
                                 decoding="async"
                                 className="aspect-[4/3] w-full cursor-pointer object-cover transition-transform duration-700 group-hover:scale-105"
@@ -354,7 +354,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                             onClick={() => openLightbox(sliderImages[0])}
                         >
                             {sliderImages[0] && (
-                                <img src={sliderImages[0]} alt="Property Main" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <img src={sliderImages[0]} alt={`${property.name} main photo — luxury ${property.location || 'vacation rental'}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             )}
                             <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
@@ -368,7 +368,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                         className="relative group cursor-pointer overflow-hidden"
                                         onClick={() => openLightbox(imgSrc)}
                                     >
-                                        <img src={imgSrc} alt={`Property ${idx + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <img src={imgSrc} alt={`${property.name} — photo ${idx + 2} of luxury cabin in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </div>
                                 ))}
@@ -378,7 +378,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                     className="relative group cursor-pointer overflow-hidden"
                                     onClick={() => openLightbox(sliderImages[4])}
                                 >
-                                    <img src={sliderImages[4]} alt="Property 4" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <img src={sliderImages[4]} alt={`${property.name} — photo 5 of luxury cabin in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/40 transition-colors duration-300 group-hover:bg-black/50 flex flex-col items-center justify-center">
                                         <span className="text-white text-3xl font-bold mb-1">+{sliderImages.length - 5 > 0 ? sliderImages.length - 5 : ''}</span>
                                         <span className="text-white/90 text-sm font-semibold uppercase tracking-widest">View All Photos</span>
@@ -393,7 +393,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                         className="flex-1 relative group cursor-pointer overflow-hidden"
                                         onClick={() => openLightbox(imgSrc)}
                                     >
-                                        <img src={imgSrc} alt={`Property ${idx + 1}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <img src={imgSrc} alt={`${property.name} — photo ${idx + 2} of luxury rental in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </div>
                                 ))}
@@ -409,7 +409,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                 className="flex-shrink-0 w-[85vw] h-[60vw] snap-center relative rounded-2xl overflow-hidden shadow-lg cursor-pointer"
                                 onClick={() => openLightbox(imgSrc)}
                             >
-                                <img src={imgSrc} alt={`Gallery ${i}`} loading="lazy" className="w-full h-full object-cover" />
+                                <img src={imgSrc} alt={`${property.name} gallery photo ${i + 1} — luxury vacation rental in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="w-full h-full object-cover" />
                                 <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full">
                                     {i + 1} / {sliderImages.length}
                                 </div>
@@ -440,6 +440,104 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             {/* Hospitable Direct Widget (for Google Vacation Rentals listing) */}
             {property.booking_url && (
                 <HospitableWidget bookingUrl={property.booking_url} />
+            )}
+
+            {/* Location & Area Guide — SEO content section */}
+            <section className="py-16 md:py-20 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Explore the Area</p>
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">About {property.location || 'This Destination'}</h2>
+                    </div>
+                    <div className="max-w-4xl mx-auto space-y-5 text-lg text-slate-600 font-light leading-relaxed">
+                        {(property.location || '').toLowerCase().includes('sevierville') || (property.location || '').toLowerCase().includes('smoky') || (property.location || '').toLowerCase().includes('tennessee') ? (
+                            <>
+                                <p>
+                                    <strong>{property.name}</strong> is a luxury vacation rental nestled in the heart of the Smoky Mountains near Sevierville, Tennessee. This premier destination offers world-class attractions including Dollywood, the Great Smoky Mountains National Park, and Gatlinburg's vibrant arts and crafts community — all within easy reach of your private retreat.
+                                </p>
+                                <p>
+                                    Whether you're seeking a romantic cabin getaway for couples, a spacious mountain lodge for large group celebrations, or a family vacation home with premium amenities like private pools, hot tubs, and game rooms, Sevierville's luxury cabin rentals deliver unforgettable experiences year-round. From fall foliage drives along the Blue Ridge Parkway to summer tubing on the Little Pigeon River, every season brings new reasons to visit.
+                                </p>
+                                <p>
+                                    Book direct with Nirvana Luxe and enjoy the best rates on luxury Smoky Mountain cabin rentals — no service fees, personal concierge support, and curated local recommendations to make your Tennessee vacation truly extraordinary.
+                                </p>
+                            </>
+                        ) : (property.location || '').toLowerCase().includes('norman') || (property.location || '').toLowerCase().includes('mooresville') || (property.location || '').toLowerCase().includes('charlotte') || (property.location || '').toLowerCase().includes('north carolina') ? (
+                            <>
+                                <p>
+                                    <strong>{property.name}</strong> is a premium lakefront vacation rental on Lake Norman, North Carolina's largest man-made lake. Located in the Charlotte metro area, Lake Norman offers over 520 miles of shoreline, pristine waters for boating and paddleboarding, and a thriving waterfront dining scene.
+                                </p>
+                                <p>
+                                    Perfect for couples seeking a romantic lakefront getaway or families looking for a luxury lake house with private dock access, Lake Norman vacation rentals combine natural beauty with upscale amenities. Enjoy sunset cruises, championship golf at nearby courses, or explore the charming towns of Mooresville and Davidson.
+                                </p>
+                                <p>
+                                    Book direct with Nirvana Luxe for the best rate guaranteed on luxury Lake Norman rentals — complete with personal concierge service and curated local guides.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p>
+                                    <strong>{property.name}</strong> is a premium luxury vacation rental in {property.location}, hand-selected by Nirvana Luxe for its exceptional quality, prime location, and unforgettable guest experiences.
+                                </p>
+                                <p>
+                                    Book direct with Nirvana Luxe and enjoy the best rates — no service fees, personal concierge support, and curated local recommendations.
+                                </p>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </section>
+
+            {/* Related Properties — internal linking for SEO */}
+            {allProperties.length > 1 && (
+                <section className="py-16 md:py-20 bg-slate-50">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-12">
+                            <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Explore More</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">You Might Also Like</h2>
+                            <p className="text-lg text-slate-500 max-w-2xl mx-auto font-light">Discover other handpicked luxury vacation rentals from the Nirvana Luxe collection</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {allProperties
+                                .filter((p) => p.slug !== slug)
+                                .slice(0, 3)
+                                .map((p) => (
+                                    <Link
+                                        key={p.slug}
+                                        href={`/${p.slug}`}
+                                        className="group block rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                                    >
+                                        {(p.primary_image || p.image) && (
+                                            <div className="aspect-[4/3] overflow-hidden">
+                                                <img
+                                                    src={p.primary_image || p.image}
+                                                    alt={`${p.name || p.title} — luxury vacation rental in ${p.location || 'Smoky Mountains'}`}
+                                                    loading="lazy"
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="p-5">
+                                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-accent transition-colors mb-1">{p.name || p.title}</h3>
+                                            {p.location && <p className="text-sm text-slate-500 flex items-center gap-1"><FaMapMarkerAlt className="text-accent text-xs" /> {p.location}</p>}
+                                            <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+                                                {p.bedroom_count > 0 && <span className="flex items-center gap-1"><FaBed className="text-accent" /> {p.bedroom_count} BR</span>}
+                                                {p.guests_max > 0 && <span className="flex items-center gap-1"><FaUsers className="text-accent" /> {p.guests_max} guests</span>}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                        </div>
+                        <div className="text-center mt-10">
+                            <Link
+                                href="/properties"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg text-sm uppercase tracking-widest"
+                            >
+                                View All Properties
+                            </Link>
+                        </div>
+                    </div>
+                </section>
             )}
 
             {/* CTA Section */}

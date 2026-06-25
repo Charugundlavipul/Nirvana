@@ -6,7 +6,7 @@ export default function SiteLayout({ children }) {
   return (
     <>
       <Navbar />
-      <main className="main-content">{children}</main>
+      <main id="main-content" className="main-content">{children}</main>
       <Footer />
       <ChatWidget />
     </>

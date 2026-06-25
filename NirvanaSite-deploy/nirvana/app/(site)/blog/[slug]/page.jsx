@@ -1,7 +1,7 @@
 import BlogPost from "../../../../src/components/Blog/BlogPost";
 import StructuredData from "../../../../src/components/StructuredData";
 import { getBlogBySlug, getBlogSlugs } from "../../../../src/lib/serverContentApi";
-import { buildMetadata } from "../../../../src/lib/seo";
+import { buildMetadata, buildArticleJsonLd } from "../../../../src/lib/seo";
 import { absoluteUrl, SITE_NAME } from "../../../../src/lib/siteConfig";
 
 export const revalidate = 21600;
@@ -42,25 +42,7 @@ export default async function BlogPostPage({ params }) {
   const { slug } = await params;
   const post = await getBlogBySlug(slug);
 
-  const articleJsonLd = post ? {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.excerpt,
-    image: post.cover_image ? [post.cover_image] : [],
-    datePublished: post.created_at,
-    author: [{
-      "@type": "Organization",
-      name: post.author_name || post.author || "Nirvana Luxe Team",
-      url: absoluteUrl("/"),
-    }],
-    publisher: {
-      "@type": "Organization",
-      name: SITE_NAME,
-      logo: { "@type": "ImageObject", url: absoluteUrl("/logo512.png") },
-    },
-    mainEntityOfPage: absoluteUrl(`/blog/${slug}`),
-  } : null;
+  const articleJsonLd = post ? buildArticleJsonLd(post) : null;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",

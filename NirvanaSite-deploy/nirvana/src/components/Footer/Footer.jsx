@@ -58,9 +58,9 @@ const Footer = () => {
     };
 
     return (
-        <footer className="mt-16 font-sans">
+        <footer aria-label="Site footer" className="mt-16 font-sans">
             <div className="bg-[#0a1222] text-white">
-                <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-14 md:grid-cols-2 lg:grid-cols-4">
+                <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-14 md:grid-cols-2 lg:grid-cols-5">
                     <section className="space-y-4">
                         <div className="bg-white/95 inline-block p-3 rounded-2xl shadow-sm">
                             <Image
@@ -87,6 +87,20 @@ const Footer = () => {
                             <li><Link href="/faq" className="transition hover:text-accent">FAQ</Link></li>
                             <li><Link href="/about" className="transition hover:text-accent">About Us</Link></li>
                             <li><Link href="/contact" className="transition hover:text-accent">Contact Us</Link></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-slate-200">Properties</h2>
+                        <ul className="space-y-2 text-sm text-slate-300">
+                            <li><Link href="/nirvana" className="transition hover:text-accent">Nirvana</Link></li>
+                            <li><Link href="/halftime-hideaway" className="transition hover:text-accent">Halftime Hideaway</Link></li>
+                            <li><Link href="/grand-prix-getaway" className="transition hover:text-accent">Grand Prix Getaway</Link></li>
+                            <li><Link href="/shoreside-oasis" className="transition hover:text-accent">Shoreside Oasis</Link></li>
+                            <li><Link href="/cabin-at-the-summit" className="transition hover:text-accent">Cabin At The Summit</Link></li>
+                            <li><Link href="/evergreen-escape" className="transition hover:text-accent">Evergreen Escape</Link></li>
+                            <li><Link href="/chalet-du-lac" className="transition hover:text-accent">Chalet Du Lac</Link></li>
+                            <li><Link href="/the-grand-sumeru" className="transition hover:text-accent">The Grand Sumeru</Link></li>
                         </ul>
                     </section>
 

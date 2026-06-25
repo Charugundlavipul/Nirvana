@@ -640,3 +640,112 @@ export function buildWebPageJsonLd({
     },
   };
 }
+
+/* ──────────────────────────────────────────────
+   LocalBusiness JSON-LD — strengthens geo-
+   targeted queries like "luxury vacation rental
+   tennessee" and "lake norman rentals"
+   ────────────────────────────────────────────── */
+
+export function buildLocalBusinessJsonLd(allReviews = []) {
+  const validReviews = (allReviews || []).filter((review) => review?.text);
+  const ratingValue = validReviews.length
+    ? (
+        validReviews.reduce((sum, review) => sum + Number(review.rating || 5), 0) /
+        validReviews.length
+      ).toFixed(1)
+    : null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": absoluteUrl("/#localbusiness"),
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: absoluteUrl("/"),
+    telephone: SITE_PHONE,
+    email: SITE_EMAIL,
+    image: absoluteUrl("/logo512.png"),
+    logo: absoluteUrl("/logo512.png"),
+    priceRange: "$$$",
+    sameAs: SOCIAL_LINKS,
+    areaServed: [
+      {
+        "@type": "State",
+        name: "Tennessee",
+        containsPlace: [
+          { "@type": "City", name: "Sevierville" },
+          { "@type": "City", name: "Pigeon Forge" },
+          { "@type": "City", name: "Gatlinburg" },
+        ],
+      },
+      {
+        "@type": "State",
+        name: "North Carolina",
+        containsPlace: [
+          { "@type": "City", name: "Mooresville" },
+          { "@type": "City", name: "Charlotte" },
+        ],
+      },
+    ],
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 35.8682,
+      longitude: -83.5683,
+    },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Sevierville",
+      addressRegion: "TN",
+      addressCountry: "US",
+    },
+    ...(ratingValue && validReviews.length
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue,
+            reviewCount: validReviews.length,
+            bestRating: "5",
+            worstRating: "1",
+          },
+        }
+      : {}),
+  };
+}
+
+/* ──────────────────────────────────────────────
+   Article JSON-LD builder — includes dateModified
+   for freshness signals in Google search
+   ────────────────────────────────────────────── */
+
+export function buildArticleJsonLd(post) {
+  if (!post) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.cover_image ? [post.cover_image] : [],
+    datePublished: post.created_at,
+    dateModified: post.updated_at || post.created_at,
+    author: [{
+      "@type": "Organization",
+      name: post.author_name || post.author || "Nirvana Luxe Team",
+      url: absoluteUrl("/"),
+    }],
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: { "@type": "ImageObject", url: absoluteUrl("/logo512.png") },
+    },
+    mainEntityOfPage: absoluteUrl(`/blog/${post.slug}`),
+    keywords: [
+      post.category,
+      "luxury travel",
+      "Smoky Mountains",
+      "vacation rental",
+      "Nirvana Luxe",
+    ].filter(Boolean),
+  };
+}
