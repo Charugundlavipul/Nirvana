@@ -671,22 +671,20 @@ export function buildLocalBusinessJsonLd(allReviews = []) {
     sameAs: SOCIAL_LINKS,
     areaServed: [
       {
-        "@type": "State",
-        name: "Tennessee",
-        containsPlace: [
-          { "@type": "City", name: "Sevierville" },
-          { "@type": "City", name: "Pigeon Forge" },
-          { "@type": "City", name: "Gatlinburg" },
-        ],
+        "@type": "GeoCircle",
+        geoMidpoint: {
+          "@type": "GeoCoordinates",
+          latitude: "35.8687",
+          longitude: "-83.5618",
+        },
+        geoRadius: "50000",
       },
-      {
-        "@type": "State",
-        name: "North Carolina",
-        containsPlace: [
-          { "@type": "City", name: "Mooresville" },
-          { "@type": "City", name: "Charlotte" },
-        ],
-      },
+      { "@type": "City", name: "Sevierville" },
+      { "@type": "City", name: "Pigeon Forge" },
+      { "@type": "City", name: "Gatlinburg" },
+      { "@type": "City", name: "Walland" },
+      { "@type": "City", name: "Mooresville" },
+      { "@type": "City", name: "Charlotte" },
     ],
     geo: {
       "@type": "GeoCoordinates",

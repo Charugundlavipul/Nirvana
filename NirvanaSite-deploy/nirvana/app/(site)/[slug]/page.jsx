@@ -28,36 +28,36 @@ export async function generateMetadata({ params }) {
   // bedroom counts. Bold features grab attention in search results.
   const propertyMeta = {
     nirvana: {
-      title: "Nirvana Cabin - Private Pool, Hot Tub & Mountain Views | Luxury Smoky Mountain Rental",
-      description: "Luxury 4BR Smoky Mountain cabin with private heated pool, hot tub, mountain views & game room near Pigeon Forge. Best romantic cabin getaway for couples or families. Sleeps 14. Book direct & save.",
+      title: "Nirvana Cabin - Private Pool & Mountain Views | Pigeon Forge & Sevierville",
+      description: "Luxury 4BR Smoky Mountain cabin with private heated pool, hot tub, mountain views & game room near Pigeon Forge and Gatlinburg. Best romantic cabin getaway. Sleeps 14.",
     },
     "shoreside-oasis": {
       title: "Shoreside Oasis - Lakefront Luxury Villa with Private Dock | Lake Norman NC",
       description: "Best luxury villa for nature-loving couples on Lake Norman. 5BR lakefront home with private dock, infinity-edge views & resort amenities. Sleeps 12 in Mooresville NC. Book direct for best rate.",
     },
     "halftime-hideaway": {
-      title: "Halftime Hideaway - Indoor Pool, Hot Tub & Game Rooms | Smoky Mountain Cabin",
-      description: "Smoky mountain cabin rental with indoor pool — luxury 5BR cabin with private heated indoor pool, hot tub, home theater & game rooms. Most romantic cabin rental for couples or groups up to 22. Sevierville TN.",
+      title: "Halftime Hideaway - Indoor Pool, Hot Tub & Game Rooms | Gatlinburg & Pigeon Forge Area",
+      description: "Smoky mountain cabin rental with indoor pool — luxury 5BR cabin with private heated indoor pool, hot tub, home theater & game rooms. Perfect for large groups near Gatlinburg and Sevierville. Sleeps 22.",
     },
     "grand-prix-getaway": {
-      title: "Grand Prix Getaway - Racing Theme Luxury Cabin with Pool & Arcade | Sevierville TN",
-      description: "Ultimate luxury cabin getaway — 6BR racing-themed cabin with private pool, arcade, home theater & mountain views. Smoky mountain cabins with pool for large groups up to 26. Book direct & save.",
+      title: "Grand Prix Getaway - Racing Theme Cabin with Pool | Sevierville & Pigeon Forge TN",
+      description: "Ultimate luxury cabin getaway — 6BR racing-themed cabin with private pool, arcade, home theater & mountain views. Premium Smoky mountain cabins for large groups up to 26 near Pigeon Forge.",
     },
     "chalet-du-lac": {
       title: "Chalet Du Lac - Lakefront Luxury Chalet on Lake Norman | Charlotte NC",
       description: "Stunning lakefront luxury vacation rental on Lake Norman with panoramic water views, private dock & luxury finishes. Best luxury villa for nature-loving couples near Charlotte. Book direct.",
     },
     "cabin-at-the-summit": {
-      title: "Cabin At The Summit - Panoramic Mountain Views | Luxury Smoky Mountain Cabin Rental",
-      description: "Luxury vacation rental in Tennessee with breathtaking mountain views from every room. Hot tub, game room & serene setting. Most romantic cabin rental in the Smokies. Book direct & save.",
+      title: "Cabin At The Summit - Panoramic Mountain Views | Gatlinburg & Smoky Mountains",
+      description: "Luxury vacation rental in Tennessee with breathtaking mountain views from every room. Hot tub, game room & serene setting. The perfect mountain retreat minutes from Gatlinburg and Pigeon Forge.",
     },
     "evergreen-escape": {
-      title: "Evergreen Escape - Peaceful Mountain Retreat | Luxury Cabin for Couples in Sevierville",
-      description: "Luxury cabin getaway for couples — secluded retreat surrounded by nature with hot tub, mountain views & modern amenities in Sevierville TN. Best romantic cabin rental. Book direct.",
+      title: "Evergreen Escape - Peaceful Mountain Retreat | Walland & Sevierville TN",
+      description: "Luxury cabin getaway for couples — secluded retreat surrounded by nature with hot tub, mountain views & modern amenities. Experience the luxury of Walland and Sevierville. Book direct.",
     },
     "the-grand-sumeru": {
-      title: "The Grand Sumeru - Premium Mountain Lodge | Luxury Vacation Rental Tennessee",
-      description: "Spacious luxury vacation rental in Tennessee — premium mountain lodge with hot tub, game room & stunning Smoky Mountain views. Ideal for large groups & family cabin getaways. Book direct & save.",
+      title: "The Grand Sumeru - Premium Mountain Lodge | Gatlinburg, Pigeon Forge & Sevierville",
+      description: "Spacious luxury vacation rental in Tennessee — premium mountain lodge with hot tub, game room & stunning Smoky Mountain views. Ideal for large groups seeking the best of Gatlinburg and Pigeon Forge.",
     },
   };
 
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }) {
 
   const location = property.location || "Luxury Vacation Rental";
   const locationKeywords = location.toLowerCase().includes("sevierville")
-    ? ["Sevierville TN cabin", "Smoky Mountains luxury cabin", "cabin rental near Dollywood", "Tennessee vacation home"]
+    ? ["Gatlinburg cabin rental", "Pigeon Forge luxury cabin", "Sevierville TN vacation home", "Walland luxury retreat", "Smoky Mountains cabin"]
     : location.toLowerCase().includes("lake norman") || location.toLowerCase().includes("mooresville")
     ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
     : ["luxury vacation rental", "premium vacation home"];

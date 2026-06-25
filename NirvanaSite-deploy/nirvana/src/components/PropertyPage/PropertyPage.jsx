@@ -453,10 +453,10 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         {(property.location || '').toLowerCase().includes('sevierville') || (property.location || '').toLowerCase().includes('smoky') || (property.location || '').toLowerCase().includes('tennessee') ? (
                             <>
                                 <p>
-                                    <strong>{property.name}</strong> is a luxury vacation rental nestled in the heart of the Smoky Mountains near Sevierville, Tennessee. This premier destination offers world-class attractions including Dollywood, the Great Smoky Mountains National Park, and Gatlinburg's vibrant arts and crafts community — all within easy reach of your private retreat.
+                                    <strong>{property.name}</strong> is a luxury vacation rental perfectly situated in the heart of the Smoky Mountains. Enjoy the peaceful seclusion of Sevierville and Walland, while remaining just minutes away from the vibrant attractions, dining, and entertainment of Gatlinburg and Pigeon Forge.
                                 </p>
                                 <p>
-                                    Whether you're seeking a romantic cabin getaway for couples, a spacious mountain lodge for large group celebrations, or a family vacation home with premium amenities like private pools, hot tubs, and game rooms, Sevierville's luxury cabin rentals deliver unforgettable experiences year-round. From fall foliage drives along the Blue Ridge Parkway to summer tubing on the Little Pigeon River, every season brings new reasons to visit.
+                                    Whether you're seeking a romantic cabin getaway, a spacious mountain lodge for a family reunion, or a luxury retreat with a private indoor pool and hot tub, our Gatlinburg and Pigeon Forge area cabins deliver an unforgettable experience. Explore the Great Smoky Mountains National Park by day, and return to your private luxury sanctuary by night.
                                 </p>
                                 <p>
                                     Book direct with Nirvana Luxe and enjoy the best rates on luxury Smoky Mountain cabin rentals — no service fees, personal concierge support, and curated local recommendations to make your Tennessee vacation truly extraordinary.

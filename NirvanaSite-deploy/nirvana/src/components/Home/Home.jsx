@@ -419,7 +419,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏔️</div>
               <h3 className="text-xl font-bold text-gray-900">Smoky Mountain Luxury Cabins</h3>
               <p className="text-gray-600 leading-relaxed">
-                From romantic cabins for couples with mountain views and hot tubs to spacious lodges sleeping up to 26 guests, our Sevierville and Pigeon Forge luxury cabin rentals feature private indoor pools, home theaters, game rooms, and more. Perfect for family reunions, bachelorette parties, and large group getaways in the Tennessee Smoky Mountains.
+                From romantic cabins for couples with mountain views to spacious lodges sleeping up to 26 guests, our Gatlinburg, Pigeon Forge, and Sevierville luxury cabin rentals feature private indoor pools, home theaters, and game rooms. Experience the pinnacle of Tennessee mountain luxury — perfectly situated near the serene beauty of Walland and the excitement of Dollywood. Ideal for family reunions and large group getaways.
               </p>
             </div>
 
@@ -452,9 +452,9 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-md transition-all">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Sevierville &amp; Smoky Mountains, TN</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Sevierville, Gatlinburg &amp; Pigeon Forge, TN</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Discover luxury cabin rentals in the Great Smoky Mountains — America's most-visited national park. Our Sevierville properties are minutes from Dollywood, Gatlinburg, and Pigeon Forge. Each cabin features premium amenities like private heated pools, hot tubs, game rooms with arcade games, and panoramic mountain views.
+                Discover luxury cabin rentals in the Great Smoky Mountains. Our properties place you minutes from the attractions of Gatlinburg and Pigeon Forge, while offering the peaceful seclusion of Sevierville and Walland. Each cabin features premium amenities like private heated pools, hot tubs, arcade rooms, and panoramic mountain views.
               </p>
               <p className="text-gray-600 leading-relaxed mb-6">
                 Ideal for couples seeking a romantic mountain getaway, families looking for smoky mountain cabins with indoor pools, or large groups celebrating milestones in style.

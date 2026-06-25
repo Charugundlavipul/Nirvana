@@ -7,7 +7,7 @@ export const SITE_ALTERNATE_NAMES = [
 ];
 export const SITE_TITLE = "Luxury Vacation Rentals";
 export const SITE_DESCRIPTION =
-  "Nirvana Luxe is the official direct-booking site for luxury cabins and lakefront vacation rentals in the Smoky Mountains, TN and Lake Norman, NC.";
+  "Nirvana Luxe is the official direct-booking site for luxury cabins and vacation rentals in Gatlinburg, Pigeon Forge, Sevierville, and Walland, TN, as well as Lake Norman, NC.";
 export const SITE_KEYWORDS = [
   "vacation rentals",
   "luxury vacation rentals",
@@ -23,6 +23,9 @@ export const SITE_KEYWORDS = [
   "booking vacation rentals",
   "luxury home rentals",
   "cabins in sevierville tn",
+  "cabins in gatlinburg tn",
+  "pigeon forge luxury cabins",
+  "walland luxury rentals",
   "homes to go",
   "tennessee cabin rentals",
   "vacation rental properties",
@@ -46,6 +49,9 @@ export const SITE_KEYWORDS = [
   "vacation rental homes near me",
   "vacation rentals sevierville tn",
   "cabins near sevierville tn",
+  "luxury cabins in gatlinburg",
+  "pigeon forge cabin rentals",
+  "walland vacation homes",
   "luxury cabins",
   "high end vacation rentals",
   "last minute rentals",
