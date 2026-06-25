@@ -404,7 +404,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Why Choose Nirvana Luxe — SEO content section */}
-      <section aria-label="Why Choose Nirvana Luxe" className="relative bg-white px-6 py-16 md:py-24">
+      <section aria-label="Why Choose Nirvana Luxe" className="relative bg-slate-50 px-6 py-12 md:py-20 border-y border-slate-100">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">THE NIRVANA LUXE DIFFERENCE</p>
@@ -415,7 +415,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
-            <div className="text-center space-y-4 p-6">
+            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏔️</div>
               <h3 className="text-xl font-bold text-gray-900">Smoky Mountain Luxury Cabins</h3>
               <p className="text-gray-600 leading-relaxed">
@@ -423,7 +423,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               </p>
             </div>
 
-            <div className="text-center space-y-4 p-6">
+            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">🏡</div>
               <h3 className="text-xl font-bold text-gray-900">Lakefront Vacation Homes</h3>
               <p className="text-gray-600 leading-relaxed">
@@ -431,7 +431,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               </p>
             </div>
 
-            <div className="text-center space-y-4 p-6">
+            <div className="text-center space-y-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center text-accent text-2xl">💰</div>
               <h3 className="text-xl font-bold text-gray-900">Best Rate — Book Direct</h3>
               <p className="text-gray-600 leading-relaxed">
@@ -443,7 +443,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
       </section>
 
       {/* Our Destinations — SEO internal linking section */}
-      <section aria-label="Explore Our Destinations" className="bg-slate-50 px-6 py-16 md:py-20">
+      <section aria-label="Explore Our Destinations" className="bg-white px-6 py-16 md:py-24">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-accent uppercase tracking-[0.3em] text-sm font-medium mb-4">EXPLORE OUR DESTINATIONS</p>
@@ -451,31 +451,53 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-md transition-all">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Sevierville, Gatlinburg &amp; Pigeon Forge, TN</h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                Discover luxury cabin rentals in the Great Smoky Mountains. Our properties place you minutes from the attractions of Gatlinburg and Pigeon Forge, while offering the peaceful seclusion of Sevierville and Walland. Each cabin features premium amenities like private heated pools, hot tubs, arcade rooms, and panoramic mountain views.
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                Ideal for couples seeking a romantic mountain getaway, families looking for smoky mountain cabins with indoor pools, or large groups celebrating milestones in style.
-              </p>
-              <Link href="/properties" className="text-accent font-semibold hover:underline inline-flex items-center gap-2">
-                Browse Smoky Mountain Rentals <FaChevronRight size={12} />
-              </Link>
-            </div>
+            <Link href="/properties" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
+              <Image 
+                src="/images/smoky_mountains.png" 
+                alt="Luxury cabin in the Smoky Mountains at sunset" 
+                fill 
+                sizes="(max-width: 768px) 100vw, 50vw" 
+                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 text-white transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] translate-y-16 group-hover:translate-y-0">
+                <h3 className="text-3xl font-bold mb-4 tracking-wide text-shadow-sm">Sevierville, Gatlinburg &amp; Pigeon Forge, TN</h3>
+                
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
+                  <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light">
+                    Discover luxury cabin rentals in the Great Smoky Mountains. Our properties place you minutes from the attractions of Gatlinburg and Pigeon Forge, while offering the peaceful seclusion of Sevierville and Walland.
+                  </p>
+                  <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20">
+                    Browse Rentals <FaChevronRight size={12} />
+                  </span>
+                </div>
+              </div>
+            </Link>
 
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-md transition-all">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Lake Norman &amp; Charlotte, NC</h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                Experience lakefront luxury on Lake Norman — North Carolina's inland sea. Our waterfront vacation homes in Mooresville and Charlotte offer private boat docks, infinity-edge pool views, and upscale finishes throughout. Wake up to sunrise over the water and spend your days boating, paddleboarding, or exploring the local wine scene.
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                Perfect for nature-loving couples, corporate retreats, and milestone celebrations on the water.
-              </p>
-              <Link href="/properties" className="text-accent font-semibold hover:underline inline-flex items-center gap-2">
-                Browse Lake Norman Rentals <FaChevronRight size={12} />
-              </Link>
-            </div>
+            <Link href="/properties" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
+              <Image 
+                src="/images/lake_norman.png" 
+                alt="Luxury lakefront home on Lake Norman" 
+                fill 
+                sizes="(max-width: 768px) 100vw, 50vw" 
+                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 text-white transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] translate-y-16 group-hover:translate-y-0">
+                <h3 className="text-3xl font-bold mb-4 tracking-wide text-shadow-sm">Lake Norman &amp; Charlotte, NC</h3>
+                
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex flex-col items-start">
+                  <p className="text-gray-200 leading-relaxed text-sm md:text-base mb-6 font-light">
+                    Experience lakefront luxury on North Carolina's inland sea. Our waterfront vacation homes offer private boat docks, infinity-edge pool views, and upscale finishes throughout.
+                  </p>
+                  <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20">
+                    Browse Rentals <FaChevronRight size={12} />
+                  </span>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
