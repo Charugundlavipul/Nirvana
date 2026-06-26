@@ -16,6 +16,7 @@ import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms
 const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [], allProperties = [] }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
+    const [lightboxImages, setLightboxImages] = useState([]);
     const heroRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
@@ -80,31 +81,35 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         };
     }, [lightboxImage, lightboxType]);
 
-    const openLightbox = (imageSrc, type = '') => {
+    const openLightbox = (imageSrc, type = '', imagesArray = galleryImages) => {
         setLightboxImage(imageSrc);
         setLightboxType(type);
+        setLightboxImages(imagesArray);
     };
 
     const closeLightbox = () => {
         setLightboxImage(null);
         setLightboxType('');
+        setLightboxImages([]);
     };
 
     const nextLightboxImage = (e) => {
         e.stopPropagation();
-        const currentIndexInImages = sliderImages.findIndex((img) => img === lightboxImage);
+        if (!lightboxImages || lightboxImages.length === 0) return;
+        const currentIndexInImages = lightboxImages.findIndex((img) => img === lightboxImage);
         if (currentIndexInImages !== -1) {
-            const nextIndex = (currentIndexInImages + 1) % sliderImages.length;
-            setLightboxImage(sliderImages[nextIndex]);
+            const nextIndex = (currentIndexInImages + 1) % lightboxImages.length;
+            setLightboxImage(lightboxImages[nextIndex]);
         }
     };
 
     const prevLightboxImage = (e) => {
         e.stopPropagation();
-        const currentIndexInImages = sliderImages.findIndex((img) => img === lightboxImage);
+        if (!lightboxImages || lightboxImages.length === 0) return;
+        const currentIndexInImages = lightboxImages.findIndex((img) => img === lightboxImage);
         if (currentIndexInImages !== -1) {
-            const prevIndex = (currentIndexInImages - 1 + sliderImages.length) % sliderImages.length;
-            setLightboxImage(sliderImages[prevIndex]);
+            const prevIndex = (currentIndexInImages - 1 + lightboxImages.length) % lightboxImages.length;
+            setLightboxImage(lightboxImages[prevIndex]);
         }
     };
 
@@ -448,48 +453,135 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             )}
 
             {/* Location & Area Guide — SEO content section */}
-            <section className="py-16 md:py-20 bg-white">
+            <section className="py-16 md:py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-12">
-                        <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Explore the Area</p>
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">About {property.location || 'This Destination'}</h2>
-                    </div>
-                    <div className="max-w-4xl mx-auto space-y-5 text-lg text-slate-600 font-light leading-relaxed">
-                        {(property.location || '').toLowerCase().includes('sevierville') || (property.location || '').toLowerCase().includes('smoky') || (property.location || '').toLowerCase().includes('tennessee') ? (
+                    {(() => {
+                        const locationText = (property.location || '').toLowerCase();
+                        const isSmokies = locationText.includes('sevierville') || locationText.includes('smoky') || locationText.includes('tennessee');
+                        const isLake = locationText.includes('norman') || locationText.includes('wylie') || locationText.includes('mooresville') || locationText.includes('charlotte') || locationText.includes('north carolina');
+
+                        const locationHeading = isSmokies 
+                            ? "Gatlinburg, Sevierville & Pigeon Forge" 
+                            : isLake 
+                                ? "Lake Norman & Charlotte Area" 
+                                : property.location || 'This Destination';
+
+                        // Take 3 images for the area collage
+                        const areaImages = isSmokies 
+                            ? [
+                                '/assets/gatlinburg.png',
+                                '/assets/sevierville.png',
+                                '/assets/pigeon_forge.png'
+                              ]
+                            : galleryImages.length >= 6 
+                                ? [galleryImages[3], galleryImages[4], galleryImages[5]] 
+                                : galleryImages.length >= 3 
+                                    ? [galleryImages[0], galleryImages[1], galleryImages[2]]
+                                    : [
+                                        curatedImages.home || '/assets/exterior.avif',
+                                        curatedImages.secondary || '/assets/exterior.avif',
+                                        curatedImages.bg || '/assets/exterior.avif'
+                                      ];
+
+                        return (
                             <>
-                                <p>
-                                    <strong>{property.name}</strong> is a luxury vacation rental perfectly situated in the heart of the Smoky Mountains. Enjoy the peaceful seclusion of Sevierville and Walland, while remaining just minutes away from the vibrant attractions, dining, and entertainment of Gatlinburg and Pigeon Forge.
-                                </p>
-                                <p>
-                                    Whether you're seeking a romantic cabin getaway, a spacious mountain lodge for a family reunion, or a luxury retreat with a private indoor pool and hot tub, our Gatlinburg and Pigeon Forge area cabins deliver an unforgettable experience. Explore the Great Smoky Mountains National Park by day, and return to your private luxury sanctuary by night.
-                                </p>
-                                <p>
-                                    Book direct with Nirvana Luxe and enjoy the best rates on luxury Smoky Mountain cabin rentals — no service fees, personal concierge support, and curated local recommendations to make your Tennessee vacation truly extraordinary.
-                                </p>
+                                <div className="text-center mb-16">
+                                    <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Explore the Area</p>
+                                    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">About {locationHeading}</h2>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                                    <div className="space-y-6 text-lg text-slate-600 font-light leading-relaxed">
+                                        {isSmokies ? (
+                                            <>
+                                                <p>
+                                                    <strong>{property.name}</strong> is a luxury vacation rental perfectly situated in the heart of the Smoky Mountains. Enjoy the peaceful seclusion of Sevierville and Walland, while remaining just minutes away from the vibrant attractions, dining, and entertainment of Gatlinburg and Pigeon Forge.
+                                                </p>
+                                                <p>
+                                                    Whether you're seeking a romantic cabin getaway, a spacious mountain lodge for a family reunion, or a luxury retreat with a private indoor pool and hot tub, our Gatlinburg and Pigeon Forge area cabins deliver an unforgettable experience. Explore the Great Smoky Mountains National Park by day, and return to your private luxury sanctuary by night.
+                                                </p>
+                                                <p>
+                                                    Book direct with Nirvana Luxe and enjoy the best rates on luxury Smoky Mountain cabin rentals — no service fees, personal concierge support, and curated local recommendations to make your Tennessee vacation truly extraordinary.
+                                                </p>
+                                            </>
+                                        ) : isLake ? (
+                                            <>
+                                                <p>
+                                                    <strong>{property.name}</strong> is a premium lakefront vacation rental located in the Charlotte metro area, home to gorgeous waters like Lake Norman and Lake Wylie. Offering hundreds of miles of shoreline, pristine waters for boating and paddleboarding, and a thriving waterfront dining scene.
+                                                </p>
+                                                <p>
+                                                    Perfect for couples seeking a romantic lakefront getaway or families looking for a luxury lake house with private dock access, our vacation rentals combine natural beauty with upscale amenities. Enjoy sunset cruises, championship golf at nearby courses, or explore the charming surrounding lake towns.
+                                                </p>
+                                                <p>
+                                                    Book direct with Nirvana Luxe for the best rate guaranteed on luxury Lake Norman and Lake Wylie rentals — complete with personal concierge service and curated local guides.
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p>
+                                                    <strong>{property.name}</strong> is a premium luxury vacation rental in {property.location}, hand-selected by Nirvana Luxe for its exceptional quality, prime location, and unforgettable guest experiences.
+                                                </p>
+                                                <p>
+                                                    Book direct with Nirvana Luxe and enjoy the best rates — no service fees, personal concierge support, and curated local recommendations.
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Interactive 3-Image Collage */}
+                                    <div className="relative h-[400px] sm:h-[500px] w-full hidden lg:block">
+                                        {/* Main Large Image */}
+                                        <div 
+                                            className="absolute top-0 left-0 w-2/3 h-[75%] rounded-3xl overflow-hidden shadow-2xl z-10 hover:z-40 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] group cursor-pointer"
+                                            onClick={() => openLightbox(areaImages[0], '', areaImages)}
+                                        >
+                                            <img src={areaImages[0]} alt={`Area view 1 near ${locationHeading}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                            <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        </div>
+                                        
+                                        {/* Top Right Floating Image */}
+                                        <div 
+                                            className="absolute top-6 right-0 w-[45%] h-[45%] rounded-3xl overflow-hidden shadow-xl z-20 hover:z-40 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] group cursor-pointer border-[6px] border-white"
+                                            onClick={() => openLightbox(areaImages[1], '', areaImages)}
+                                        >
+                                            <img src={areaImages[1]} alt={`Area view 2 near ${locationHeading}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                            <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        </div>
+
+                                        {/* Bottom Right Overlapping Image */}
+                                        <div 
+                                            className="absolute bottom-4 right-10 w-[55%] h-[45%] rounded-3xl overflow-hidden shadow-2xl z-30 hover:z-40 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] group cursor-pointer border-[6px] border-white"
+                                            onClick={() => openLightbox(areaImages[2], '', areaImages)}
+                                        >
+                                            <img src={areaImages[2]} alt={`Area view 3 near ${locationHeading}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                            <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Mobile Fallback: Grid of 3 images */}
+                                    <div className="grid grid-cols-2 gap-4 lg:hidden mt-8">
+                                        <div 
+                                            className="col-span-2 h-48 rounded-2xl overflow-hidden shadow-md group cursor-pointer"
+                                            onClick={() => openLightbox(areaImages[0], '', areaImages)}
+                                        >
+                                            <img src={areaImages[0]} alt={`Area view 1 near ${locationHeading}`} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div 
+                                            className="col-span-1 h-32 rounded-2xl overflow-hidden shadow-md group cursor-pointer"
+                                            onClick={() => openLightbox(areaImages[1], '', areaImages)}
+                                        >
+                                            <img src={areaImages[1]} alt={`Area view 2 near ${locationHeading}`} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div 
+                                            className="col-span-1 h-32 rounded-2xl overflow-hidden shadow-md group cursor-pointer"
+                                            onClick={() => openLightbox(areaImages[2], '', areaImages)}
+                                        >
+                                            <img src={areaImages[2]} alt={`Area view 3 near ${locationHeading}`} className="w-full h-full object-cover" />
+                                        </div>
+                                    </div>
+                                </div>
                             </>
-                        ) : (property.location || '').toLowerCase().includes('norman') || (property.location || '').toLowerCase().includes('wylie') || (property.location || '').toLowerCase().includes('mooresville') || (property.location || '').toLowerCase().includes('charlotte') || (property.location || '').toLowerCase().includes('north carolina') ? (
-                            <>
-                                <p>
-                                    <strong>{property.name}</strong> is a premium lakefront vacation rental located in the Charlotte metro area, home to gorgeous waters like Lake Norman and Lake Wylie. Offering hundreds of miles of shoreline, pristine waters for boating and paddleboarding, and a thriving waterfront dining scene.
-                                </p>
-                                <p>
-                                    Perfect for couples seeking a romantic lakefront getaway or families looking for a luxury lake house with private dock access, our vacation rentals combine natural beauty with upscale amenities. Enjoy sunset cruises, championship golf at nearby courses, or explore the charming surrounding lake towns.
-                                </p>
-                                <p>
-                                    Book direct with Nirvana Luxe for the best rate guaranteed on luxury Lake Norman and Lake Wylie rentals — complete with personal concierge service and curated local guides.
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <p>
-                                    <strong>{property.name}</strong> is a premium luxury vacation rental in {property.location}, hand-selected by Nirvana Luxe for its exceptional quality, prime location, and unforgettable guest experiences.
-                                </p>
-                                <p>
-                                    Book direct with Nirvana Luxe and enjoy the best rates — no service fees, personal concierge support, and curated local recommendations.
-                                </p>
-                            </>
-                        )}
-                    </div>
+                        );
+                    })()}
                 </div>
             </section>
 
@@ -578,14 +670,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             {/* Lightbox */}
                   {(lightboxImage || lightboxType) && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-8" onClick={closeLightbox}>
-                    {!lightboxType && (
-                        <button
-                            className="absolute top-6 right-6 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-all z-[110]"
-                            onClick={closeLightbox}
-                        >
-                            <FaTimes size={28} />
-                        </button>
-                    )}
+                    {/* Local close buttons are used instead inside the components */}
 
                     <div className="relative max-w-6xl w-full max-h-[95vh] flex justify-center" onClick={(e) => e.stopPropagation()}>
                         {lightboxType === 'description' ? (
@@ -638,27 +723,42 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                 </div>
                             </div>
                         ) : lightboxImage ? (
-                            <div className="relative flex items-center justify-center w-full">
-                                <button
-                                    className="absolute left-0 md:-left-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full z-10"
-                                    onClick={prevLightboxImage}
-                                >
-                                    <FaArrowLeft size={32} />
-                                </button>
-                                <div className="bg-transparent relative w-full h-[85vh] flex items-center justify-center">
-                                <img
-                                    src={lightboxImage}
-                                    alt="Property Image"
-                                    loading="lazy"
-                                    className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
-                                />
+                            <div className="relative flex items-center justify-center w-full h-[85vh]">
+                                <div className="relative flex items-center justify-center max-w-full max-h-full">
+                                    <button
+                                        className="absolute -top-4 -right-4 md:-top-6 md:-right-6 text-white hover:text-accent bg-black/80 hover:bg-black p-3 md:p-4 rounded-full transition-all z-[110] shadow-xl border border-white/10"
+                                        onClick={closeLightbox}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
+                                    
+                                    {lightboxImages && lightboxImages.length > 1 && (
+                                        <button
+                                            className="absolute left-4 md:-left-8 text-white hover:text-accent bg-black/60 hover:bg-black/90 backdrop-blur-md transition-all p-3 md:p-4 rounded-full z-[110] shadow-xl"
+                                            style={{ top: '50%', transform: 'translateY(-50%)' }}
+                                            onClick={prevLightboxImage}
+                                        >
+                                            <FaArrowLeft size={20} />
+                                        </button>
+                                    )}
+
+                                    <img
+                                        src={lightboxImage}
+                                        alt="Property Image"
+                                        loading="lazy"
+                                        className="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+                                    />
+
+                                    {lightboxImages && lightboxImages.length > 1 && (
+                                        <button
+                                            className="absolute right-4 md:-right-8 text-white hover:text-accent bg-black/60 hover:bg-black/90 backdrop-blur-md transition-all p-3 md:p-4 rounded-full z-[110] shadow-xl"
+                                            style={{ top: '50%', transform: 'translateY(-50%)' }}
+                                            onClick={nextLightboxImage}
+                                        >
+                                            <FaArrowRight size={20} />
+                                        </button>
+                                    )}
                                 </div>
-                                <button
-                                    className="absolute right-0 md:-right-20 text-white/50 hover:text-white transition-colors p-4 hidden md:block hover:bg-white/10 rounded-full z-10"
-                                    onClick={nextLightboxImage}
-                                >
-                                    <FaArrowRight size={32} />
-                                </button>
                             </div>
                         ) : null}
                     </div>

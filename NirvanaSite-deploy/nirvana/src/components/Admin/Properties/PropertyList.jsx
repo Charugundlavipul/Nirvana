@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaBed, FaUsers } from "react-icons/fa";
 import AdminLayout from "../AdminLayout";
 import styles from "./PropertyList.module.css";
 import { supabase } from "../../../supabaseClient";
@@ -99,90 +100,81 @@ const PropertyList = () => {
                 {loading ? (
                     <div className={styles.loading}>Loading properties...</div>
                 ) : (
-                    <div className={styles.grid}>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-8 pb-20">
                         {properties.map((property) => {
                             const drafts = draftsPerProperty[property.id] || [];
                             const hasRevision = drafts.some((draft) => draft.status === "revision_requested");
                             const latestRevisionNote = getLatestRevisionNote(property.id);
 
                             return (
-                                <div key={property.id} className={styles.card} onClick={() => handleEdit(property.slug)}>
-                                    <div
-                                        className={styles.cardImage}
-                                        style={{ backgroundImage: `url(${getThumbnail(property)})` }}
-                                    />
-                                    <div className={styles.cardContent}>
-                                        <h3 className={styles.cardTitle}>
-                                            {property.name}
-                                            {property.is_published === false && (
-                                                <span
-                                                    style={{
-                                                        marginLeft: "8px",
-                                                        fontSize: "11px",
-                                                        fontWeight: 700,
-                                                        padding: "2px 8px",
-                                                        borderRadius: "999px",
-                                                        background: "#fef3c7",
-                                                        color: "#b45309",
-                                                        textTransform: "uppercase",
-                                                        verticalAlign: "middle"
-                                                    }}
-                                                >
-                                                    Draft
-                                                </span>
-                                            )}
-                                            {drafts.length > 0 && (
-                                                <span
-                                                    style={{
-                                                        marginLeft: "8px",
-                                                        fontSize: "10px",
-                                                        fontWeight: 700,
-                                                        padding: "3px 10px",
-                                                        borderRadius: "999px",
-                                                        background: hasRevision ? "#fef3c7" : "#dbeafe",
-                                                        color: hasRevision ? "#92400e" : "#1d4ed8",
-                                                        textTransform: "uppercase",
-                                                        verticalAlign: "middle",
-                                                        letterSpacing: "0.02em",
-                                                    }}
-                                                >
-                                                    {hasRevision
-                                                        ? `${drafts.length} Revision${drafts.length !== 1 ? "s" : ""}`
-                                                        : `${drafts.length} Draft${drafts.length !== 1 ? "s" : ""} Pending`}
-                                                </span>
-                                            )}
-                                        </h3>
-                                        <p className={styles.cardLocation}>{property.location || "No location set"}</p>
+                                <article
+                                    key={property.id}
+                                    className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)] flex flex-col text-left"
+                                    onClick={() => handleEdit(property.slug)}
+                                >
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
+                                        <img
+                                            src={getThumbnail(property)}
+                                            alt={`${property.name} - thumbnail`}
+                                            className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    </div>
+
+                                    <div className="px-2 pb-2 pt-4 flex flex-col flex-grow">
+                                        <div className="mb-1 flex items-start justify-between gap-2">
+                                            <h3 className="truncate text-lg font-bold text-slate-900 transition-colors group-hover:text-[#8b6e4e]">
+                                                {property.name}
+                                                {property.is_published === false && (
+                                                    <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase align-middle">
+                                                        Draft
+                                                    </span>
+                                                )}
+                                                {drafts.length > 0 && (
+                                                    <span className={`ml-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase align-middle tracking-widest ${hasRevision ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                        {hasRevision
+                                                            ? `${drafts.length} Revision${drafts.length !== 1 ? "s" : ""}`
+                                                            : `${drafts.length} Draft${drafts.length !== 1 ? "s" : ""} Pending`}
+                                                    </span>
+                                                )}
+                                            </h3>
+                                        </div>
+
+                                        <p className="mb-2 text-sm text-slate-500">{property.location || "No location set"}</p>
+
+                                        <div className="mb-3 flex items-center gap-3 text-sm text-slate-600">
+                                            <span className="flex items-center gap-1.5">
+                                                <FaBed className="text-[#8b6e4e]" />
+                                                {property.bedroom_count || 0} Beds
+                                            </span>
+                                            <span className="flex items-center gap-1.5">
+                                                <FaUsers className="text-[#8b6e4e]" />
+                                                {property.guests_max || 0} Guests
+                                            </span>
+                                        </div>
+
                                         {latestRevisionNote && (
-                                            <p
-                                                style={{
-                                                    margin: "6px 0 0",
-                                                    fontSize: "12px",
-                                                    color: "#92400e",
-                                                    fontStyle: "italic",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap"
-                                                }}
-                                            >
+                                            <p className="mb-3 text-xs text-amber-700 italic overflow-hidden text-ellipsis whitespace-nowrap">
                                                 Note: {latestRevisionNote}
                                             </p>
                                         )}
-                                        <div className={styles.cardStats}>
-                                            <span>{property.bedroom_count || 0} Beds</span>
-                                            <span>{property.guests_max || 0} Guests</span>
-                                        </div>
-                                        <div className={styles.cardFooter}>
-                                            <button className={styles.editBtn}>Edit</button>
+
+                                        <div className="mt-auto pt-4 flex gap-2 border-t border-slate-100">
                                             <button
-                                                className={styles.deleteBtn}
-                                                onClick={(event) => handleDelete(event, property.id)}
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(property.slug); }}
+                                                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(e, property.id); }}
+                                                className="group/btn flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-100 hover:text-rose-700"
                                             >
                                                 Delete
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             );
                         })}
                     </div>

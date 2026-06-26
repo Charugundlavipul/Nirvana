@@ -335,53 +335,43 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
     };
 
     return (
-        <div style={{ padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h3>Amenities ({amenities.length})</h3>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-800">Amenities ({amenities.length})</h3>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    style={{
-                        background: "#10b981", color: "white", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px"
-                    }}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95"
                 >
                     <FaPlus /> Add Amenity
                 </button>
             </div>
 
             {isAdding && (
-                <div style={{ background: "#f9fafb", padding: "15px", borderRadius: "6px", marginBottom: "20px", border: "1px solid #e5e7eb" }}>
+                <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
 
                     {/* Mode Toggle */}
-                    <div style={{ display: "flex", gap: "10px", marginBottom: "15px", borderBottom: "1px solid #e5e7eb", paddingBottom: "10px" }}>
+                    <div className="mb-6 flex overflow-hidden rounded-xl bg-slate-200/60 p-1">
                         <button
                             onClick={() => {
                                 setMode("BANK");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
                             }}
-                            style={{
-                                background: mode === "BANK" ? "#10b981" : "#e5e7eb",
-                                color: mode === "BANK" ? "white" : "#374151",
-                                border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold"
-                            }}
+                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "BANK" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                         >
-                            Select from Bank
+                            Choose Standard Amenity
                         </button>
                         <button
                             onClick={() => {
                                 setMode("CUSTOM");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
                             }}
-                            style={{
-                                background: mode === "CUSTOM" ? "#8b5cf6" : "#e5e7eb",
-                                color: mode === "CUSTOM" ? "white" : "#374151",
-                                border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold"
-                            }}
+                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "CUSTOM" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                         >
-                            Create Custom
+                            Create Custom Amenity
                         </button>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "10px" }}>
+                    <div className="mb-4 flex flex-col gap-4">
 
                         {/* BANK MODE */}
                         {mode === "BANK" && (
@@ -398,12 +388,12 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                     }}
                                     getLabel={(opt) => `${opt.label}`}
                                     getValue={(opt) => opt.value}
-                                    placeholder="Search and choose from amenity bank..."
+                                    placeholder="Search standard amenities (e.g. WiFi, Pool)..."
                                 />
                                 {newAmenity.title && (
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
-                                        <span>Preview:</span>
-                                        <div style={{ fontSize: "20px", color: "#000" }}>{getAmenityIcon(newAmenity.title, newAmenity.icon_key)}</div>
+                                    <div className="flex items-center gap-3 text-sm text-slate-600">
+                                        <span className="font-semibold">Preview:</span>
+                                        <div className="text-2xl text-slate-900">{getAmenityIcon(newAmenity.title, newAmenity.icon_key)}</div>
                                     </div>
                                 )}
                             </>
@@ -411,35 +401,46 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
 
                         {/* CUSTOM MODE */}
                         {mode === "CUSTOM" && (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                <input
-                                    placeholder="Amenity Name (e.g. 'PS5 Gaming Room')"
-                                    value={newAmenity.title}
-                                    onChange={(e) => setNewAmenity({ ...newAmenity, title: e.target.value })}
-                                    style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "4px" }}
-                                />
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        Amenity Name
+                                    </label>
+                                    <input
+                                        placeholder="e.g. 'PS5 Gaming Room'"
+                                        value={newAmenity.title}
+                                        onChange={(e) => setNewAmenity({ ...newAmenity, title: e.target.value })}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    />
+                                </div>
 
                                 {/* Searchable Icon Picker (Datalist) */}
                                 <div>
-                                    <label style={{ fontSize: "12px", color: "#666" }}>
-                                        Search Icon ({ICON_OPTIONS.length} options)
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        Choose an Icon
                                     </label>
                                     <SearchablePagedDropdown
                                         options={ICON_OPTIONS}
                                         value={newAmenity.icon_key}
                                         onChange={(val) => setNewAmenity((prev) => ({ ...prev, icon_key: val }))}
-                                        getLabel={(opt) => `${opt.label} (${opt.value})`}
+                                        getLabel={(opt) => opt.label}
                                         getValue={(opt) => opt.value}
-                                        placeholder="Search and pick icon..."
+                                        placeholder="Search icons (e.g. 'game', 'pool')..."
                                     />
                                 </div>
 
-                                <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#666" }}>
-                                    <span>Icon Preview:</span>
-                                    <div style={{ fontSize: "24px", color: "#000" }}>
-                                        {newAmenity.icon_key ? getAmenityIcon(null, newAmenity.icon_key) : "❓"}
+                                <div className="col-span-1 flex items-center rounded-xl border border-slate-100 bg-slate-50 p-4 md:col-span-2">
+                                    <div className="flex flex-1 items-center gap-4">
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white text-3xl text-slate-800 shadow-sm border border-slate-100">
+                                            {newAmenity.icon_key ? getAmenityIcon(null, newAmenity.icon_key) : <span className="text-slate-300">?</span>}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-700">Icon Preview</p>
+                                            <p className="text-xs text-slate-500">
+                                                {newAmenity.icon_key ? `Selected: ${newAmenity.icon_key}` : "Search and select an icon to preview"}
+                                            </p>
+                                        </div>
                                     </div>
-                                    {newAmenity.icon_key && <span style={{ fontSize: "12px", color: "#999" }}>({newAmenity.icon_key})</span>}
                                 </div>
                             </div>
                         )}
@@ -448,19 +449,19 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                             placeholder={mode === "BANK" ? "Description (Optional)" : "Description (e.g. 'Has 2 controllers')"}
                             value={newAmenity.description}
                             onChange={(e) => setNewAmenity({ ...newAmenity, description: e.target.value })}
-                            style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                             rows={2}
                         />
                     </div>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                        <button onClick={handleAdd} style={{ background: "#2563eb", color: "white", padding: "8px 16px", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Add Amenity</button>
-                        <button onClick={() => setIsAdding(false)} style={{ background: "#6b7280", color: "white", padding: "8px 16px", border: "none", borderRadius: "4px", cursor: "pointer" }}>Cancel</button>
+                    <div className="flex gap-3">
+                        <button onClick={handleAdd} className="rounded-lg bg-emerald-600 px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95">Add Amenity</button>
+                        <button onClick={() => setIsAdding(false)} className="rounded-lg bg-slate-500 px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-slate-400 active:scale-95">Cancel</button>
                     </div>
                 </div>
             )}
 
-            {loading ? <p>Loading...</p> : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {loading ? <p className="py-8 text-center text-slate-500">Loading...</p> : (
+                <div className="flex flex-col gap-4">
                     {!canEditDirectly && pendingDrafts.creates.length > 0 ? (
                         <div style={{ background: "#eff6ff", border: "1px dashed #93c5fd", borderRadius: "8px", padding: "10px" }}>
                             <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 700, color: "#1d4ed8", textTransform: "uppercase" }}>
@@ -510,38 +511,38 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                         const submitDisabled = savingAmenityId === item.id || (!canEditDirectly && (!!pendingUpdate || !!pendingDelete));
 
                         return (
-                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "15px", padding: "10px", border: "1px solid #f0f0f0", borderRadius: "6px", background: "white", opacity: pendingDelete ? 0.7 : 1 }}>
-                                <div style={{ fontSize: "24px", width: "40px", display: "flex", justifyContent: "center", color: "#666" }}>
+                            <div key={item.id} className={`flex flex-col md:flex-row items-start md:items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-sm ${pendingDelete ? 'opacity-70' : ''}`}>
+                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-50 text-2xl text-slate-700">
                                     {getAmenityIcon(draft.title, draft.icon_key)}
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
-                                        {pendingUpdate && !canEditDirectly ? (
-                                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                                <div className="flex-1 w-full">
+                                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                                        {pendingUpdate && !canEditDirectly && (
+                                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">
                                                 Draft Update Pending
                                             </span>
-                                        ) : null}
-                                        {pendingDelete && !canEditDirectly ? (
-                                            <span style={{ fontSize: "10px", fontWeight: 700, color: "#991b1b", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: "999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                                        )}
+                                        {pendingDelete && !canEditDirectly && (
+                                            <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
                                                 Draft Delete Pending
                                             </span>
-                                        ) : null}
+                                        )}
                                     </div>
                                     <input
                                         value={draft.title}
                                         disabled={!canEditDirectly && (!!pendingUpdate || !!pendingDelete)}
                                         onChange={(e) => handleDraftChange(item.id, "title", e.target.value)}
-                                        style={{ fontWeight: "bold", border: "none", background: "transparent", width: "100%", marginBottom: "4px", fontSize: "16px" }}
+                                        className="mb-1 w-full border-none bg-transparent text-lg font-bold text-slate-800 outline-none focus:ring-0 p-0"
                                     />
                                     <input
                                         value={draft.description || ""}
                                         disabled={!canEditDirectly && (!!pendingUpdate || !!pendingDelete)}
                                         placeholder="Add description..."
                                         onChange={(e) => handleDraftChange(item.id, "description", e.target.value)}
-                                        style={{ border: "none", background: "transparent", width: "100%", color: "#666", fontSize: "14px" }}
+                                        className="w-full border-none bg-transparent text-sm text-slate-500 outline-none focus:ring-0 p-0"
                                     />
                                 </div>
-                                <div style={{ width: "230px" }}>
+                                <div className="w-full md:w-56 flex-shrink-0">
                                     <SearchablePagedDropdown
                                         options={ICON_OPTIONS}
                                         value={draft.icon_key || ""}
@@ -552,36 +553,30 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                         getLabel={(opt) => `${opt.label}`}
                                         getValue={(opt) => opt.value}
                                         placeholder="Search and pick icon..."
-                                        width="230px"
+                                        width="100%"
                                     />
                                 </div>
-                                <button
-                                    onClick={() => handleSaveRow(item)}
-                                    disabled={submitDisabled}
-                                    style={{
-                                        background: "#2563eb",
-                                        color: "white",
-                                        border: "none",
-                                        borderRadius: "6px",
-                                        padding: "8px 10px",
-                                        cursor: "pointer",
-                                        fontSize: "12px",
-                                    }}
-                                >
-                                    {savingAmenityId === item.id ? "Saving..." : pendingDelete ? "Delete Pending" : pendingUpdate ? "Update Pending" : (canEditDirectly ? "Save" : "Submit")}
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(item.id)}
-                                    disabled={!canEditDirectly && !!pendingDelete}
-                                    style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}
-                                    title={!canEditDirectly && !!pendingDelete ? "Delete request already pending" : undefined}
-                                >
-                                    <FaTrash />
-                                </button>
+                                <div className="flex w-full md:w-auto items-center gap-3">
+                                    <button
+                                        onClick={() => handleSaveRow(item)}
+                                        disabled={submitDisabled}
+                                        className="w-full md:w-auto rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95 disabled:bg-emerald-600/50 disabled:active:scale-100"
+                                    >
+                                        {savingAmenityId === item.id ? "Saving..." : pendingDelete ? "Delete Pending" : pendingUpdate ? "Update Pending" : (canEditDirectly ? "Save" : "Submit")}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        disabled={!canEditDirectly && !!pendingDelete}
+                                        className="flex-shrink-0 rounded-lg p-2.5 text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                                        title={!canEditDirectly && !!pendingDelete ? "Delete request already pending" : undefined}
+                                    >
+                                        <FaTrash size={18} />
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}
-                    {amenities.length === 0 && !isAdding && <p style={{ color: "#999", textAlign: "center", marginTop: "20px" }}>No amenities yet. Add one!</p>}
+                    {amenities.length === 0 && !isAdding && <p className="py-8 text-center text-slate-500">No amenities yet. Add one!</p>}
                 </div>
             )}
 

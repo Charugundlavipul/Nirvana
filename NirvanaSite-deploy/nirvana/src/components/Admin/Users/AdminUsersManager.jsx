@@ -181,26 +181,26 @@ const AdminUsersManager = () => {
 
   return (
     <AdminLayout title="Admin Users" subtitle="Create admins and update credentials in one step">
-      <div style={panel}>
-        <h3 style={{ marginTop: 0 }}>Create New Admin</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 180px auto", gap: "10px" }}>
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-xl font-bold text-slate-800">Create New Admin</h3>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_180px_auto] gap-4 items-center">
           <input
             placeholder="Email"
             value={newUser.email}
             onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-            style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
           />
           <input
             placeholder="Password"
             type="password"
             value={newUser.password}
             onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
-            style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
           />
           <select
             value={newUser.role}
             onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value }))}
-            style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
           >
             {ROLE_OPTIONS.map((r) => (
               <option key={r} value={r}>{r}</option>
@@ -209,89 +209,76 @@ const AdminUsersManager = () => {
           <button
             onClick={handleCreate}
             disabled={busyUserId === "create"}
-            style={{ padding: "10px 14px", border: "none", background: "#10b981", color: "#fff", borderRadius: "6px", cursor: "pointer" }}
+            className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50 md:w-auto"
           >
             {busyUserId === "create" ? "Creating..." : "Create Admin"}
           </button>
         </div>
-        <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+        <p className="mt-3 text-xs text-slate-500">
           Passwords are never viewable. To change a password, type a new one and click Save Changes.
         </p>
       </div>
 
-      <div style={panel}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-          <h3 style={{ margin: 0 }}>Existing Admins ({users.length})</h3>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <h3 className="text-xl font-bold text-slate-800">Existing Admins ({users.length})</h3>
           <input
             placeholder="Search by email/role"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "260px", padding: "9px 10px", border: "1px solid #ddd", borderRadius: "6px" }}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 md:w-64"
           />
         </div>
 
-        {error ? <div style={{ color: "#b91c1c", marginBottom: "8px" }}>{error}</div> : null}
+        {error ? <div className="mb-4 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div> : null}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div className="flex flex-col gap-4">
           {visibleUsers.map((u) => {
             const row = getRowState(u);
+            const isChanged = rowHasChanges(u, row);
             return (
-              <div key={u.user_id} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "10px" }}>
-                <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>
-                  User ID: {u.user_id}
+              <div key={u.user_id} className="rounded-xl border border-slate-200 p-5 transition-all hover:border-slate-300 hover:shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-400">ID: {u.user_id}</span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 180px", gap: "8px", alignItems: "center" }}>
+                <div className="mb-3 grid grid-cols-1 gap-4 md:grid-cols-[1fr_180px]">
                   <input
                     value={row.email}
                     onChange={(e) => setRowState(u.user_id, { email: e.target.value })}
                     placeholder="Email"
-                    style={{ padding: "9px 10px", border: "1px solid #ddd", borderRadius: "6px" }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <select
                     value={row.role}
                     onChange={(e) => setRowState(u.user_id, { role: e.target.value })}
-                    style={{ padding: "9px 10px", border: "1px solid #ddd", borderRadius: "6px" }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
                   >
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "8px" }}>
+                <div className="mb-4">
                   <input
                     placeholder="New password (optional)"
                     type="password"
                     value={row.password}
                     onChange={(e) => setRowState(u.user_id, { password: e.target.value })}
-                    style={{ padding: "9px 10px", border: "1px solid #ddd", borderRadius: "6px" }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
-                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                <div className="flex gap-3">
                   <button
                     onClick={() => handleSaveUser(u)}
-                    disabled={busyUserId === u.user_id || !rowHasChanges(u, row)}
-                    style={{
-                      padding: "8px 12px",
-                      border: "none",
-                      borderRadius: "6px",
-                      background: "#2563eb",
-                      color: "#fff",
-                      cursor: "pointer",
-                    }}
+                    disabled={busyUserId === u.user_id || !isChanged}
+                    className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95 disabled:bg-emerald-600/50 disabled:active:scale-100"
                   >
                     {busyUserId === u.user_id ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     onClick={() => handleDelete(u.user_id, u.email)}
                     disabled={busyUserId === u.user_id}
-                    style={{
-                      padding: "8px 12px",
-                      border: "1px solid #ef4444",
-                      borderRadius: "6px",
-                      background: "#fff",
-                      color: "#b91c1c",
-                      cursor: "pointer",
-                    }}
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-5 py-2 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-100 hover:text-rose-700 disabled:opacity-50"
                   >
                     Delete User
                   </button>
@@ -299,7 +286,7 @@ const AdminUsersManager = () => {
               </div>
             );
           })}
-          {visibleUsers.length === 0 ? <div style={{ color: "#666" }}>No admin users found.</div> : null}
+          {visibleUsers.length === 0 ? <div className="py-8 text-center text-sm text-slate-500">No admin users found.</div> : null}
         </div>
       </div>
     </AdminLayout>
