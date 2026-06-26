@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers, FaMapMarkerAlt, FaQuoteLeft, FaSearch, FaCalendarAlt } from 'react-icons/fa';
 import { getCompactBathroomSummary } from "../../lib/bathrooms";
+import CustomDatePicker from '../common/CustomDatePicker';
+import CustomSelect from '../common/CustomSelect';
 
 const HERO_IMAGE = "/assets/exterior.avif";
 const CTA_IMAGE = "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp";
@@ -726,6 +728,7 @@ const HeroSearch = ({ router, properties = [] }) => {
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
   const [guests, setGuests] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
@@ -760,6 +763,7 @@ const HeroSearch = ({ router, properties = [] }) => {
     if (checkInDate) params.append("checkIn", checkInDate);
     if (checkOutDate) params.append("checkOut", checkOutDate);
     if (guests) params.append("guests", guests);
+    if (bedrooms) params.append("bedrooms", bedrooms);
 
     router.push(`/properties?${params.toString()}`);
   };
@@ -811,58 +815,71 @@ const HeroSearch = ({ router, properties = [] }) => {
           <div className="flex-[1.5] flex items-center gap-3 px-4 py-4 border-r border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
             <FaCalendarAlt className="text-gray-400 text-base flex-shrink-0" />
             <div className="flex items-center gap-1 w-full">
-              <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1 relative z-50">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check in</span>
-                <input
-                  id="home-search-check-in-desktop"
-                  type="date"
-                  aria-label="Check-in date"
-                  min={todayString}
+                <CustomDatePicker
                   value={checkInDate}
-                  onClick={(e) => e.target.showPicker?.()}
-                  onChange={(e) => {
-                    setCheckInDate(e.target.value);
-                    if (checkOutDate && e.target.value && checkOutDate <= e.target.value) setCheckOutDate("");
+                  onChange={(val) => {
+                    setCheckInDate(val);
+                    if (checkOutDate && val && checkOutDate <= val) setCheckOutDate("");
                   }}
-                  className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none cursor-pointer w-full"
+                  minDate={todayString}
+                  placeholder="Add dates"
                 />
               </div>
               <span className="text-gray-300 mx-1">—</span>
-              <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1 relative z-50">
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Check out</span>
-                <input
-                  id="home-search-check-out-desktop"
-                  type="date"
-                  aria-label="Check-out date"
-                  min={checkInDate || todayString}
+                <CustomDatePicker
                   value={checkOutDate}
-                  onClick={(e) => e.target.showPicker?.()}
-                  onChange={(e) => setCheckOutDate(e.target.value)}
-                  className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none cursor-pointer w-full"
+                  onChange={setCheckOutDate}
+                  minDate={checkInDate || todayString}
+                  placeholder="Add dates"
                 />
               </div>
             </div>
           </div>
 
           {/* Guests */}
-          <div className="flex-1 flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+          <div className="flex-[0.9] flex items-center gap-3 px-4 py-4 border-r border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
             <FaUsers className="text-gray-400 text-lg flex-shrink-0" />
-            <div className="flex flex-col w-full">
+            <div className="flex flex-col w-full relative z-40">
               <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Guests</span>
-              <select
-                id="home-search-guests-desktop"
-                aria-label="Guests"
+              <CustomSelect
                 value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                className="bg-transparent text-sm text-gray-900 font-medium focus:outline-none appearance-none cursor-pointer w-full"
-              >
-                <option value="">Add guests</option>
-                <option value="2">2+ guests</option>
-                <option value="4">4+ guests</option>
-                <option value="6">6+ guests</option>
-                <option value="8">8+ guests</option>
-                <option value="10">10+ guests</option>
-              </select>
+                onChange={setGuests}
+                options={[
+                  { value: "", label: "Add guests" },
+                  { value: "2", label: "2+ guests" },
+                  { value: "4", label: "4+ guests" },
+                  { value: "6", label: "6+ guests" },
+                  { value: "8", label: "8+ guests" },
+                  { value: "10", label: "10+ guests" }
+                ]}
+                placeholder="Add guests"
+              />
+            </div>
+          </div>
+
+          {/* Bedrooms */}
+          <div className="flex-[0.8] flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <FaBed className="text-gray-400 text-lg flex-shrink-0" />
+            <div className="flex flex-col w-full relative z-40">
+              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Bedrooms</span>
+              <CustomSelect
+                value={bedrooms}
+                onChange={setBedrooms}
+                options={[
+                  { value: "", label: "Any" },
+                  { value: "3", label: "3+ beds" },
+                  { value: "4", label: "4+ beds" },
+                  { value: "5", label: "5+ beds" },
+                  { value: "6", label: "6+ beds" },
+                  { value: "7", label: "7+ beds" },
+                  { value: "8", label: "8+ beds" }
+                ]}
+                placeholder="Any"
+              />
             </div>
           </div>
 
@@ -920,55 +937,64 @@ const HeroSearch = ({ router, properties = [] }) => {
             )}
           </div>
 
-          {/* Dates + Guests in one row */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
+          {/* Dates + Guests + Bedrooms in grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5 relative z-[60]">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check in</span>
-              <input
-                id="home-search-check-in-mobile"
-                type="date"
-                aria-label="Check-in date"
-                min={todayString}
+              <CustomDatePicker
                 value={checkInDate}
-                onClick={(e) => e.target.showPicker?.()}
-                onChange={(e) => {
-                  setCheckInDate(e.target.value);
-                  if (checkOutDate && e.target.value && checkOutDate <= e.target.value) setCheckOutDate("");
+                onChange={(val) => {
+                  setCheckInDate(val);
+                  if (checkOutDate && val && checkOutDate <= val) setCheckOutDate("");
                 }}
-                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none cursor-pointer"
+                minDate={todayString}
+                placeholder="Add dates"
               />
             </div>
 
-            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5">
+            <div className="min-w-0 rounded-xl border border-gray-200 p-2.5 relative z-[60]">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Check out</span>
-              <input
-                id="home-search-check-out-mobile"
-                type="date"
-                aria-label="Check-out date"
-                min={checkInDate || todayString}
+              <CustomDatePicker
                 value={checkOutDate}
-                onClick={(e) => e.target.showPicker?.()}
-                onChange={(e) => setCheckOutDate(e.target.value)}
-                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none cursor-pointer"
+                onChange={setCheckOutDate}
+                minDate={checkInDate || todayString}
+                placeholder="Add dates"
               />
             </div>
 
-            <div className="rounded-xl border border-gray-200 p-2.5">
+            <div className="rounded-xl border border-gray-200 p-2.5 relative z-[50]">
               <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Guests</span>
-              <select
-                id="home-search-guests-mobile"
-                aria-label="Guests"
+              <CustomSelect
                 value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                className="w-full bg-transparent text-xs font-medium text-gray-900 focus:outline-none appearance-none"
-              >
-                <option value="">Any</option>
-                <option value="2">2+</option>
-                <option value="4">4+</option>
-                <option value="6">6+</option>
-                <option value="8">8+</option>
-                <option value="10">10+</option>
-              </select>
+                onChange={setGuests}
+                options={[
+                  { value: "", label: "Any" },
+                  { value: "2", label: "2+" },
+                  { value: "4", label: "4+" },
+                  { value: "6", label: "6+" },
+                  { value: "8", label: "8+" },
+                  { value: "10", label: "10+" }
+                ]}
+                placeholder="Any"
+              />
+            </div>
+
+            <div className="rounded-xl border border-gray-200 p-2.5 relative z-[50]">
+              <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-0.5">Bedrooms</span>
+              <CustomSelect
+                value={bedrooms}
+                onChange={setBedrooms}
+                options={[
+                  { value: "", label: "Any" },
+                  { value: "3", label: "3+ beds" },
+                  { value: "4", label: "4+ beds" },
+                  { value: "5", label: "5+ beds" },
+                  { value: "6", label: "6+ beds" },
+                  { value: "7", label: "7+ beds" },
+                  { value: "8", label: "8+ beds" }
+                ]}
+                placeholder="Any"
+              />
             </div>
           </div>
 

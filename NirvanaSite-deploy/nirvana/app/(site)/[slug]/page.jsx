@@ -31,11 +31,11 @@ export async function generateMetadata({ params }) {
       title: "Nirvana Cabin - Private Pool & Mountain Views | Pigeon Forge & Sevierville",
       description: "Luxury 4BR Smoky Mountain cabin with private heated pool, hot tub, mountain views & game room near Pigeon Forge and Gatlinburg. Best romantic cabin getaway. Sleeps 14.",
     },
-    "shoreside-oasis": {
+    "shoreside": {
       title: "Shoreside Oasis - Lakefront Luxury Villa with Private Dock | Lake Norman NC",
       description: "Best luxury villa for nature-loving couples on Lake Norman. 5BR lakefront home with private dock, infinity-edge views & resort amenities. Sleeps 12 in Mooresville NC. Book direct for best rate.",
     },
-    "halftime-hideaway": {
+    "halftime": {
       title: "Halftime Hideaway - Indoor Pool, Hot Tub & Game Rooms | Gatlinburg & Pigeon Forge Area",
       description: "Smoky mountain cabin rental with indoor pool — luxury 5BR cabin with private heated indoor pool, hot tub, home theater & game rooms. Perfect for large groups near Gatlinburg and Sevierville. Sleeps 22.",
     },
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }) {
       title: "Grand Prix Getaway - Racing Theme Cabin with Pool | Sevierville & Pigeon Forge TN",
       description: "Ultimate luxury cabin getaway — 6BR racing-themed cabin with private pool, arcade, home theater & mountain views. Premium Smoky mountain cabins for large groups up to 26 near Pigeon Forge.",
     },
-    "chalet-du-lac": {
+    "chalet-du-lac-lakefront-retreat": {
       title: "Chalet Du Lac - Lakefront Luxury Chalet on Lake Norman | Charlotte NC",
       description: "Stunning lakefront luxury vacation rental on Lake Norman with panoramic water views, private dock & luxury finishes. Best luxury villa for nature-loving couples near Charlotte. Book direct.",
     },
