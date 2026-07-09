@@ -16,9 +16,12 @@ const applyBlogImageFallback = (event) => {
     event.currentTarget.src = BLOG_FALLBACK_LOGO;
 };
 
+const CATEGORIES = ['All Articles', 'Travel Guides', 'Destinations', 'Property Spotlights'];
+
 const BlogFeed = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState('All Articles');
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -94,13 +97,22 @@ const BlogFeed = () => {
                 </ol>
             </nav>
 
-            {/* Top Categories Filters (UI placeholder for future implementation) */}
+            {/* Top Categories Filters */}
             <div className="max-w-7xl mx-auto px-6 mt-12 overflow-x-auto no-scrollbar pb-2">
                 <div className="flex space-x-4">
-                    <button className="px-6 py-2 bg-slate-200 text-slate-800 rounded-full font-semibold text-sm hover:bg-accent hover:text-white transition-all">All Articles</button>
-                    <button className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-full font-semibold text-sm hover:border-accent hover:text-accent transition-all whitespace-nowrap">Travel Guides</button>
-                    <button className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-full font-semibold text-sm hover:border-accent hover:text-accent transition-all whitespace-nowrap">Destinations</button>
-                    <button className="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-full font-semibold text-sm hover:border-accent hover:text-accent transition-all whitespace-nowrap">Property Spotlights</button>
+                    {CATEGORIES.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all whitespace-nowrap ${
+                                activeCategory === cat
+                                    ? 'bg-accent text-white shadow-md'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:border-accent hover:text-accent'
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -129,7 +141,9 @@ const BlogFeed = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {posts.map(post => (
+                        {posts
+                            .filter(post => activeCategory === 'All Articles' || post.category === activeCategory)
+                            .map(post => (
                             <Link 
                                 key={post.id} 
                                 href={`/blog/${post.slug}`}
@@ -171,7 +185,7 @@ const BlogFeed = () => {
                                     </div>
                                 </div>
                             </Link>
-                        ))}
+                            ))}
                     </div>
                 )}
             </section>
