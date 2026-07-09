@@ -129,7 +129,7 @@ const BlogPost = ({ slug: propSlug }) => {
 
             {/* Hero Image */}
             <div className="px-6 md:px-12 max-w-5xl mx-auto mb-16">
-                <div className="aspect-[21/9] rounded-3xl overflow-hidden shadow-2xl bg-slate-200">
+                <div className="aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl bg-slate-200">
                     <img 
                         src={displayPost.cover_image || displayPost.imageUrl || BLOG_FALLBACK_LOGO} 
                         alt={displayPost.title} 
