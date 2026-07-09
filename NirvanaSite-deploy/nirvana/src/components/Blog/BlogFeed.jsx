@@ -2,12 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FaChevronRight, FaCalendarAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaArrowRight, FaBookOpen } from 'react-icons/fa';
 import { supabase } from '../../supabaseClient';
 import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
-
-// SEO Optimized Blog Feed
-// Intercepts travelers during the "planning" phase.
 
 const BLOG_FALLBACK_LOGO = '/favicon.png';
 
@@ -18,6 +15,137 @@ const applyBlogImageFallback = (event) => {
 
 const CATEGORIES = ['All Articles', 'Travel Guides', 'Destinations', 'Property Spotlights'];
 
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// --- Featured Hero Card -----------------------------------------------------------
+const FeaturedPost = ({ post }) => (
+    <Link
+        href={`/blog/${post.slug}`}
+        className="group relative flex flex-col rounded-3xl overflow-hidden shadow-2xl min-h-[480px] bg-slate-900 block"
+    >
+        {/* Image */}
+        <div className="absolute inset-0 overflow-hidden">
+            <img
+                src={post.cover_image || post.imageUrl || BLOG_FALLBACK_LOGO}
+                alt={post.title}
+                onError={applyBlogImageFallback}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out opacity-70"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-transparent hidden lg:block" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-end p-8 md:p-12 max-w-2xl mt-auto">
+            <div className="flex items-center gap-3 mb-5">
+                <span className="bg-accent text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-widest uppercase">
+                    {post.category || 'Featured'}
+                </span>
+                <span className="text-white/50 text-xs font-semibold tracking-widest uppercase">Featured</span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4 group-hover:text-accent transition-colors duration-300">
+                {post.title}
+            </h2>
+
+            <p className="text-slate-300 text-lg font-light leading-relaxed mb-8 line-clamp-2">
+                {post.excerpt}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                <div className="flex items-center gap-2">
+                    <img
+                        src={post.author_image_url || BLOG_FALLBACK_LOGO}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-white/20"
+                        alt="author"
+                        onError={applyBlogImageFallback}
+                    />
+                    <span className="text-white font-medium">{post.author_name || 'Nirvana Luxe Team'}</span>
+                </div>
+                <span className="text-slate-600">&middot;</span>
+                <div className="flex items-center gap-1.5">
+                    <FaCalendarAlt size={11} />
+                    <span>{formatDate(post.created_at)}</span>
+                </div>
+                {post.read_time && (
+                    <>
+                        <span className="text-slate-600">&middot;</span>
+                        <div className="flex items-center gap-1.5">
+                            <FaClock size={11} />
+                            <span>{post.read_time}</span>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <div className="mt-8 inline-flex items-center gap-2 text-accent font-semibold text-sm group-hover:gap-4 transition-all duration-300">
+                Read Full Article <FaArrowRight size={12} />
+            </div>
+        </div>
+    </Link>
+);
+
+// --- Standard Card -----------------------------------------------------------
+const PostCard = ({ post }) => (
+    <Link
+        href={`/blog/${post.slug}`}
+        className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300"
+    >
+        {/* Thumbnail */}
+        <div className="relative aspect-[16/9] overflow-hidden bg-slate-200">
+            <img
+                src={post.cover_image || post.imageUrl || BLOG_FALLBACK_LOGO}
+                alt={post.title}
+                loading="lazy"
+                onError={applyBlogImageFallback}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute top-4 left-4">
+                <span className="bg-accent/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase shadow-lg">
+                    {post.category}
+                </span>
+            </div>
+            {post.read_time && (
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs flex items-center gap-1.5">
+                        <FaClock size={10} /> {post.read_time}
+                    </span>
+                </div>
+            )}
+        </div>
+
+        {/* Body */}
+        <div className="p-6 flex flex-col flex-1">
+            <h2 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-accent transition-colors duration-300 line-clamp-2 leading-snug">
+                {post.title}
+            </h2>
+            <p className="text-slate-500 text-sm font-light leading-relaxed flex-1 line-clamp-3 mb-5">
+                {post.excerpt}
+            </p>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
+                <div className="flex items-center gap-2">
+                    <img
+                        src={post.author_image_url || BLOG_FALLBACK_LOGO}
+                        className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                        alt="author"
+                        onError={applyBlogImageFallback}
+                    />
+                    <span className="text-xs font-semibold text-slate-700">{post.author_name || 'Nirvana Luxe Team'}</span>
+                </div>
+                <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                    <FaCalendarAlt size={10} className="text-slate-300" />
+                    {formatDate(post.created_at)}
+                </span>
+            </div>
+        </div>
+    </Link>
+);
+
+// --- Main Feed ---------------------------------------------------------------
 const BlogFeed = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,162 +160,202 @@ const BlogFeed = () => {
                 .eq('published', true)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error fetching blogs:", error);
-            } else {
-                setPosts(data || []);
-            }
+            if (error) console.error('Error fetching blogs:', error);
+            else setPosts(data || []);
             setLoading(false);
         };
-
         fetchPosts();
     }, []);
 
-    // Dynamic SEO update for Client-Side Rendering
     useEffect(() => {
         document.title = `Smoky Mountain Luxury Travel Blog & Guides | ${SITE_NAME}`;
-        
         let metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
             metaDescription = document.createElement('meta');
-            metaDescription.name = "description";
+            metaDescription.name = 'description';
             document.head.appendChild(metaDescription);
         }
         metaDescription.content = `Plan your next premium vacation with ${SITE_NAME}'s expert travel guides, destination comparisons, and luxury cabin tips for the Smoky Mountains area.`;
     }, []);
 
-    // JSON-LD Schema for Blog Feed / ItemList
     const feedSchema = {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": `${SITE_NAME} Luxury Travel Blog`,
-        "description": "Expert travel guides and tips for Smoky Mountain luxury vacations.",
-        "itemListElement": posts.map((post, index) => ({
-            "@type": "ListItem",
-            "position": index + 1,
-            "url": absoluteUrl(`/blog/${post.slug}`)
-        }))
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: `${SITE_NAME} Luxury Travel Blog`,
+        description: 'Expert travel guides and tips for Smoky Mountain luxury vacations.',
+        itemListElement: posts.map((post, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            url: absoluteUrl(`/blog/${post.slug}`),
+        })),
     };
+
+    const filtered = activeCategory === 'All Articles'
+        ? posts
+        : posts.filter(p => p.category === activeCategory);
+
+    const featuredPost = filtered[0] || null;
+    const gridPosts = filtered.slice(1);
 
     return (
         <div className="font-sans text-gray-800 bg-slate-50 min-h-screen">
-            {/* Inject Schema */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(feedSchema) }}
             />
 
-            {/* Hero Section */}
-            <section className="bg-slate-900 py-24 px-6 md:px-12 text-center text-white">
-                <div className="max-w-4xl mx-auto mt-16">
-                    <p className="text-accent uppercase tracking-[0.3em] text-sm font-semibold mb-4">Inspiration & Guides</p>
-                    <h1 className="text-5xl md:text-6xl font-bold mb-6">The Nirvana Luxe Journal</h1>
-                    <p className="text-xl text-slate-300 font-light max-w-2xl mx-auto">
+            {/* ── Hero ──────────────────────────────────────────────────── */}
+            <section className="relative overflow-hidden min-h-[520px] flex flex-col justify-center">
+                {/* Background image */}
+                <div className="absolute inset-0">
+                    <img
+                        src="/blog-hero-bg.png"
+                        alt="Smoky Mountain luxury backdrop"
+                        className="w-full h-full object-cover object-center"
+                    />
+                    {/* Dark overlay layers for legibility */}
+                    <div className="absolute inset-0 bg-slate-950/70" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/80" />
+                </div>
+
+                {/* Ambient accent glow — sits above bg, below content */}
+                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
+                <div className="absolute -bottom-24 -right-24 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
+
+                <div className="relative max-w-7xl mx-auto px-6 md:px-12 pt-36 pb-24 text-center">
+                    <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 text-accent px-5 py-2 rounded-full text-xs font-bold tracking-[0.25em] uppercase mb-8">
+                        <FaBookOpen size={11} />
+                        Inspiration &amp; Guides
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.05] mb-6">
+                        The{' '}
+                        <span className="text-accent">Nirvana Luxe</span>
+                        <br />Journal
+                    </h1>
+
+                    <p className="text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
                         Curated experiences, travel tips, and deep dives into the finest mountain retreats in Tennessee.
                     </p>
+
+                    <div className="flex items-center justify-center gap-10 mt-12 text-slate-400 text-sm">
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-white">{posts.length}</div>
+                            <div className="text-xs uppercase tracking-wider mt-0.5">Articles</div>
+                        </div>
+                        <div className="w-px h-8 bg-slate-700" />
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-white">{CATEGORIES.length - 1}</div>
+                            <div className="text-xs uppercase tracking-wider mt-0.5">Categories</div>
+                        </div>
+                        <div className="w-px h-8 bg-slate-600" />
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-white">5&#9733;</div>
+                            <div className="text-xs uppercase tracking-wider mt-0.5">Luxury Focus</div>
+                        </div>
+                    </div>
                 </div>
+
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent" />
             </section>
 
-            {/* Breadcrumbs */}
-            <nav className="bg-white border-b border-slate-200 py-4 px-6 md:px-12 max-w-7xl mx-auto text-sm text-slate-500">
-                <ol className="flex items-center space-x-2">
-                    <li><Link href="/" className="hover:text-accent transition-colors">Home</Link></li>
-                    <li><FaChevronRight size={10} className="mx-2" /></li>
-                    <li className="text-slate-900 font-semibold">Journal</li>
-                </ol>
-            </nav>
-
-            {/* Top Categories Filters */}
-            <div className="max-w-7xl mx-auto px-6 mt-12 overflow-x-auto no-scrollbar pb-2">
-                <div className="flex space-x-4">
+            {/* --- Category Filters ----------------------------------------- */}
+            <div className="max-w-7xl mx-auto px-6 md:px-12 pt-10 pb-2">
+                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
                     {CATEGORIES.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
-                            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all whitespace-nowrap ${
+                            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                                 activeCategory === cat
-                                    ? 'bg-accent text-white shadow-md'
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:border-accent hover:text-accent'
+                                    ? 'bg-accent text-white shadow-lg shadow-accent/25 scale-105'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:border-accent hover:text-accent hover:shadow-md'
                             }`}
                         >
                             {cat}
                         </button>
                     ))}
+                    <span className="ml-auto text-sm text-slate-400 whitespace-nowrap flex-shrink-0 hidden md:block">
+                        {filtered.length} {filtered.length === 1 ? 'article' : 'articles'}
+                    </span>
                 </div>
+                <div className="mt-6 h-px bg-gradient-to-r from-accent/30 via-slate-200 to-transparent" />
             </div>
 
-            {/* Blog Post Grid */}
-            <section className="py-16 px-6 md:px-12 max-w-7xl mx-auto">
+            {/* --- Content Area --------------------------------------------- */}
+            <section className="max-w-7xl mx-auto px-6 md:px-12 py-12">
                 {loading ? (
-                    <div className="text-center py-20">
-                        <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin mb-4"></div>
-                        <p className="text-slate-500 font-medium">Curating mountain insights...</p>
-                    </div>
-                ) : posts.length === 0 ? (
-                    <div className="max-w-2xl mx-auto text-center py-24 px-8 bg-white rounded-3xl shadow-sm border border-slate-100">
-                        <div className="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-8">
-                            <FaCalendarAlt size={32} />
+                    <div className="flex flex-col items-center justify-center py-32 gap-5">
+                        <div className="relative w-16 h-16">
+                            <div className="absolute inset-0 rounded-full border-4 border-slate-200" />
+                            <div className="absolute inset-0 rounded-full border-4 border-t-accent animate-spin" />
                         </div>
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">The Journal is Warming Up</h2>
-                        <p className="text-slate-600 text-lg font-light leading-relaxed mb-10">
-                            We're currently drafting new travel guides, destination tips, and hidden gems for your next Smoky Mountain getaway. Check back shortly for our latest updates.
+                        <p className="text-slate-400 font-medium tracking-wide">Curating mountain insights...</p>
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="max-w-lg mx-auto text-center py-28 px-8">
+                        <div className="w-24 h-24 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-8 text-4xl">
+                            <FaBookOpen />
+                        </div>
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">No Articles Yet</h2>
+                        <p className="text-slate-500 leading-relaxed mb-10">
+                            {activeCategory === 'All Articles'
+                                ? "We're drafting new guides. Check back soon."
+                                : `No articles found under "${activeCategory}" yet.`}
                         </p>
-                        <Link 
-                            href="/properties" 
-                            className="inline-block bg-primary text-white px-10 py-4 font-bold rounded-full hover:bg-accent transition-all duration-300 shadow-md"
-                        >
-                            Explore Our Properties
-                        </Link>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            {activeCategory !== 'All Articles' && (
+                                <button
+                                    onClick={() => setActiveCategory('All Articles')}
+                                    className="inline-flex items-center gap-2 bg-accent text-white px-8 py-3.5 rounded-full font-semibold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
+                                >
+                                    View All Articles
+                                </button>
+                            )}
+                            <Link
+                                href="/properties"
+                                className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-primary-hover transition-all shadow-md"
+                            >
+                                Explore Properties
+                            </Link>
+                        </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {posts
-                            .filter(post => activeCategory === 'All Articles' || post.category === activeCategory)
-                            .map(post => (
-                            <Link 
-                                key={post.id} 
-                                href={`/blog/${post.slug}`}
-                                className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-slate-100"
-                            >
-                                <div className="relative aspect-[16/10] overflow-hidden bg-slate-200">
-                                    <img 
-                                        src={post.cover_image || post.imageUrl || BLOG_FALLBACK_LOGO} 
-                                        alt={post.title} 
-                                        loading="lazy"
-                                        onError={applyBlogImageFallback}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                    />
-                                    <div className="absolute top-4 left-4 bg-accent text-white px-4 py-1 rounded-full text-xs font-bold tracking-wider uppercase">
-                                        {post.category}
-                                    </div>
-                                </div>
-                                <div className="p-8 flex flex-col flex-1">
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-4 group-hover:text-accent transition-colors line-clamp-3">
-                                        {post.title}
-                                    </h2>
-                                    <p className="text-slate-600 font-light mb-6 flex-1 line-clamp-3">
-                                        {post.excerpt}
-                                    </p>
-                                    <div className="flex items-center justify-between text-sm text-slate-500 pt-6 border-t border-slate-100 mt-auto">
-                                        <div className="flex items-center gap-2">
-                                            <img
-                                                src={post.author_image_url || BLOG_FALLBACK_LOGO}
-                                                className="w-6 h-6 rounded-full object-cover"
-                                                alt="author"
-                                                onError={applyBlogImageFallback}
-                                            />
-                                            <span className="font-medium text-slate-700">{post.author_name || "Nirvana Luxe Team"}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <FaCalendarAlt className="text-slate-400" />
-                                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
-                            ))}
-                    </div>
+                    <>
+                        {featuredPost && (
+                            <div className="mb-12">
+                                <FeaturedPost post={featuredPost} />
+                            </div>
+                        )}
+                        {gridPosts.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {gridPosts.map(post => (
+                                    <PostCard key={post.id} post={post} />
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
+            </section>
+
+            {/* --- CTA Strip ------------------------------------------------ */}
+            <section className="relative overflow-hidden bg-slate-900 mt-16">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(96,189,104,0.15),_transparent_60%)]" />
+                <div className="relative max-w-5xl mx-auto text-center px-6 py-24">
+                    <p className="text-accent text-xs font-bold tracking-[0.3em] uppercase mb-4">Ready to Experience It?</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                        Book Your Dream<br />Mountain Escape
+                    </h2>
+                    <p className="text-slate-400 text-lg font-light max-w-xl mx-auto mb-10">
+                        Browse our curated portfolio of luxury Tennessee cabins and secure your best direct rate.
+                    </p>
+                    <Link
+                        href="/properties"
+                        className="inline-flex items-center gap-3 bg-accent hover:bg-accent/90 text-white px-10 py-4 rounded-full font-bold text-base uppercase tracking-wide transition-all duration-300 shadow-2xl shadow-accent/30 hover:shadow-accent/50 hover:scale-105"
+                    >
+                        Explore Properties <FaArrowRight />
+                    </Link>
+                </div>
             </section>
         </div>
     );

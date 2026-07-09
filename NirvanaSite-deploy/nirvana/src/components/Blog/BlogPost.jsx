@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../supabaseClient';
-import { FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFacebook, FaTwitter, FaLink } from 'react-icons/fa';
+import { FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFacebook, FaTwitter, FaLink, FaClock } from 'react-icons/fa';
 import RichTextContent from '../common/RichTextContent';
 import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
 
@@ -108,7 +108,7 @@ const BlogPost = ({ slug: propSlug }) => {
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-8 leading-tight">
                     {displayPost.title}
                 </h1>
-                <div className="flex items-center justify-center gap-6 text-sm text-slate-500">
+                <div className="flex items-center justify-center flex-wrap gap-3 text-sm text-slate-500">
                     <div className="flex items-center gap-2">
                         <img
                             src={displayPost.author_image_url || BLOG_FALLBACK_LOGO}
@@ -118,12 +118,16 @@ const BlogPost = ({ slug: propSlug }) => {
                         />
                         <span className="font-semibold text-slate-700">{displayPost.author_name || displayPost.author || "Nirvana Luxe Team"}</span>
                     </div>
+                    <span className="text-slate-300 hidden sm:inline">&middot;</span>
                     <div className="flex items-center gap-2">
                         <FaCalendarAlt className="text-slate-400" />
                         <span>{displayPost.created_at ? new Date(displayPost.created_at).toLocaleDateString() : displayPost.date}</span>
                     </div>
-                    <div className="hidden sm:block text-slate-300">•</div>
-                    <div className="hidden sm:block">{displayPost.read_time || displayPost.readTime || "5 min read"}</div>
+                    <span className="text-slate-300 hidden sm:inline">&middot;</span>
+                    <div className="flex items-center gap-1.5 hidden sm:flex">
+                        <FaClock className="text-slate-400" />
+                        <span>{displayPost.read_time || displayPost.readTime || "5 min read"}</span>
+                    </div>
                 </div>
             </header>
 
