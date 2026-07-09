@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../supabaseClient';
-import { FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFacebook, FaTwitter, FaLink, FaClock } from 'react-icons/fa';
+import { FaChevronRight, FaChevronLeft, FaCalendarAlt, FaFacebook, FaTwitter, FaLink, FaClock, FaArrowRight } from 'react-icons/fa';
 import RichTextContent from '../common/RichTextContent';
 import { SITE_NAME, absoluteUrl } from '../../lib/siteConfig';
 
@@ -79,114 +79,138 @@ const BlogPost = ({ slug: propSlug }) => {
     };
 
     return (
-        <div className="font-sans text-gray-800 bg-white min-h-screen">
+        <div className="font-sans text-gray-800 bg-slate-50 min-h-screen">
             {/* Inject Schema */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
             />
 
-            {/* Top Navigation Spacer (If navbar is fixed) */}
-            <div className="h-[80px] bg-slate-900 border-b border-white/10" />
-
-            {/* Breadcrumbs */}
-            <nav className="bg-slate-50 border-b border-slate-200 py-4 px-6 md:px-12">
-                <div className="max-w-4xl mx-auto">
-                    <ol className="flex items-center space-x-2 text-sm text-slate-500">
-                        <li><Link href="/blog" className="hover:text-accent transition-colors flex items-center"><FaChevronLeft className="mr-2" /> Journal</Link></li>
-                        <li><FaChevronRight size={10} className="mx-2" /></li>
-                        <li className="text-slate-900 font-semibold truncate">{displayPost.title}</li>
-                    </ol>
-                </div>
-            </nav>
-
-            {/* Article Header */}
-            <header className="px-6 md:px-12 py-12 md:py-20 max-w-4xl mx-auto text-center">
-                <div className="inline-block bg-accent/10 text-accent px-4 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-6">
-                    {displayPost.category}
-                </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-8 leading-tight">
-                    {displayPost.title}
-                </h1>
-                <div className="flex items-center justify-center flex-wrap gap-3 text-sm text-slate-500">
-                    <div className="flex items-center gap-2">
-                        <img
-                            src={displayPost.author_image_url || BLOG_FALLBACK_LOGO}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-100"
-                            alt="author"
-                            onError={applyBlogImageFallback}
-                        />
-                        <span className="font-semibold text-slate-700">{displayPost.author_name || displayPost.author || "Nirvana Luxe Team"}</span>
-                    </div>
-                    <span className="text-slate-300 hidden sm:inline">&middot;</span>
-                    <div className="flex items-center gap-2">
-                        <FaCalendarAlt className="text-slate-400" />
-                        <span>{displayPost.created_at ? new Date(displayPost.created_at).toLocaleDateString() : displayPost.date}</span>
-                    </div>
-                    <span className="text-slate-300 hidden sm:inline">&middot;</span>
-                    <div className="flex items-center gap-1.5 hidden sm:flex">
-                        <FaClock className="text-slate-400" />
-                        <span>{displayPost.read_time || displayPost.readTime || "5 min read"}</span>
-                    </div>
-                </div>
-            </header>
-
-            {/* Hero Image */}
-            <div className="px-6 md:px-12 max-w-5xl mx-auto mb-16">
-                <div className="aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl bg-slate-200">
+            {/* --- Cinematic Hero --------------------------------------------- */}
+            <section className="relative w-full min-h-[70vh] flex flex-col justify-end bg-slate-950 overflow-hidden">
+                {/* Background Image & Overlays */}
+                <div className="absolute inset-0">
                     <img 
                         src={displayPost.cover_image || displayPost.imageUrl || BLOG_FALLBACK_LOGO} 
                         alt={displayPost.title} 
                         onError={applyBlogImageFallback}
                         className="w-full h-full object-cover"
                     />
+                    <div className="absolute inset-0 bg-slate-950/60" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                 </div>
-            </div>
 
-            {/* Article Content */}
-            <div className="px-6 md:px-12 max-w-4xl mx-auto mb-24">
-                <RichTextContent
-                    value={displayPost.content}
-                    className="max-w-none text-slate-600 leading-relaxed
-                    [&_p]:mb-5
-                    [&_strong]:font-bold [&_strong]:text-slate-900
-                    [&_em]:italic
-                    [&_a]:text-accent [&_a]:underline [&_a]:underline-offset-4
-                    [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:text-4xl md:[&_h1]:text-5xl [&_h1]:font-bold [&_h1]:leading-tight [&_h1]:text-slate-900
-                    [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-3xl md:[&_h2]:text-4xl [&_h2]:font-bold [&_h2]:leading-tight [&_h2]:text-slate-900
-                    [&_h3]:mt-7 [&_h3]:mb-3 [&_h3]:text-2xl md:[&_h3]:text-3xl [&_h3]:font-bold [&_h3]:leading-snug [&_h3]:text-slate-900
-                    [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:text-xl md:[&_h4]:text-2xl [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-slate-900
-                    [&_ul]:mb-5 [&_ul]:ml-6 [&_ul]:list-disc
-                    [&_ol]:mb-5 [&_ol]:ml-6 [&_ol]:list-decimal
-                    [&_li]:mb-2
-                    [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-slate-700
-                    [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-8"
-                />
+                {/* Breadcrumbs Top Layer */}
+                <div className="absolute top-0 left-0 w-full z-20 border-b border-white/10 bg-slate-950/20 backdrop-blur-md">
+                    <nav className="max-w-7xl mx-auto px-6 md:px-12 py-4">
+                        <ol className="flex items-center space-x-2 text-sm text-slate-300">
+                            <li>
+                                <Link href="/blog" className="hover:text-accent transition-colors flex items-center gap-2">
+                                    <FaChevronLeft size={10} /> Journal
+                                </Link>
+                            </li>
+                            <li><FaChevronRight size={10} className="mx-2 text-slate-500" /></li>
+                            <li className="text-white font-medium truncate max-w-[200px] md:max-w-sm">{displayPost.title}</li>
+                        </ol>
+                    </nav>
+                </div>
 
-                {/* Social Sharing */}
-                <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col items-center gap-6">
-                    <div className="text-slate-500 font-semibold">Share this guide</div>
-                    <div className="flex gap-4">
-                        <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#1877F2] hover:text-white transition-colors">
-                            <FaFacebook />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#1DA1F2] hover:text-white transition-colors">
-                            <FaTwitter />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-800 hover:text-white transition-colors">
-                            <FaLink />
-                        </button>
+                {/* Hero Content */}
+                <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-16 pt-32 w-full text-center">
+                    <div className="inline-block bg-accent/20 border border-accent/30 text-accent px-5 py-1.5 rounded-full text-xs font-bold tracking-[0.2em] uppercase mb-8 backdrop-blur-sm shadow-[0_0_15px_rgba(96,189,104,0.3)]">
+                        {displayPost.category}
+                    </div>
+                    
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-[1.1] max-w-4xl mx-auto drop-shadow-lg">
+                        {displayPost.title}
+                    </h1>
+
+                    <div className="flex items-center justify-center flex-wrap gap-4 text-sm text-slate-300">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={displayPost.author_image_url || BLOG_FALLBACK_LOGO}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-white/20 shadow-md"
+                                alt="author"
+                                onError={applyBlogImageFallback}
+                            />
+                            <span className="font-semibold text-white tracking-wide">{displayPost.author_name || displayPost.author || "Nirvana Luxe Team"}</span>
+                        </div>
+                        <span className="text-slate-500 hidden sm:inline">&middot;</span>
+                        <div className="flex items-center gap-2">
+                            <FaCalendarAlt className="text-slate-400" />
+                            <span>{displayPost.created_at ? new Date(displayPost.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : displayPost.date}</span>
+                        </div>
+                        <span className="text-slate-500 hidden sm:inline">&middot;</span>
+                        <div className="flex items-center gap-2 hidden sm:flex">
+                            <FaClock className="text-slate-400" />
+                            <span>{displayPost.read_time || displayPost.readTime || "5 min read"}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {/* CTA Section */}
-            <section className="bg-slate-50 py-24 border-t border-slate-200 text-center px-6">
-                <div className="max-w-2xl mx-auto">
-                    <h2 className="text-4xl font-bold text-slate-900 mb-6">Ready to Experience It Yourself?</h2>
-                    <p className="text-xl text-slate-500 mb-10">Browse our exclusive portfolio of luxury Tennessee cabins and secure your direct rate.</p>
-                    <Link href="/properties" className="inline-block bg-accent hover:bg-accent/90 text-white px-10 py-4 font-bold text-lg uppercase tracking-wide transition-all shadow-xl hover:shadow-2xl">
-                        Explore Properties
+            {/* --- Main Content ----------------------------------------------- */}
+            <section className="relative -mt-10 max-w-4xl mx-auto px-6 md:px-12 mb-24 z-20">
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 md:p-16">
+                    {/* Abstract/Excerpt (Optional nice touch for long articles) */}
+                    {displayPost.excerpt && (
+                        <p className="text-xl md:text-2xl font-light text-slate-500 leading-relaxed mb-12 text-center italic">
+                            "{displayPost.excerpt}"
+                        </p>
+                    )}
+
+                    {/* Rich Text Body */}
+                    <RichTextContent
+                        value={displayPost.content}
+                        className="max-w-none text-slate-700 leading-loose text-lg
+                        [&_p]:mb-6
+                        [&_strong]:font-bold [&_strong]:text-slate-900
+                        [&_em]:italic
+                        [&_a]:text-accent [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-accent-dark transition-colors
+                        [&_h1]:mt-14 [&_h1]:mb-6 [&_h1]:text-4xl md:[&_h1]:text-5xl [&_h1]:font-bold [&_h1]:leading-tight [&_h1]:text-slate-900 [&_h1]:tracking-tight
+                        [&_h2]:mt-12 [&_h2]:mb-5 [&_h2]:text-3xl md:[&_h2]:text-4xl [&_h2]:font-bold [&_h2]:leading-tight [&_h2]:text-slate-900 [&_h2]:tracking-tight
+                        [&_h3]:mt-10 [&_h3]:mb-4 [&_h3]:text-2xl md:[&_h3]:text-3xl [&_h3]:font-bold [&_h3]:leading-snug [&_h3]:text-slate-900
+                        [&_h4]:mt-8 [&_h4]:mb-4 [&_h4]:text-xl md:[&_h4]:text-2xl [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-slate-900
+                        [&_ul]:mb-8 [&_ul]:ml-8 [&_ul]:list-disc [&_ul]:space-y-2
+                        [&_ol]:mb-8 [&_ol]:ml-8 [&_ol]:list-decimal [&_ol]:space-y-2
+                        [&_blockquote]:my-10 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-slate-50 [&_blockquote]:p-6 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_blockquote]:rounded-r-xl
+                        [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-10 [&_img]:w-full"
+                    />
+
+                    {/* Social Sharing */}
+                    <div className="mt-16 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="text-slate-500 font-semibold uppercase tracking-wider text-sm">Share this Guide</div>
+                        <div className="flex gap-4">
+                            <button className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-[#1877F2] hover:text-white hover:border-[#1877F2] transition-all shadow-sm hover:shadow-md hover:-translate-y-1">
+                                <FaFacebook size={18} />
+                            </button>
+                            <button className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-[#1DA1F2] hover:text-white hover:border-[#1DA1F2] transition-all shadow-sm hover:shadow-md hover:-translate-y-1">
+                                <FaTwitter size={18} />
+                            </button>
+                            <button className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all shadow-sm hover:shadow-md hover:-translate-y-1">
+                                <FaLink size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* --- CTA Strip ------------------------------------------------ */}
+            <section className="relative overflow-hidden bg-slate-900">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(96,189,104,0.15),_transparent_60%)]" />
+                <div className="relative max-w-5xl mx-auto text-center px-6 py-24">
+                    <p className="text-accent text-xs font-bold tracking-[0.3em] uppercase mb-4">Ready to Experience It?</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                        Book Your Dream<br />Mountain Escape
+                    </h2>
+                    <p className="text-slate-400 text-lg font-light max-w-xl mx-auto mb-10">
+                        Browse our curated portfolio of luxury Tennessee cabins and secure your best direct rate.
+                    </p>
+                    <Link
+                        href="/properties"
+                        className="inline-flex items-center gap-3 bg-accent hover:bg-accent/90 text-white px-10 py-4 rounded-full font-bold text-base uppercase tracking-wide transition-all duration-300 shadow-2xl shadow-accent/30 hover:shadow-accent/50 hover:scale-105"
+                    >
+                        Explore Properties <FaArrowRight />
                     </Link>
                 </div>
             </section>
