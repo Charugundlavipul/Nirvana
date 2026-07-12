@@ -622,7 +622,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
         <div className="mt-2 text-center text-sm font-bold text-accent group-hover:underline">
           <button
             onClick={(e) => { e.stopPropagation(); window.location.href = link; }}
-            className="w-full rounded-xl bg-slate-50 py-3 text-slate-700 transition-colors hover:bg-accent hover:text-white"
+            className="w-full rounded-xl bg-accent py-3 text-white transition-all hover:bg-green-700 hover:scale-[1.02]"
           >
             EXPLORE PROPERTY
           </button>
