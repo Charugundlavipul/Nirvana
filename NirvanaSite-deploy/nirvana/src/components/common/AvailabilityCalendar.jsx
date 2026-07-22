@@ -618,13 +618,13 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                                     Unavailable
                                 </button>
                             )}
-                            <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-400">
+                            <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1 text-center text-[11px] leading-relaxed text-slate-400">
                                 <span className="inline-flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-emerald-400 flex-shrink-0"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="block h-3 w-3 flex-shrink-0 text-emerald-400" aria-hidden="true"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 1 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
                                     Free cancellation 14+ days before check-in
                                 </span>
-                                {' · '}
-                                <a href="/terms" className="underline underline-offset-2 hover:text-slate-600 transition-colors">Full policy</a>
+                                <span aria-hidden="true">·</span>
+                                <a href="/terms" className="inline-flex items-center underline underline-offset-2 transition-colors hover:text-slate-600">Full policy</a>
                             </p>
                         </div>
                     ) : null}
