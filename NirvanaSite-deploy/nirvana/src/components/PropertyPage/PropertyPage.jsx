@@ -431,6 +431,30 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </section>
             )}
 
+            {/* Know Before You Book — Trust Signals */}
+            <section className="py-8 md:py-10 bg-white border-y border-slate-100">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
+                        <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-emerald-500 flex-shrink-0"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
+                            <span>Free cancellation <span className="hidden sm:inline">up to </span>14+ days<span className="hidden sm:inline"> before check-in</span></span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-accent flex-shrink-0"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /></svg>
+                            <span>No service fees</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-accent flex-shrink-0"><path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clipRule="evenodd" /></svg>
+                            <span>Instant confirmation</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-accent flex-shrink-0"><path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" /></svg>
+                            <span>Personal concierge</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
 
             {/* Custom Review & Activity Sections */}
             <InlineReviews reviews={initialReviews} />

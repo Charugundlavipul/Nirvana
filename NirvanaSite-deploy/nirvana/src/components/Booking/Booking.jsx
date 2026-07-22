@@ -233,9 +233,12 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-100 bg-gray-50/80">
+        <div className="p-4 border-t border-gray-100 bg-gray-50/80 space-y-1.5">
           <p className="text-xs text-gray-500 text-center">
             Questions about a property? <a href="/contact" className="text-accent font-semibold hover:underline">Contact us</a>
+          </p>
+          <p className="text-[11px] text-gray-400 text-center">
+            Free cancellation 14+ days before check-in. <a href="/terms#cancellation" className="underline underline-offset-2 hover:text-gray-600 transition-colors">View policy</a>
           </p>
         </div>
       </div>

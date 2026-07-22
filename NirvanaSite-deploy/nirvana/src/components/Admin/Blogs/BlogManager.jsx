@@ -474,7 +474,7 @@ const BlogManager = () => {
                                     <label>Article Title</label>
                                     <input
                                         value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') })}
                                         required
                                         placeholder="e.g. 5 Best Hikes in the Smokies"
                                     />
@@ -483,7 +483,7 @@ const BlogManager = () => {
                                     <label>URL Slug</label>
                                     <input
                                         value={formData.slug}
-                                        onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/ /g, '-') })}
+                                        onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') })}
                                         required
                                     />
                                 </div>

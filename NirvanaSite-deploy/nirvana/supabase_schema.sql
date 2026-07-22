@@ -724,8 +724,8 @@ BEGIN
                 req.payload->>'excerpt',
                 req.payload->>'content',
                 req.payload->>'cover_image',
-                COALESCE((req.payload->>'published')::boolean, false),
-                CASE WHEN (req.payload->>'published')::boolean = true THEN NOW() ELSE NULL END,
+                COALESCE((req.payload->>'published')::boolean, true),
+                CASE WHEN COALESCE((req.payload->>'published')::boolean, true) = true THEN NOW() ELSE NULL END,
                 req.payload->>'draft_comment'
             );
         ELSIF req.action = 'update' THEN
@@ -739,8 +739,8 @@ BEGIN
                 excerpt = req.payload->>'excerpt',
                 content = req.payload->>'content',
                 cover_image = req.payload->>'cover_image',
-                published = COALESCE((req.payload->>'published')::boolean, false),
-                published_at = CASE WHEN (req.payload->>'published')::boolean = true AND published_at IS NULL THEN NOW() ELSE published_at END,
+                published = COALESCE((req.payload->>'published')::boolean, true),
+                published_at = CASE WHEN COALESCE((req.payload->>'published')::boolean, true) = true AND published_at IS NULL THEN NOW() ELSE published_at END,
                 draft_comment = COALESCE(req.payload->>'draft_comment', draft_comment),
                 updated_at = NOW()
             WHERE id = req.entity_id;

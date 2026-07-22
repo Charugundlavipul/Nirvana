@@ -155,7 +155,7 @@ const FAQ = ({ initialProperties = [], initialSlug = null, initialFaqs = [] }) =
         <div id="faq-list" className="space-y-3">
           {isLoading && <p className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center text-base font-medium text-slate-500">Loading FAQs...</p>}
           {!isLoading && errorMessage && <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-center text-sm font-medium text-rose-700">{errorMessage}</p>}
-          {!isLoading && !errorMessage && displayedFaqs.map((faq, index) => <FAQItem key={faq.id || index} question={faq.question} answer={faq.answer} index={index} />)}
+          {!isLoading && !errorMessage && displayedFaqs.map((faq, index) => <FAQItem key={faq.id || index} question={faq.question} answer={faq.answer} index={index} pinned={faq.pinned} />)}
           {!isLoading && !errorMessage && displayedFaqs.length === 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
               <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent text-xl"><FaCircleCheck /></div>

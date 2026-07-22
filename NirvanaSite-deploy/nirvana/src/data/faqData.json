@@ -1,8 +1,9 @@
 {
   "common": [
     {
-      "answer": "Cancellations made 30 days or more before check-in receive a full refund minus processing fees. Cancellations within 30 days are subject to our detailed cancellation policy.",
-      "question": "What is your cancellation policy?"
+      "answer": "We offer a flexible cancellation policy: Guests who cancel at least 14 days before check-in will receive a full refund. Cancellations made between 7 and 13 days before check-in will receive a 50% refund. Cancellations made less than 7 days before check-in are non-refundable. Please review our full Terms and Conditions for complete details, or contact us if you have questions about a specific booking.",
+      "question": "What is your cancellation policy?",
+      "pinned": true
     },
     {
       "answer": "Yes, we accept all major credit cards including Visa, MasterCard, and American Express.",

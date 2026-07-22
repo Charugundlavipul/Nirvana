@@ -177,6 +177,8 @@ const Footer = () => {
                             <span className="text-slate-600">|</span>
                             <Link href="/terms" className="transition hover:text-accent">Terms</Link>
                             <span className="text-slate-600">|</span>
+                            <Link href="/terms#cancellation" className="transition hover:text-accent">Cancellation Policy</Link>
+                            <span className="text-slate-600">|</span>
                             <Link href="/privacy" className="transition hover:text-accent">Privacy</Link>
                         </div>
                     </div>

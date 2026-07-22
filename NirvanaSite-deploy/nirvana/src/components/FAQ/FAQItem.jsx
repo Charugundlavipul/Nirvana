@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaPlus, FaMinus } from 'react-icons/fa';
 
-const FAQItem = ({ question, answer, index = 0 }) => {
+const FAQItem = ({ question, answer, index = 0, pinned = false }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -16,6 +16,11 @@ const FAQItem = ({ question, answer, index = 0 }) => {
             {String(index + 1).padStart(2, '0')}
           </span>
           <span className="text-sm font-semibold leading-snug text-slate-800 md:text-base">{question}</span>
+          {pinned && (
+            <span className="hidden sm:inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
+              Most Asked
+            </span>
+          )}
         </div>
         <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-300 md:h-8 md:w-8 ${isOpen ? 'bg-accent text-white rotate-180' : 'bg-slate-100 text-slate-500 group-hover:bg-accent/10 group-hover:text-accent'}`}>
           {isOpen ? <FaMinus size={10} /> : <FaPlus size={10} />}
