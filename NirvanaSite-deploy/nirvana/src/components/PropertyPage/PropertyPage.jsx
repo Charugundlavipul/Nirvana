@@ -14,12 +14,15 @@ import HospitableWidget from '../common/HospitableWidget';
 import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
 import CarouselNavigation from '../common/CarouselNavigation';
 
+const LIGHTBOX_PRELOAD_RADIUS = 5;
+
 const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [], allProperties = [] }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
     const [lightboxImages, setLightboxImages] = useState([]);
     const heroRef = useRef(null);
     const mobileGalleryRef = useRef(null);
+    const lightboxPreloadCacheRef = useRef(new Map());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
     const [visibleCount, setVisibleCount] = useState(10);
@@ -69,6 +72,31 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
 
     const sliderImages = galleryImages;
 
+    const preloadLightboxWindow = (images, activeImage) => {
+        if (typeof window === 'undefined' || !Array.isArray(images) || images.length < 2 || !activeImage) return;
+        const activeIndex = images.findIndex((image) => image === activeImage);
+        if (activeIndex < 0) return;
+
+        const windowUrls = new Set([activeImage]);
+        for (let offset = 1; offset <= LIGHTBOX_PRELOAD_RADIUS; offset += 1) {
+            windowUrls.add(images[(activeIndex - offset + images.length) % images.length]);
+            windowUrls.add(images[(activeIndex + offset) % images.length]);
+        }
+
+        windowUrls.forEach((url) => {
+            if (!url || lightboxPreloadCacheRef.current.has(url)) return;
+            const preloadImage = new window.Image();
+            preloadImage.decoding = 'async';
+            preloadImage.src = url;
+            lightboxPreloadCacheRef.current.set(url, preloadImage);
+        });
+
+        // Keep references only for the rolling 5-before/5-after window.
+        lightboxPreloadCacheRef.current.forEach((_, url) => {
+            if (!windowUrls.has(url)) lightboxPreloadCacheRef.current.delete(url);
+        });
+    };
+
     const updateMobileGalleryIndex = () => {
         const track = mobileGalleryRef.current;
         const firstCard = track?.firstElementChild;
@@ -107,7 +135,16 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         };
     }, [lightboxImage, lightboxType]);
 
+    useEffect(() => {
+        if (lightboxImage && lightboxImages.length > 1) {
+            preloadLightboxWindow(lightboxImages, lightboxImage);
+        }
+    }, [lightboxImage, lightboxImages]);
+
     const openLightbox = (imageSrc, type = '', imagesArray = galleryImages) => {
+        if (imageSrc && Array.isArray(imagesArray)) {
+            preloadLightboxWindow(imagesArray, imageSrc);
+        }
         setLightboxImage(imageSrc);
         setLightboxType(type);
         setLightboxImages(imagesArray);
@@ -117,6 +154,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         setLightboxImage(null);
         setLightboxType('');
         setLightboxImages([]);
+        lightboxPreloadCacheRef.current.clear();
     };
 
     const nextLightboxImage = (e) => {
@@ -155,7 +193,24 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
 
     const heroImageSrc = curatedImages.bg || curatedImages.home;
     const introImageSrc = curatedImages.secondary || curatedImages.home;
+    const introGalleryImages = [
+        introImageSrc,
+        curatedImages.home,
+        curatedImages.bg,
+        ...sliderImages,
+    ].filter((image, index, images) => image && images.indexOf(image) === index);
+    const activeIntroImage = introGalleryImages[currentIndex % Math.max(introGalleryImages.length, 1)] || introImageSrc;
+    const moveIntroGallery = (direction) => {
+        setCurrentIndex((previous) => (
+            previous + direction + introGalleryImages.length
+        ) % introGalleryImages.length);
+    };
     const descriptionPreview = createRichTextExcerpt(property.description, 2000, true);
+    const introDescription = descriptionPreview.text
+        .replace(/\p{Extended_Pictographic}/gu, '')
+        .replace(/\uFE0F/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
     const videoUrl = `${property.video_url || ''}`.trim();
     const bathroomSummary = getBathroomSummary(property);
     const { fullBathCount, halfBathCount } = normalizeBathroomCounts(property);
@@ -243,75 +298,145 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             </section>
 
             {/* Property Introduction */}
-            <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 md:px-12 md:py-24">
-                <div className="flex flex-col gap-10 md:gap-12 lg:flex-row lg:items-center lg:gap-16">
-                    <div className="flex-1 space-y-6 min-w-0 md:space-y-8">
+            <section className="relative overflow-hidden bg-[#f7f8f6] py-16 md:py-24">
+                <div className="pointer-events-none absolute -left-40 top-12 h-80 w-80 rounded-full bg-accent/[0.035] blur-3xl"></div>
+                <div className="relative mx-auto grid max-w-[1380px] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 xl:px-12">
+                    <div className="order-2 min-w-0 space-y-7 lg:order-1 md:space-y-9">
                         <div>
-                            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent sm:text-sm sm:tracking-[0.2em]">About This Property</p>
-                            <h2 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl md:text-5xl">Welcome to {property.name}</h2>
+                            <div className="mb-5 flex items-center gap-3">
+                                <span className="h-px w-10 bg-accent"></span>
+                                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent sm:text-sm">About this property</p>
+                            </div>
+                            <h2 className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-[-0.025em] text-slate-950 sm:text-5xl lg:text-[3.4rem]">Welcome to {property.name}</h2>
+                            {property.location && (
+                                <p className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-500 sm:text-base">
+                                    <FaMapMarkerAlt className="text-accent" aria-hidden="true" />
+                                    {property.location}
+                                </p>
+                            )}
                         </div>
                         <div>
-                            <p className="overflow-hidden text-ellipsis whitespace-pre-line text-base font-light leading-7 text-slate-600 line-clamp-6 sm:text-lg sm:leading-8 md:text-xl md:leading-relaxed md:line-clamp-[12]">
-                                {descriptionPreview.text}
+                            <p className="overflow-hidden text-base font-light leading-8 text-slate-600 line-clamp-6 sm:text-lg sm:leading-9">
+                                {introDescription}
                             </p>
                             {(descriptionPreview.text.length > 300 || descriptionPreview.isTruncated) && (
                                 <button
                                     type="button"
                                     onClick={() => openLightbox(null, 'description')}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 px-5 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+                                    className="group mt-5 inline-flex items-center gap-2 border-b border-accent/40 pb-1 text-sm font-semibold text-accent transition-colors hover:border-accent hover:text-accent/80"
                                 >
-                                    Read more
+                                    Read the full story <FaArrowRight size={11} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
                                 </button>
                             )}
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-5 sm:gap-5 md:grid-cols-5 md:gap-4 md:pt-6">
-                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">
+                        <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 shadow-[0_12px_35px_rgba(15,23,42,0.05)] backdrop-blur-sm sm:grid-cols-5">
+                            <div className="px-3 py-5 text-center sm:border-r sm:border-slate-200/80">
+                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                                   {property.bedroom_count || '-'}
                                 </p>
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Bedrooms</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Bedrooms</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">
+                            <div className="border-l border-slate-200/80 px-3 py-5 text-center sm:border-l-0 sm:border-r">
+                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                                   {property.bed_count || '-'}
                                 </p>
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Beds</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Beds</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">{fullBathCount || '-'}</p>
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Full Baths</p>
+                            <div className="border-t border-slate-200/80 px-3 py-5 text-center sm:border-r sm:border-t-0">
+                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{fullBathCount || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Full baths</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">{halfBathCount || '-'}</p>
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Half Baths</p>
+                            <div className="border-l border-t border-slate-200/80 px-3 py-5 text-center sm:border-l-0 sm:border-r sm:border-t-0">
+                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{halfBathCount || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Half baths</p>
                             </div>
-                            <div className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200/70">
-                                <p className="text-2xl font-bold text-accent sm:text-3xl">{property.guests_max || '-'}</p>
-                                <p className="text-[10px] md:text-xs uppercase tracking-[0.05em] md:tracking-[0.08em] text-slate-500 whitespace-nowrap">Guests</p>
+                            <div className="col-span-2 border-t border-slate-200/80 px-3 py-5 text-center sm:col-span-1 sm:border-t-0">
+                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{property.guests_max || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Guests</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="relative w-full flex-1 group">
-                        <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-accent/20 to-transparent opacity-0 transition-opacity duration-500 md:-inset-4 group-hover:opacity-100"></div>
-                        <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-                                <img
-                                src={introImageSrc}
-                                alt={`${property.name} — luxury vacation rental exterior in ${property.location || 'Smoky Mountains'}`}
-                                fetchPriority="high"
-                                decoding="async"
-                                className="aspect-[4/3] w-full cursor-pointer object-cover transition-transform duration-700 group-hover:scale-105"
-                                onClick={() => openLightbox(introImageSrc)}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <button
-                                onClick={() => openLightbox(introImageSrc)}
-                                className="absolute bottom-4 right-4 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 opacity-100 shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-white md:bottom-6 md:right-6 md:text-base md:opacity-0 group-hover:md:opacity-100"
-                            >
-                                View Full Image
-                            </button>
+                    <div className="order-1 w-full min-w-0 lg:order-2">
+                        <div className="rounded-[2rem] border border-white/80 bg-white/70 p-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] backdrop-blur-sm sm:p-3">
+                            <div className="group relative overflow-hidden rounded-[1.45rem] bg-slate-200">
+                                <button
+                                    type="button"
+                                    onClick={() => openLightbox(activeIntroImage, '', introGalleryImages)}
+                                    className="block w-full"
+                                    aria-label={`Open photo ${currentIndex + 1} of ${introGalleryImages.length} in full screen`}
+                                >
+                                    <img
+                                        src={activeIntroImage}
+                                        alt={`${property.name} photo ${currentIndex + 1} — luxury vacation rental in ${property.location || 'Smoky Mountains'}`}
+                                        decoding="async"
+                                        className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                                    />
+                                </button>
+                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10"></div>
+
+                                <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-slate-950/65 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md">
+                                    {currentIndex + 1} / {introGalleryImages.length}
+                                </span>
+
+                                {introGalleryImages.length > 1 && (
+                                    <div className="absolute bottom-4 left-4 flex items-center gap-1 rounded-full border border-white/15 bg-slate-950/70 p-1.5 shadow-lg backdrop-blur-md">
+                                        <button
+                                            type="button"
+                                            onClick={() => moveIntroGallery(-1)}
+                                            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                            aria-label="Previous property photo"
+                                        >
+                                            <FaArrowLeft size={13} aria-hidden="true" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => moveIntroGallery(1)}
+                                            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                            aria-label="Next property photo"
+                                        >
+                                            <FaArrowRight size={13} aria-hidden="true" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => openLightbox(activeIntroImage, '', introGalleryImages)}
+                                    className="absolute bottom-4 right-4 rounded-full border border-white/50 bg-white/90 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-lg backdrop-blur-md transition-all hover:bg-white hover:shadow-xl sm:text-sm"
+                                >
+                                    View all {introGalleryImages.length} photos
+                                </button>
+                            </div>
+
+                            {introGalleryImages.length > 1 && (
+                                <div className="mt-2.5 grid grid-cols-4 gap-2 sm:gap-2.5" aria-label="Property photo thumbnails">
+                                    {introGalleryImages.slice(0, 4).map((image, index) => {
+                                        const activeIndex = currentIndex % introGalleryImages.length;
+                                        const isActive = activeIndex === index || (index === 3 && activeIndex > 3);
+                                        const remaining = introGalleryImages.length - 4;
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={image}
+                                                onClick={() => setCurrentIndex(index)}
+                                                className={`relative aspect-[4/3] overflow-hidden rounded-xl border transition-all duration-300 ${isActive ? 'border-slate-950 opacity-100 ring-2 ring-slate-950/10' : 'border-slate-200/80 opacity-65 hover:opacity-100'}`}
+                                                aria-label={`Show property photo ${index + 1}`}
+                                                aria-current={isActive ? 'true' : undefined}
+                                            >
+                                                <img src={image} alt="" loading="lazy" className="h-full w-full object-cover" />
+                                                {index === 3 && remaining > 0 && (
+                                                    <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-bold text-white">
+                                                        +{remaining}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -789,6 +914,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                     <button
                                         className="absolute -top-4 -right-4 md:-top-6 md:-right-6 text-white hover:text-accent bg-black/80 hover:bg-black p-3 md:p-4 rounded-full transition-all z-[110] shadow-xl border border-white/10"
                                         onClick={closeLightbox}
+                                        aria-label="Close photo viewer"
                                     >
                                         <FaTimes size={20} />
                                     </button>
@@ -798,6 +924,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                             className="absolute left-4 md:-left-8 text-white hover:text-accent bg-black/60 hover:bg-black/90 backdrop-blur-md transition-all p-3 md:p-4 rounded-full z-[110] shadow-xl"
                                             style={{ top: '50%', transform: 'translateY(-50%)' }}
                                             onClick={prevLightboxImage}
+                                            aria-label="Previous photo"
                                         >
                                             <FaArrowLeft size={20} />
                                         </button>
@@ -806,7 +933,8 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                     <img
                                         src={lightboxImage}
                                         alt="Property Image"
-                                        loading="lazy"
+                                        fetchPriority="high"
+                                        decoding="async"
                                         className="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl"
                                     />
 
@@ -815,6 +943,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                             className="absolute right-4 md:-right-8 text-white hover:text-accent bg-black/60 hover:bg-black/90 backdrop-blur-md transition-all p-3 md:p-4 rounded-full z-[110] shadow-xl"
                                             style={{ top: '50%', transform: 'translateY(-50%)' }}
                                             onClick={nextLightboxImage}
+                                            aria-label="Next photo"
                                         >
                                             <FaArrowRight size={20} />
                                         </button>

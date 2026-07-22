@@ -138,7 +138,7 @@ const HostsPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+    <div className="min-h-screen bg-[#f4f3ee] font-sans text-slate-800">
       {/* ═══════════════ HERO + STAT STRIP (fits one viewport) ═══════════════ */}
       <div className="flex flex-col" style={{ minHeight: 'calc(100svh - var(--site-header-height))' }}>
         <div
@@ -189,16 +189,21 @@ const HostsPage = () => {
       </div>
 
       {/* ═══════════════ PILLAR 1 — ACQUISITION ═══════════════ */}
-      <section className="w-full bg-white py-16 sm:py-24 border-b border-slate-100">
+      <section className="relative w-full overflow-hidden bg-[#f5f2ea] py-16 sm:py-24">
+        <div className="pointer-events-none absolute -right-32 top-10 h-80 w-80 rounded-full border border-[#424334]/10" />
+        <div className="pointer-events-none absolute -right-20 top-24 h-56 w-56 rounded-full border border-[#424334]/10" />
         <div className="max-w-7xl mx-auto px-5 sm:px-6 flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-20">
-          <div className="w-full lg:w-1/2 rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-xl sm:shadow-2xl">
+          <div className="relative w-full lg:w-1/2">
+            <div className="absolute -bottom-4 -left-4 hidden h-full w-full rounded-[2rem] border border-[#424334]/15 sm:block" />
+            <div className="relative overflow-hidden rounded-2xl shadow-[0_24px_70px_rgba(32,35,29,0.16)] sm:rounded-[2rem]">
             <Image
               src="/assets/hosts-acquisition.png"
               alt="Property acquisition and investment analysis"
-              width={700}
-              height={500}
-              className="w-full h-auto object-cover"
+              width={1024}
+              height={1024}
+              className="h-auto w-full object-contain"
             />
+            </div>
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
@@ -234,16 +239,20 @@ const HostsPage = () => {
       </section>
 
       {/* ═══════════════ PILLAR 2 — MANAGEMENT ═══════════════ */}
-      <section className="w-full bg-slate-50 py-16 sm:py-24 border-b border-slate-100">
+      <section className="relative w-full overflow-hidden bg-white py-16 sm:py-24">
+        <div className="pointer-events-none absolute -left-36 bottom-0 h-96 w-96 rounded-full bg-accent/[0.045] blur-3xl" />
         <div className="max-w-7xl mx-auto px-5 sm:px-6 flex flex-col lg:flex-row-reverse items-center gap-8 sm:gap-12 lg:gap-20">
-          <div className="w-full lg:w-1/2 rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-xl sm:shadow-2xl">
+          <div className="relative w-full lg:w-1/2">
+            <div className="absolute -right-4 -top-4 hidden h-full w-full rounded-[2rem] bg-[#eef0eb] sm:block" />
+            <div className="relative overflow-hidden rounded-2xl shadow-[0_24px_70px_rgba(15,23,42,0.14)] sm:rounded-[2rem]">
             <Image
               src="/assets/hosts-management-v3.png"
               alt="End-to-end vacation rental property management"
-              width={700}
-              height={500}
-              className="w-full h-auto object-cover"
+              width={1024}
+              height={1024}
+              className="h-auto w-full object-contain"
             />
+            </div>
           </div>
           <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
             <div>
@@ -272,69 +281,79 @@ const HostsPage = () => {
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 py-16 sm:py-24 space-y-16 sm:space-y-28">
+      <div>
 
         {/* ═══════════════ PM SERVICES GRID (REFINED) ═══════════════ */}
-        <section className="space-y-8 sm:space-y-12">
+        <section className="relative overflow-hidden bg-[#1c1e19] py-20 sm:py-28">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-[30rem] w-[55rem] -translate-x-1/2 rounded-full bg-[#424334]/35 blur-[120px]" />
+          <div className="relative mx-auto max-w-7xl space-y-10 px-5 sm:space-y-14 sm:px-6">
           <div className="text-center max-w-2xl mx-auto px-4">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-accent mb-2 sm:mb-3">Comprehensive Care</p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">Comprehensive Care</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-[-0.02em]">
               Full-Service Management
             </h2>
-            <p className="mt-4 text-gray-600 text-sm sm:text-base">We handle every detail of your investment, so you can enjoy the returns without the headaches.</p>
+            <p className="mt-4 text-white/60 text-sm leading-7 sm:text-base">We handle every detail of your investment, so you can enjoy the returns without the headaches.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {serviceCategories.map((cat, idx) => (
-              <div key={idx} className="bg-white rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+              <div key={idx} className="group rounded-2xl border border-white/10 bg-white/[0.055] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.085] sm:rounded-[2rem] sm:p-10">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-xl sm:rounded-2xl bg-slate-50 text-accent text-xl sm:text-2xl group-hover:bg-accent group-hover:text-white transition-colors duration-300">
+                  <div className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-xl sm:rounded-2xl bg-accent/15 text-accent text-xl sm:text-2xl group-hover:bg-accent group-hover:text-white transition-colors duration-300">
                     <cat.icon />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">{cat.title}</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">{cat.title}</h3>
                 </div>
                 <ul className="space-y-3 sm:space-y-4">
                   {cat.items.map((item, itemIdx) => (
                     <li key={itemIdx} className="flex items-start gap-3">
                       <FaCheckCircle className="text-accent shrink-0 text-sm sm:text-base mt-1" />
-                      <span className="text-sm sm:text-[0.95rem] text-gray-700 leading-relaxed">{item}</span>
+                      <span className="text-sm sm:text-[0.95rem] text-white/70 leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
+          </div>
         </section>
 
         {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-        <section className="space-y-8 sm:space-y-12 pt-6 sm:pt-10">
+        <section className="bg-[#eef0eb] py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl space-y-10 px-5 sm:space-y-14 sm:px-6">
           <div className="text-center max-w-2xl mx-auto px-4">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-accent mb-2 sm:mb-3">The Roadmap</p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">The Roadmap</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-slate-950">
               Your Path to Passive Income
             </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">A clear, accountable process from first conversation to consistent owner returns.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto">
+          <div className="relative grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-0 max-w-6xl mx-auto">
+            <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-8 hidden h-px bg-[#424334]/20 lg:block" />
             {processSteps.map((step, idx) => (
-              <div key={idx} className="relative bg-white p-8 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
-                <div className="absolute -right-4 -top-6 text-[8rem] font-black text-slate-50 group-hover:text-accent/5 transition-colors duration-500 z-0 select-none">
-                  {step.step}
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-gray-900 text-lg mb-3">{step.title}</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
+              <div key={idx} className="group relative px-1 lg:px-5">
+                <div className="relative rounded-2xl border border-white bg-white/70 p-7 shadow-[0_12px_35px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_20px_50px_rgba(15,23,42,0.09)] lg:min-h-64 lg:pt-16">
+                  <div className="absolute right-5 top-5 text-5xl font-black text-[#424334]/[0.055] select-none lg:right-6 lg:top-10 lg:text-7xl">{step.step}</div>
+                  <div className="relative z-10">
+                    <div className="mb-5 grid h-10 w-10 place-items-center rounded-full bg-[#424334] text-xs font-bold text-white ring-8 ring-[#eef0eb] lg:absolute lg:-top-[4.5rem] lg:left-0">0{step.step}</div>
+                    <h4 className="font-bold text-slate-950 text-lg mb-3">{step.title}</h4>
+                    <p className="text-sm text-slate-600 leading-7">{step.desc}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+          </div>
         </section>
 
         {/* ═══════════════ MARKETS ═══════════════ */}
-        <section className="space-y-6 sm:space-y-10">
+        <section className="relative overflow-hidden bg-white py-20 sm:py-28">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-[#f5f2ea] to-transparent" />
+          <div className="relative mx-auto max-w-7xl space-y-8 px-5 sm:space-y-12 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-accent mb-2 sm:mb-3">Our Markets</p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">Our Markets</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-slate-950">
               Where We Specialize
             </h2>
           </div>
@@ -345,42 +364,50 @@ const HostsPage = () => {
                 region: "Sevierville, Gatlinburg & Pigeon Forge",
                 tagline: "Great Smoky Mountains",
                 desc: "Top-performing STR market. High year-round tourist demand, strong ADR, and exceptional appreciation.",
-                gradient: "from-emerald-500/20 to-accent/10",
+                number: "01",
+                gradient: "from-[#edf4e9] to-[#f8f6ef]",
               },
               {
                 region: "Charlotte Region, NC",
                 tagline: "Lake Norman & Lake Wylie",
                 desc: "Rapidly growing metro with Lake Norman and Lake Wylie waterfront opportunities — ideal for premium vacation rentals.",
-                gradient: "from-primary/10 to-slate-200/50",
+                number: "02",
+                gradient: "from-[#ecefe9] to-[#f5f2ea]",
               },
             ].map((m) => (
               <div
                 key={m.region}
-                className={`relative rounded-2xl sm:rounded-[2rem] border border-slate-100 bg-gradient-to-br ${m.gradient} p-6 sm:p-8 md:p-10 space-y-3 shadow-sm overflow-hidden`}
+                className={`group relative min-h-64 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br ${m.gradient} p-7 shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(15,23,42,0.1)] sm:rounded-[2rem] sm:p-10`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full bg-white/80 text-accent text-base sm:text-lg shadow-sm">
+                <span className="absolute right-5 top-0 text-[6rem] font-black leading-none text-[#424334]/[0.055] sm:right-8 sm:text-[8rem]">{m.number}</span>
+                <div className="relative flex items-start gap-4">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#424334] text-white text-base shadow-lg sm:h-12 sm:w-12 sm:text-lg">
                     <FaMapMarkerAlt />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">{m.region}</h3>
-                    <p className="text-xs sm:text-sm text-accent font-semibold">{m.tagline}</p>
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-accent sm:text-xs">{m.tagline}</p>
+                    <h3 className="max-w-sm text-xl font-bold leading-snug text-slate-950 sm:text-2xl">{m.region}</h3>
                   </div>
                 </div>
-                <p className="text-sm sm:text-[0.95rem] text-gray-600 leading-relaxed">{m.desc}</p>
+                <p className="relative mt-7 max-w-lg border-t border-[#424334]/10 pt-5 text-sm leading-7 text-slate-600 sm:text-[0.95rem]">{m.desc}</p>
               </div>
             ))}
+          </div>
           </div>
         </section>
 
         {/* ═══════════════ WHY NIRVANALUXE ═══════════════ */}
-        <section className="relative bg-primary rounded-2xl sm:rounded-[2rem] p-8 sm:p-10 md:p-16 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(96,189,104,0.15),transparent_60%)]" />
-          <div className="relative z-10 text-center max-w-3xl mx-auto space-y-8 sm:space-y-10">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+        <section className="relative overflow-hidden bg-[#424334] py-20 sm:py-28">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.1),transparent_45%)]" />
+          <div className="pointer-events-none absolute -bottom-44 -left-24 h-96 w-96 rounded-full border border-white/10" />
+          <div className="relative z-10 mx-auto max-w-5xl space-y-10 px-5 text-center sm:space-y-14 sm:px-6">
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-accent sm:text-xs">The Nirvana Standard</p>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-white">
               Why Investors Choose Us
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-3 sm:rounded-[2rem]">
               {[
                 {
                   icon: FaChartLine,
@@ -398,12 +425,12 @@ const HostsPage = () => {
                   desc: "You own the asset. We run the business — 24/7.",
                 },
               ].map((item) => (
-                <div key={item.title} className="space-y-3 sm:space-y-4">
-                  <div className="grid h-12 w-12 sm:h-14 sm:w-14 mx-auto place-items-center rounded-2xl bg-accent/20 text-accent text-xl sm:text-2xl">
+                <div key={item.title} className="space-y-4 bg-[#424334]/95 p-8 transition-colors duration-300 hover:bg-white/[0.06] sm:p-10">
+                  <div className="grid h-12 w-12 sm:h-14 sm:w-14 mx-auto place-items-center rounded-2xl border border-white/10 bg-white/10 text-accent text-xl sm:text-2xl">
                     <item.icon />
                   </div>
                   <h4 className="font-bold text-white text-base sm:text-lg">{item.title}</h4>
-                  <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-xs sm:text-sm text-white/60 leading-6">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -411,14 +438,17 @@ const HostsPage = () => {
         </section>
 
         {/* ═══════════════ INQUIRY FORM ═══════════════ */}
-        <section id="inquiry-form" className="scroll-mt-24 space-y-6 sm:space-y-10 pb-6 sm:pb-10">
+        <section id="inquiry-form" className="scroll-mt-24 bg-[#f5f2ea] py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl space-y-8 px-5 sm:space-y-12 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-accent mb-2 sm:mb-3">Get In Touch</p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">Get In Touch</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-slate-950">
               Ready to Partner With Us?
             </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">Tell us about your property or investment goals. We’ll outline the right next step for you.</p>
           </div>
           <ContactForm />
+          </div>
         </section>
       </div>
     </div>
