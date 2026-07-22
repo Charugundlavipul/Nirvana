@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
-import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnowledgeRefresh, revalidatePageMetadata } from "../../../lib/adminApi";
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
 import { getBathroomSummary, normalizeBathroomCounts } from "../../../lib/bathrooms";
@@ -67,6 +67,7 @@ const ENTITY_TABLE_BY_TYPE = {
   property_curated_image: "property_curated_images",
   property_highlight_image: "property_highlight_images",
   blog: "blogs",
+  page_metadata: "page_metadata",
 };
 
 const MANAGED_STORAGE_BUCKETS = new Set(["property-assets", "profile-pictures"]);
@@ -138,6 +139,17 @@ const FIELD_LABELS = {
   slot: "Image Slot",
   property_id: "Property",
   property_ids: "Properties",
+  page_key: "Page Path",
+  seo_title: "SEO Title",
+  canonical_path: "Canonical URL",
+  open_graph_title: "Social Title",
+  open_graph_description: "Social Description",
+  open_graph_image: "Social Image",
+  twitter_title: "X / Twitter Title",
+  twitter_description: "X / Twitter Description",
+  twitter_image: "X / Twitter Image",
+  noindex: "Hide From Search Engines",
+  follow: "Follow Page Links",
 };
 
 const PREVIEW_IGNORED_KEYS = new Set([
@@ -555,9 +567,11 @@ const RequestEntityPreviewCard = ({ req, onPreviewImage = null, propertyNamesByI
   const canPreview = typeof onPreviewImage === "function";
   const title =
     requestedData?.title ||
+    requestedData?.seo_title ||
     requestedData?.name ||
     requestedData?.slot ||
     currentData?.title ||
+    currentData?.seo_title ||
     currentData?.name ||
     currentData?.slot ||
     null;
@@ -1250,6 +1264,8 @@ const getRequestPrimaryLabel = (req) => {
   return (
     merged.name ||
     merged.title ||
+    merged.page_key ||
+    merged.seo_title ||
     merged.question ||
     merged.author_name ||
     merged.slot ||
@@ -1964,7 +1980,10 @@ const ApprovalQueue = () => {
     const requestId = req.id;
     setWorkingId(requestId);
     const decisionComment = comment[requestId] || null;
-    const { error } = await supabase.rpc("apply_approval_request", {
+    const approvalFunction = String(req.entity_type || "").toLowerCase() === "page_metadata"
+      ? "apply_page_metadata_approval"
+      : "apply_approval_request";
+    const { error } = await supabase.rpc(approvalFunction, {
       p_request_id: requestId,
       p_new_status: decision,
       p_comment: decisionComment,
@@ -1975,7 +1994,12 @@ const ApprovalQueue = () => {
     } else {
       if (decision === "approved") {
         try {
-          await queueKnowledgeRefresh({ request: req });
+          if (String(req.entity_type || "").toLowerCase() === "page_metadata") {
+            const payload = parseSnapshot(req.payload);
+            if (payload.page_key) await revalidatePageMetadata(payload.page_key);
+          } else {
+            await queueKnowledgeRefresh({ request: req });
+          }
         } catch (refreshError) {
           console.error("Failed to queue knowledge refresh after approval:", refreshError);
         }
@@ -2021,6 +2045,8 @@ const ApprovalQueue = () => {
       navigate("/admin/properties");
     } else if (entityType === "blog") {
       navigate("/admin/blogs");
+    } else if (entityType === "page_metadata") {
+      navigate("/admin/metadata");
     } else if (["review", "faq", "activity"].includes(entityType)) {
       navigate("/admin/global");
     } else {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight, FaSearch } from "react-icons/fa";
 import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts } from "../../lib/adminApi";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { label: "Knowledge Hub", path: "/admin/knowledge", icon: <FaBookOpen size={18} /> },
     { label: "Subscribers", path: "/admin/subscribers", icon: <FaUsers size={18} /> },
     { label: "Global Content", path: "/admin/global", icon: <FaGlobeAmericas size={18} /> },
+    { label: "Page Metadata", path: "/admin/metadata", icon: <FaSearch size={18} /> },
     { label: "Admins", path: "/admin/admins", icon: <FaUserShield size={18} />, superOnly: true },
     { label: "Approvals", path: "/admin/approvals", icon: <FaCheckSquare size={18} />, superOnly: true },
 ];

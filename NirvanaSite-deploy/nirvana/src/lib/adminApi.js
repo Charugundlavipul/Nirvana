@@ -241,3 +241,23 @@ export async function queueKnowledgeRefresh(payload = {}) {
     body: JSON.stringify(payload),
   });
 }
+
+export async function fetchPageMetadataAdmin() {
+  return adminRequest("/api/admin/page-metadata");
+}
+
+export async function savePageMetadataAdmin({ pageKey, metadata, comment = null }) {
+  return adminRequest("/api/admin/page-metadata", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pageKey, metadata, comment }),
+  });
+}
+
+export async function revalidatePageMetadata(pageKey) {
+  return adminRequest("/api/admin/page-metadata", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pageKey }),
+  });
+}

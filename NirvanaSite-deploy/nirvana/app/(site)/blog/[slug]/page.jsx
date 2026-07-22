@@ -1,6 +1,6 @@
 import BlogPost from "../../../../src/components/Blog/BlogPost";
 import StructuredData from "../../../../src/components/StructuredData";
-import { getBlogBySlug, getBlogSlugs } from "../../../../src/lib/serverContentApi";
+import { getBlogBySlug, getBlogSlugs, getManagedPageMetadata } from "../../../../src/lib/serverContentApi";
 import { buildMetadata, buildArticleJsonLd } from "../../../../src/lib/seo";
 import { absoluteUrl, SITE_NAME } from "../../../../src/lib/siteConfig";
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/blog/${slug}`, {
     title: `${post.title} | ${SITE_NAME} Journal`,
     description: post.excerpt || `Read ${post.title} on the ${SITE_NAME} luxury travel blog.`,
     pathname: `/blog/${slug}`,

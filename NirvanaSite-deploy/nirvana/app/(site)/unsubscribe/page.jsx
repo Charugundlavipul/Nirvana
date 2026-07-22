@@ -1,13 +1,15 @@
 import { Suspense } from "react";
 import Unsubscribe from "../../../src/components/Unsubscribe/Unsubscribe";
-import { buildMetadata } from "../../../src/lib/seo";
+import { getManagedPageMetadata } from "../../../src/lib/serverContentApi";
 
-export const metadata = buildMetadata({
-  title: "Unsubscribe",
-  description: "Manage your Nirvana Luxe alert subscription preferences.",
-  pathname: "/unsubscribe",
-  noindex: true,
-});
+export async function generateMetadata() {
+  return getManagedPageMetadata("/unsubscribe", {
+    title: "Unsubscribe",
+    description: "Manage your Nirvana Luxe alert subscription preferences.",
+    pathname: "/unsubscribe",
+    noindex: true,
+  });
+}
 
 export default function UnsubscribePage() {
   return (

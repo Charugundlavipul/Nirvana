@@ -1,12 +1,13 @@
 import Booking from "../../../src/components/Booking/Booking";
 import StructuredData from "../../../src/components/StructuredData";
-import { getPropertyCards } from "../../../src/lib/serverContentApi";
-import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { getManagedPageMetadata, getPropertyCards } from "../../../src/lib/serverContentApi";
+import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 3600;
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/book", {
   title: "Book Direct - Luxury Cabins & Lake Homes | Save",
   description: "Skip Airbnb fees - book your Smoky Mountain cabin or Lake Norman home directly with Nirvana Luxe. Best rate guaranteed. Real-time availability.",
   pathname: "/book",
@@ -20,7 +21,8 @@ export const metadata = buildMetadata({
     "best rate vacation rental",
     "Nirvana Luxe booking",
   ],
-});
+  });
+}
 
 export default async function BookPage() {
   const properties = await getPropertyCards();

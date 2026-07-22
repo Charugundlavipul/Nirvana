@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Booking from "../../../../src/components/Booking/Booking";
-import { getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
+import { getManagedPageMetadata, getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildMetadata, descriptionFromRichText } from "../../../../src/lib/seo";
 
 export const revalidate = 3600;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/book/${property.slug}`, {
     title: `Book ${property.name}`,
     description: descriptionFromRichText(property.description, 160) || `Reserve ${property.name} in ${property.location}.`,
     pathname: `/book/${property.slug}`,

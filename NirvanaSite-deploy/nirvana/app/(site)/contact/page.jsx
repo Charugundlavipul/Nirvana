@@ -1,9 +1,11 @@
 import ContactUs from "../../../src/components/Contact/ContactUs";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
+import { getManagedPageMetadata } from "../../../src/lib/serverContentApi";
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/contact", {
   title: "Contact Nirvana Luxe - Inquiries & Booking",
   description: "Questions about booking, availability or group trips? Contact the Nirvana Luxe team - we typically respond within 1 hour. Reach us now.",
   pathname: "/contact",
@@ -16,7 +18,8 @@ export const metadata = buildMetadata({
     "booking questions Smoky Mountains",
     "Lake Norman rental inquiry",
   ],
-});
+  });
+}
 
 export default function ContactPage() {
   const jsonLd = {

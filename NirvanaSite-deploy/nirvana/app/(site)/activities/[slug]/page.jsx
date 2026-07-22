@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ActivitiesPage from "../../../../src/components/NearbyActivities/ActivitiesPage";
-import { getActivitiesBySlug, getPropertyBySlug, getPropertySlugs } from "../../../../src/lib/serverContentApi";
+import { getActivitiesBySlug, getManagedPageMetadata, getPropertyBySlug, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildMetadata } from "../../../../src/lib/seo";
 
 export const revalidate = 21600;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/activities/${property.slug}`, {
     title: `${property.name} Nearby Activities`,
     description: `Discover nearby activities, dining, and local experiences around ${property.name}.`,
     pathname: `/activities/${property.slug}`,

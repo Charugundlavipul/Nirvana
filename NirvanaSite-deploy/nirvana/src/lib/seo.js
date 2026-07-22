@@ -33,6 +33,11 @@ export function buildMetadata({
   type = "website",
   noindex = false,
   follow = true,
+  openGraphTitle,
+  openGraphDescription,
+  twitterTitle,
+  twitterDescription,
+  twitterImages,
 }) {
   const normalizedImages = (Array.isArray(images) ? images : [images])
     .filter(Boolean)
@@ -50,16 +55,20 @@ export function buildMetadata({
     openGraph: {
       type,
       siteName: SITE_NAME,
-      title: title || SITE_TITLE,
-      description,
+      title: openGraphTitle || title || SITE_TITLE,
+      description: openGraphDescription || description,
       url: pathname,
       images: normalizedImages,
     },
     twitter: {
       card: "summary_large_image",
-      title: title || SITE_TITLE,
-      description,
-      images: normalizedImages.map((image) => image.url),
+      title: twitterTitle || title || SITE_TITLE,
+      description: twitterDescription || description,
+      images: (twitterImages
+        ? (Array.isArray(twitterImages) ? twitterImages : [twitterImages])
+            .filter(Boolean)
+            .map((image) => image.startsWith("http") ? image : absoluteUrl(image))
+        : normalizedImages.map((image) => image.url)),
     },
     robots: noindex
       ? {

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import PropertyPage from "../../../src/components/PropertyPage/PropertyPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { getHospitablePropertyById, getPropertyBundleBySlug, getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
+import { getHospitablePropertyById, getManagedPageMetadata, getPropertyBundleBySlug, getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
 import { buildMetadata, buildPropertyJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 import { SITE_NAME, absoluteUrl } from "../../../src/lib/siteConfig";
 
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
     ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
     : ["luxury vacation rental", "premium vacation home"];
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/${property.slug}`, {
     title: override?.title || `${property.name} — ${location}`,
     description: override?.description || descriptionFromRichText(property.description, 160) || `Book ${property.name} in ${location}. Direct booking luxury vacation rental with Nirvana Luxe.`,
     pathname: `/${property.slug}`,

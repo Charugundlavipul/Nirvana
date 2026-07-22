@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import PropertyGalleryPage from "../../../../src/components/PropertyGallery/PropertyGalleryPage";
-import { getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs } from "../../../../src/lib/serverContentApi";
+import { getManagedPageMetadata, getPropertyBundleBySlug, getPropertyBySlug, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildMetadata } from "../../../../src/lib/seo";
 
 export const revalidate = 21600;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/${property.slug}/gallery`, {
     title: `${property.name} Photo Gallery`,
     description: `View the photo gallery for ${property.name}.`,
     pathname: `/${property.slug}/gallery`,

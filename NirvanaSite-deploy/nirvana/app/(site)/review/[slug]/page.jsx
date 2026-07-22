@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import ReviewsPage from "../../../../src/components/Review/ReviewPage";
 import StructuredData from "../../../../src/components/StructuredData";
-import { getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews } from "../../../../src/lib/serverContentApi";
+import { getManagedPageMetadata, getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews } from "../../../../src/lib/serverContentApi";
 import { buildMetadata, buildReviewCollectionJsonLd } from "../../../../src/lib/seo";
 
 export const revalidate = 21600;
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/review/${property.slug}`, {
     title: `${property.name} Reviews`,
     description: `Read verified guest reviews for ${property.name}.`,
     pathname: `/review/${property.slug}`,

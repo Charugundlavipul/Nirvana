@@ -14,6 +14,7 @@ import SubscribersManager from "./Subscribers/SubscribersManager";
 import KnowledgeHubManager from "./Knowledge/KnowledgeHubManager";
 import BlogManager from "./Blogs/BlogManager";
 import AdminSignatures from "./Signatures/AdminSignatures";
+import PageMetadataManager from "./Metadata/PageMetadataManager";
 
 const AdminApp = () => {
   return (
@@ -25,6 +26,7 @@ const AdminApp = () => {
           <Route path="properties" element={<PropertyList />} />
           <Route path="properties/:slug" element={<PropertyEditor />} />
           <Route path="global" element={<GlobalContent />} />
+          <Route path="metadata" element={<PageMetadataManager />} />
           <Route path="blogs" element={<BlogManager />} />
           <Route path="knowledge" element={<KnowledgeHubManager />} />
           <Route path="approvals" element={<ApprovalQueue />} />

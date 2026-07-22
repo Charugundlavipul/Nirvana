@@ -1,8 +1,7 @@
 import Home from "../../src/components/Home/Home";
 import StructuredData from "../../src/components/StructuredData";
-import { getProperties, getReviews } from "../../src/lib/serverContentApi";
+import { getManagedPageMetadata, getProperties, getReviews } from "../../src/lib/serverContentApi";
 import {
-  buildMetadata,
   buildBreadcrumbJsonLd,
   buildOrganizationJsonLd,
   buildSiteNavigationJsonLd,
@@ -12,7 +11,7 @@ import { SITE_ALTERNATE_NAMES, SITE_NAME, absoluteUrl } from "../../src/lib/site
 
 export const revalidate = 3600;
 
-const baseMetadata = buildMetadata({
+const homeMetadataDefaults = {
   title: "Nirvana Luxe Official Site - Luxury Vacation Rentals",
   description:
     "Official Nirvana Luxe direct-booking site for luxury cabins and lakefront vacation rentals in the Smoky Mountains, TN and Lake Norman, NC.",
@@ -34,14 +33,12 @@ const baseMetadata = buildMetadata({
     "halftime hideaway",
     "grandprix getaway",
   ],
-});
-
-export const metadata = {
-  ...baseMetadata,
-  title: {
-    absolute: "Nirvana Luxe Official Site - Luxury Vacation Rentals",
-  },
 };
+
+export async function generateMetadata() {
+  const managed = await getManagedPageMetadata("/", homeMetadataDefaults);
+  return { ...managed, title: { absolute: managed.title } };
+}
 
 export default async function HomePage() {
   const [properties, reviews] = await Promise.all([getProperties(), getReviews()]);

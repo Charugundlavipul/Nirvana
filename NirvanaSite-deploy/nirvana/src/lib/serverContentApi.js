@@ -12,6 +12,10 @@ import {
   fetchPropertiesWithCurated,
   fetchReviews,
 } from "./contentApi";
+import { buildMetadata } from "./seo";
+import { metadataRecordToBuildOptions, normalizePageKey } from "./pageMetadata";
+
+let metadataReadWarningShown = false;
 
 export const getProperties = cache(async () => fetchProperties());
 export const getPropertyCards = cache(async () => fetchPropertyCards());
@@ -21,6 +25,31 @@ export const getPropertyBundleBySlug = cache(async (slug) => fetchPropertyBundle
 export const getFaqsBySlug = cache(async (slug) => fetchFaqsBySlug(slug));
 export const getActivitiesBySlug = cache(async (slug) => fetchActivitiesBySlug(slug));
 export const getReviews = cache(async (options = {}) => fetchReviews(options));
+
+export const getManagedPageMetadata = cache(async (pageKey, fallback = {}) => {
+  const normalizedPageKey = normalizePageKey(pageKey);
+  try {
+    const { data, error } = await supabase
+      .from("page_metadata")
+      .select("*")
+      .eq("page_key", normalizedPageKey)
+      .maybeSingle();
+
+    if (error && !metadataReadWarningShown) {
+      // Keep the public site usable while the schema migration is being deployed.
+      console.warn(`Unable to load managed metadata for ${normalizedPageKey}:`, error.message);
+      metadataReadWarningShown = true;
+    }
+
+    return buildMetadata(metadataRecordToBuildOptions(data || {}, {
+      ...fallback,
+      pathname: fallback.pathname || normalizedPageKey,
+    }));
+  } catch (error) {
+    console.warn(`Unable to load managed metadata for ${normalizedPageKey}:`, error?.message || error);
+    return buildMetadata(fallback);
+  }
+});
 
 export const getHospitableProperties = cache(async () => {
   try {

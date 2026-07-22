@@ -1,12 +1,13 @@
 import ReviewsPage from "../../../src/components/Review/ReviewPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { getPropertyCards, getReviews } from "../../../src/lib/serverContentApi";
-import { buildMetadata, buildReviewCollectionJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { getManagedPageMetadata, getPropertyCards, getReviews } from "../../../src/lib/serverContentApi";
+import { buildReviewCollectionJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 21600;
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/review", {
   title: "5-Star Guest Reviews - Nirvana Luxe Rentals",
   description: "100+ verified 5-star reviews for Nirvana Luxe cabins & lake homes. Real guests. Real experiences. See why families & groups come back.",
   pathname: "/review",
@@ -20,7 +21,8 @@ export const metadata = buildMetadata({
     "luxury rental guest feedback",
     "verified guest reviews",
   ],
-});
+  });
+}
 
 export default async function ReviewPage() {
   const [properties, reviews] = await Promise.all([getPropertyCards(), getReviews()]);

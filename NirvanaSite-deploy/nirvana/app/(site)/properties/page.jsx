@@ -1,12 +1,13 @@
 import PropertyOverview from "../../../src/components/PropertyOverview/propertyOverview";
 import StructuredData from "../../../src/components/StructuredData";
-import { getPropertyCards } from "../../../src/lib/serverContentApi";
-import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { getManagedPageMetadata, getPropertyCards } from "../../../src/lib/serverContentApi";
+import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 3600;
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/properties", {
   title: "Luxury Rentals - Smokies & Lake Norman | Book",
   description: "Browse 8 luxury cabins & lakefront homes in Sevierville TN & Lake Norman NC. Sleep up to 26 guests. Direct booking, best rate guaranteed.",
   pathname: "/properties",
@@ -22,7 +23,8 @@ export const metadata = buildMetadata({
     "direct booking vacation homes",
     "Nirvana Luxe properties",
   ],
-});
+  });
+}
 
 export default async function PropertiesPage() {
   const properties = await getPropertyCards();
@@ -62,4 +64,3 @@ export default async function PropertiesPage() {
     </>
   );
 }
-

@@ -1,12 +1,13 @@
 import FAQ from "../../../src/components/FAQ/FAQ";
 import StructuredData from "../../../src/components/StructuredData";
-import { getFaqsBySlug, getPropertyCards } from "../../../src/lib/serverContentApi";
-import { buildFaqJsonLd, buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { getFaqsBySlug, getManagedPageMetadata, getPropertyCards } from "../../../src/lib/serverContentApi";
+import { buildFaqJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
 export const revalidate = 43200;
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/faq", {
   title: "FAQ - Booking, Check-In & Amenities | Nirvana",
   description: "Got questions? Find answers about booking, cancellation, check-in, amenities, pets & more for your Nirvana Luxe luxury rental stay.",
   pathname: "/faq",
@@ -21,7 +22,8 @@ export const metadata = buildMetadata({
     "amenities luxury rental",
     "house rules cabin rental",
   ],
-});
+  });
+}
 
 export default async function FaqPage() {
   const properties = await getPropertyCards();

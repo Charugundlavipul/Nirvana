@@ -1,12 +1,12 @@
 import LegalPage from "../../../src/components/Legal/LegalPage";
-import { getLegalPageContent } from "../../../src/lib/serverContentApi";
-import { buildMetadata, descriptionFromRichText } from "../../../src/lib/seo";
+import { getLegalPageContent, getManagedPageMetadata } from "../../../src/lib/serverContentApi";
+import { descriptionFromRichText } from "../../../src/lib/seo";
 
 export const revalidate = 86400;
 
 export async function generateMetadata() {
   const page = await getLegalPageContent("terms_and_conditions");
-  return buildMetadata({
+  return getManagedPageMetadata("/terms", {
     title: page.title || "Terms and Conditions",
     description: descriptionFromRichText(page.content, 160) || "Read the terms and conditions for Nirvana Luxe.",
     pathname: "/terms",

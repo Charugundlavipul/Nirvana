@@ -1,9 +1,11 @@
 import BlogFeed from "../../../src/components/Blog/BlogFeed";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
+import { getManagedPageMetadata } from "../../../src/lib/serverContentApi";
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/blog", {
   title: "Nirvana Luxe Journal - Luxury Travel & Tips",
   description: "Explore luxury travel guides, Smoky Mountain tips & Lake Norman getaway ideas from Nirvana Luxe. Plan your perfect escape with expert advice.",
   pathname: "/blog",
@@ -17,7 +19,8 @@ export const metadata = buildMetadata({
     "vacation planning",
     "luxury getaway ideas",
   ],
-});
+  });
+}
 
 export default function BlogFeedPage() {
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([

@@ -1,9 +1,11 @@
 import HostsPage from "../../../src/components/Hosts/HostsPage";
 import StructuredData from "../../../src/components/StructuredData";
-import { buildMetadata, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
+import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { SITE_EMAIL, SITE_NAME, SITE_PHONE, SOCIAL_LINKS, absoluteUrl } from "../../../src/lib/siteConfig";
+import { getManagedPageMetadata } from "../../../src/lib/serverContentApi";
 
-export const metadata = buildMetadata({
+export async function generateMetadata() {
+  return getManagedPageMetadata("/hosts", {
   title: "List With Nirvana Luxe - Property Management",
   description:
     "Earn more from your vacation rental. Nirvana Luxe offers full-service STR management in Sevierville TN & Lake Norman NC. Get a free analysis.",
@@ -21,7 +23,8 @@ export const metadata = buildMetadata({
     "Nirvana Luxe investors",
     "STR property manager",
   ],
-});
+  });
+}
 
 export default function HostsPage_Route() {
   const jsonLd = {

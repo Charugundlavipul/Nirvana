@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import FAQ from "../../../../src/components/FAQ/FAQ";
 import StructuredData from "../../../../src/components/StructuredData";
-import { getFaqsBySlug, getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
+import { getFaqsBySlug, getManagedPageMetadata, getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildFaqJsonLd, buildMetadata } from "../../../../src/lib/seo";
 
 export const revalidate = 43200;
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
     });
   }
 
-  return buildMetadata({
+  return getManagedPageMetadata(`/faq/${property.slug}`, {
     title: `${property.name} FAQ`,
     description: `Answers to common questions about ${property.name}, including amenities, booking, and house rules.`,
     pathname: `/faq/${property.slug}`,
