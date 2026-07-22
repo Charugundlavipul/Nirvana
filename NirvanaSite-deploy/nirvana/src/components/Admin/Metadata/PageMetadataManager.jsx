@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { FaCheckCircle, FaChevronRight, FaClock, FaExternalLinkAlt, FaSearch, FaShareAlt } from "react-icons/fa";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FaCheckCircle, FaChevronRight, FaClock, FaExternalLinkAlt, FaSearch, FaShareAlt, FaUpload } from "react-icons/fa";
 import AdminLayout from "../AdminLayout";
 import { fetchPageMetadataAdmin, isSuperAdminRole, savePageMetadataAdmin } from "../../../lib/adminApi";
+import { compressImageToWebp } from "../../../lib/imageCompressor";
+import { supabase } from "../../../supabaseClient";
 import styles from "./PageMetadataManager.module.css";
 
 const EMPTY_FORM = {
@@ -61,7 +63,9 @@ const PageMetadataManager = () => {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState({ openGraphImage: false, twitterImage: false });
   const [notice, setNotice] = useState(null);
+  const fileInputRefs = useRef({});
 
   const loadPages = async (preferredKey = null) => {
     setLoading(true);
@@ -119,6 +123,46 @@ const PageMetadataManager = () => {
   const isReviewer = isSuperAdminRole(role);
   const previewTitle = form.openGraphTitle || form.title || "Page title";
   const previewDescription = form.openGraphDescription || form.description || "Page description";
+
+  const handleImageUpload = async (event, fieldKey) => {
+    const originalFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!originalFile || !selectedPage) return;
+
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(originalFile.type)) {
+      setNotice({ type: "error", text: "Please upload a JPG, PNG, or WebP image." });
+      return;
+    }
+    if (originalFile.size > 12 * 1024 * 1024) {
+      setNotice({ type: "error", text: "The selected image is larger than 12 MB." });
+      return;
+    }
+
+    setUploading((current) => ({ ...current, [fieldKey]: true }));
+    setNotice(null);
+    try {
+      const file = await compressImageToWebp(originalFile, { maxWidth: 1600, quality: 0.82 });
+      const pageFolder = selectedPage.pageKey === "/"
+        ? "home"
+        : selectedPage.pageKey.replace(/^\/+|\/+$/g, "").replace(/[^a-zA-Z0-9/_-]/g, "-");
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const storagePath = `page-metadata/${pageFolder}/${fieldKey}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("property-assets")
+        .upload(storagePath, file, { contentType: file.type || "image/webp", upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage.from("property-assets").getPublicUrl(storagePath);
+      if (!publicData?.publicUrl) throw new Error("The image uploaded, but its public URL could not be created.");
+      update(fieldKey, publicData.publicUrl);
+      setNotice({ type: "success", text: "Image uploaded. Publish or submit the metadata to save this change." });
+    } catch (error) {
+      setNotice({ type: "error", text: error.message || "Unable to upload the image." });
+    } finally {
+      setUploading((current) => ({ ...current, [fieldKey]: false }));
+    }
+  };
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -261,7 +305,15 @@ const PageMetadataManager = () => {
                   <div className={styles.formGrid}>
                     <Field label="Social title" hint="Leave blank to use the SEO title."><input value={form.openGraphTitle} onChange={(event) => update("openGraphTitle", event.target.value)} maxLength={120} placeholder={form.title} /></Field>
                     <Field label="Social description" hint="Leave blank to use the meta description."><textarea value={form.openGraphDescription} onChange={(event) => update("openGraphDescription", event.target.value)} maxLength={320} rows={3} placeholder={form.description} /></Field>
-                    <Field label="Social image URL" hint="Use a wide image (1200 × 630 px recommended)."><input value={form.openGraphImage} onChange={(event) => update("openGraphImage", event.target.value)} placeholder="/images/social-preview.jpg" /></Field>
+                    <Field label="Social image" hint="Upload a JPG, PNG, or WebP image. A 1200 × 630 px image is recommended.">
+                      <div className={styles.imageFieldRow}>
+                        <input value={form.openGraphImage} onChange={(event) => update("openGraphImage", event.target.value)} placeholder="Paste an image URL or upload a file" />
+                        <input ref={(element) => { fileInputRefs.current.openGraphImage = element; }} type="file" accept="image/jpeg,image/png,image/webp" className={styles.fileInput} onChange={(event) => handleImageUpload(event, "openGraphImage")} />
+                        <button type="button" className={styles.uploadButton} disabled={uploading.openGraphImage} onClick={() => fileInputRefs.current.openGraphImage?.click()}>
+                          <FaUpload aria-hidden="true" /> {uploading.openGraphImage ? "Uploading..." : form.openGraphImage ? "Replace" : "Upload image"}
+                        </button>
+                      </div>
+                    </Field>
                   </div>
                   <div className={styles.socialPreview}>
                     <div className={styles.previewImage}>
@@ -276,7 +328,15 @@ const PageMetadataManager = () => {
                   <div className={styles.formGrid}>
                     <Field label="X / Twitter title"><input value={form.twitterTitle} onChange={(event) => update("twitterTitle", event.target.value)} maxLength={120} placeholder={previewTitle} /></Field>
                     <Field label="X / Twitter description"><textarea value={form.twitterDescription} onChange={(event) => update("twitterDescription", event.target.value)} maxLength={320} rows={3} placeholder={previewDescription} /></Field>
-                    <Field label="X / Twitter image URL"><input value={form.twitterImage} onChange={(event) => update("twitterImage", event.target.value)} placeholder={form.openGraphImage || "/images/social-preview.jpg"} /></Field>
+                    <Field label="X / Twitter image">
+                      <div className={styles.imageFieldRow}>
+                        <input value={form.twitterImage} onChange={(event) => update("twitterImage", event.target.value)} placeholder={form.openGraphImage || "Paste an image URL or upload a file"} />
+                        <input ref={(element) => { fileInputRefs.current.twitterImage = element; }} type="file" accept="image/jpeg,image/png,image/webp" className={styles.fileInput} onChange={(event) => handleImageUpload(event, "twitterImage")} />
+                        <button type="button" className={styles.uploadButton} disabled={uploading.twitterImage} onClick={() => fileInputRefs.current.twitterImage?.click()}>
+                          <FaUpload aria-hidden="true" /> {uploading.twitterImage ? "Uploading..." : form.twitterImage ? "Replace" : "Upload image"}
+                        </button>
+                      </div>
+                    </Field>
                   </div>
                 </details>
               </section>
@@ -303,7 +363,7 @@ const PageMetadataManager = () => {
                 </section>
               ) : null}
 
-              <div className={styles.stickyActions}>
+              <div className={styles.formActions}>
                 <div>
                   <strong>{isReviewer ? "Publish immediately" : "Approval required"}</strong>
                   <span>{isReviewer ? "Your changes will become the live metadata." : "A superadmin will review these changes before they go live."}</span>

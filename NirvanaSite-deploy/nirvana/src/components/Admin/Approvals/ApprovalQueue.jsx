@@ -78,6 +78,8 @@ const MEDIA_REFERENCE_TABLES = [
   { table: "property_highlight_images", column: "url" },
   { table: "reviews", column: "avatar_url" },
   { table: "activities", column: "image_url" },
+  { table: "page_metadata", column: "open_graph_image" },
+  { table: "page_metadata", column: "twitter_image" },
 ];
 const MEDIA_ENTITY_TYPES = new Set([
   "property_image",
@@ -85,6 +87,7 @@ const MEDIA_ENTITY_TYPES = new Set([
   "property_highlight_image",
   "review",
   "activity",
+  "page_metadata",
 ]);
 
 const statusBadgeStyle = (status) => {
