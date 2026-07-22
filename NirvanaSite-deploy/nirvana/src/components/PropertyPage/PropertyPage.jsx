@@ -12,15 +12,18 @@ import InlineActivities from './InlineActivities';
 import ContactForm from '../Contact/ContactForm';
 import HospitableWidget from '../common/HospitableWidget';
 import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
+import CarouselNavigation from '../common/CarouselNavigation';
 
 const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initialActivities = [], allProperties = [] }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
     const [lightboxType, setLightboxType] = useState('');
     const [lightboxImages, setLightboxImages] = useState([]);
     const heroRef = useRef(null);
+    const mobileGalleryRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
     const [visibleCount, setVisibleCount] = useState(10);
+    const [mobileGalleryIndex, setMobileGalleryIndex] = useState(0);
 
     const property = initialBundle?.property || null;
     const galleryImages = initialBundle?.galleryImages || [];
@@ -52,6 +55,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         window.scrollTo(0, 0);
         setCurrentIndex(0);
         setVisibleCount(10);
+        setMobileGalleryIndex(0);
     }, [slug]);
 
     useEffect(() => {
@@ -64,6 +68,28 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
     }, [visibleCount, galleryImages.length]);
 
     const sliderImages = galleryImages;
+
+    const updateMobileGalleryIndex = () => {
+        const track = mobileGalleryRef.current;
+        const firstCard = track?.firstElementChild;
+        if (!track || !firstCard) return;
+        const step = firstCard.getBoundingClientRect().width + 16;
+        setMobileGalleryIndex(Math.min(Math.round(track.scrollLeft / step), Math.max(sliderImages.length - 1, 0)));
+    };
+
+    const moveMobileGallery = (direction) => {
+        if (!sliderImages.length) return;
+        const nextIndex = (mobileGalleryIndex + direction + sliderImages.length) % sliderImages.length;
+        setVisibleCount((previous) => Math.max(previous, nextIndex + 1));
+        setMobileGalleryIndex(nextIndex);
+        window.requestAnimationFrame(() => {
+            const track = mobileGalleryRef.current;
+            const firstCard = track?.firstElementChild;
+            if (!track || !firstCard) return;
+            const step = firstCard.getBoundingClientRect().width + 16;
+            track.scrollTo({ left: nextIndex * step, behavior: 'smooth' });
+        });
+    };
 
     // Carousel logic removed for modern gallery grid style
 
@@ -355,23 +381,34 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         )}
                     </div>
 
-                    {/* Mobile Horizontal Scroll (fallback for small screens) */}
-                    <div className="md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-6 -mx-6 px-6">
-                        {sliderImages.slice(0, visibleCount).map((imgSrc, i) => (
-                            <div
-                                key={i}
-                                className="flex-shrink-0 w-[85vw] h-[60vw] snap-center relative rounded-2xl overflow-hidden shadow-lg cursor-pointer"
-                                onClick={() => openLightbox(imgSrc)}
-                            >
-                                <img src={imgSrc} alt={`${property.name} gallery photo ${i + 1} — luxury vacation rental in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="w-full h-full object-cover" />
-                                <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                                    {i + 1} / {sliderImages.length}
+                    {/* Mobile swipe gallery with attached controls */}
+                    <div className="md:hidden">
+                        <div
+                            ref={mobileGalleryRef}
+                            onScroll={updateMobileGalleryIndex}
+                            className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                        >
+                            {sliderImages.slice(0, visibleCount).map((imgSrc, i) => (
+                                <div
+                                    key={i}
+                                    className="relative h-[60vw] w-[85vw] flex-shrink-0 snap-center cursor-pointer overflow-hidden rounded-2xl shadow-lg"
+                                    onClick={() => openLightbox(imgSrc)}
+                                >
+                                    <img src={imgSrc} alt={`${property.name} gallery photo ${i + 1} — luxury vacation rental in ${property.location || 'Smoky Mountains'}`} loading="lazy" className="h-full w-full object-cover" />
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                        <CarouselNavigation
+                            current={mobileGalleryIndex + 1}
+                            total={sliderImages.length}
+                            onPrevious={() => moveMobileGallery(-1)}
+                            onNext={() => moveMobileGallery(1)}
+                            label="gallery photos"
+                            className="mt-2"
+                        />
                     </div>
 
-                    <div className="text-center mt-10 md:hidden">
+                    <div className="mt-6 text-center md:hidden">
                         <button
                             onClick={() => openLightbox(sliderImages[0])}
                             className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-lg text-sm uppercase tracking-widest"

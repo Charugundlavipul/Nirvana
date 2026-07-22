@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaMapMarkerAlt, FaHiking, FaUtensils, FaCamera, FaShoppingBag, FaIcons, FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import CarouselNavigation from '../common/CarouselNavigation';
 
 const getActivityIcon = (category) => {
     switch (category?.toLowerCase()) {
@@ -141,24 +142,15 @@ const InlineActivities = ({ activities = [], slug }) => {
                     ))}
                 </div>
 
-                {/* Mobile/Tablet Arrow Controls (Placed BELOW the grid) */}
-                {activities.length > 3 && (
-                    <div className="flex xl:hidden justify-center gap-6 mt-12 mb-8">
-                        <button 
-                            type="button"
-                            onClick={prevActivity}
-                            className="w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-600 hover:bg-accent hover:text-white transition-all duration-300 border border-slate-100"
-                        >
-                            <FaChevronLeft size={18} />
-                        </button>
-                        <button 
-                            type="button"
-                            onClick={nextActivity}
-                            className="w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-600 hover:bg-accent hover:text-white transition-all duration-300 border border-slate-100"
-                        >
-                            <FaChevronRight size={18} />
-                        </button>
-                    </div>
+                {activities.length > getVisibleActivities().length && (
+                    <CarouselNavigation
+                        current={(currentIndex % activities.length) + 1}
+                        total={activities.length}
+                        onPrevious={prevActivity}
+                        onNext={nextActivity}
+                        label="experiences"
+                        className="mt-6 mb-8 xl:hidden"
+                    />
                 )}
 
                 <div className="text-center mt-20">
@@ -178,4 +170,3 @@ const InlineActivities = ({ activities = [], slug }) => {
 };
 
 export default InlineActivities;
-

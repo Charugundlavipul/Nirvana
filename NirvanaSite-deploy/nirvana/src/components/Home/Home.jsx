@@ -8,6 +8,7 @@ import { FaChevronLeft, FaChevronRight, FaStar, FaAirbnb, FaBed, FaBath, FaUsers
 import { getCompactBathroomSummary } from "../../lib/bathrooms";
 import CustomDatePicker from '../common/CustomDatePicker';
 import CustomSelect from '../common/CustomSelect';
+import CarouselNavigation from '../common/CarouselNavigation';
 
 const HERO_IMAGE = "/assets/exterior.avif";
 const CTA_IMAGE = "/data/ShoresideOasis/116Mcnaron-31_41_11zon.webp";
@@ -280,6 +281,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <button
               onClick={prevReview}
               className="hidden md:inline-flex p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+              aria-label="Previous review"
             >
               <FaChevronLeft size={20} />
             </button>
@@ -318,26 +320,19 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
             <button
               onClick={nextReview}
               className="hidden md:inline-flex p-4 rounded-full bg-white shadow-xl border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
+              aria-label="Next review"
             >
               <FaChevronRight size={20} />
             </button>
           </div>
-          <div className="mt-6 flex items-center justify-center gap-3 md:hidden">
-            <button
-              onClick={prevReview}
-              className="inline-flex p-3 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-              aria-label="Previous review"
-            >
-              <FaChevronLeft size={18} />
-            </button>
-            <button
-              onClick={nextReview}
-              className="inline-flex p-3 rounded-full bg-white shadow-lg border border-slate-100 hover:bg-accent hover:text-white hover:border-accent text-gray-600 transition-all duration-300"
-              aria-label="Next review"
-            >
-              <FaChevronRight size={18} />
-            </button>
-          </div>
+          <CarouselNavigation
+            current={(reviewIndex % Math.max(filteredReviews.length, 1)) + 1}
+            total={filteredReviews.length}
+            onPrevious={prevReview}
+            onNext={nextReview}
+            label="reviews"
+            className="mt-5 md:hidden"
+          />
 
           <div className="text-center mt-12">
             <Link href="/review" className="inline-flex items-center gap-2 text-accent font-semibold hover:underline text-lg">
