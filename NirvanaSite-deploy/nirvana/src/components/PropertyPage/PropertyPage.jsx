@@ -598,10 +598,14 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
             <section className="py-8 md:py-10 bg-white border-y border-slate-100">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
-                        <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                        <Link
+                            href="/cancellation-policy"
+                            className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-slate-800"
+                            aria-label="Full refund 14 or more days before check-in; 50% refund 7 to 13 days before check-in. View cancellation policy."
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-emerald-500 flex-shrink-0"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
-                            <span>Free cancellation <span className="hidden sm:inline">up to </span>14+ days<span className="hidden sm:inline"> before check-in</span></span>
-                        </div>
+                            <span>Full refund 14+ days <span aria-hidden="true">·</span> 50% refund 7–13 days</span>
+                        </Link>
                         <div className="flex items-center gap-2.5 text-sm text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-accent flex-shrink-0"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /></svg>
                             <span>No service fees</span>
