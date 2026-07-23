@@ -96,8 +96,8 @@ export default function CancellationPolicyPage() {
             Cancellation policy
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
-            Clear terms for bookings made directly with Nirvana Luxe, plus the right
-            place to find the policy for Airbnb and Vrbo reservations.
+            Plans can change. Review your cancellation options for a direct booking,
+            or find the policy that applies to your Airbnb or Vrbo reservation.
           </p>
         </div>
       </section>
