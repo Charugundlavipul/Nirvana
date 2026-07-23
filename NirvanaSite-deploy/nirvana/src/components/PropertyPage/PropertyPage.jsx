@@ -331,30 +331,30 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 shadow-[0_12px_35px_rgba(15,23,42,0.05)] backdrop-blur-sm sm:grid-cols-5">
-                            <div className="px-3 py-5 text-center sm:border-r sm:border-slate-200/80">
-                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                        <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-accent/30 bg-accent/10 shadow-[0_12px_35px_rgba(96,189,104,0.1)] backdrop-blur-sm sm:grid-cols-5">
+                            <div className="px-3 py-5 text-center sm:border-r sm:border-accent/20">
+                                <p className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
                                   {property.bedroom_count || '-'}
                                 </p>
-                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Bedrooms</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-accent sm:text-[10px]">Bedrooms</p>
                             </div>
-                            <div className="border-l border-slate-200/80 px-3 py-5 text-center sm:border-l-0 sm:border-r">
-                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                            <div className="border-l border-accent/20 px-3 py-5 text-center sm:border-l-0 sm:border-r">
+                                <p className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
                                   {property.bed_count || '-'}
                                 </p>
-                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Beds</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-accent sm:text-[10px]">Beds</p>
                             </div>
-                            <div className="border-t border-slate-200/80 px-3 py-5 text-center sm:border-r sm:border-t-0">
-                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{fullBathCount || '-'}</p>
-                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Full baths</p>
+                            <div className="border-t border-accent/20 px-3 py-5 text-center sm:border-r sm:border-t-0">
+                                <p className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{fullBathCount || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-accent sm:text-[10px]">Full baths</p>
                             </div>
-                            <div className="border-l border-t border-slate-200/80 px-3 py-5 text-center sm:border-l-0 sm:border-r sm:border-t-0">
-                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{halfBathCount || '-'}</p>
-                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Half baths</p>
+                            <div className="border-l border-t border-accent/20 px-3 py-5 text-center sm:border-l-0 sm:border-r sm:border-t-0">
+                                <p className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{halfBathCount || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-accent sm:text-[10px]">Half baths</p>
                             </div>
-                            <div className="col-span-2 border-t border-slate-200/80 px-3 py-5 text-center sm:col-span-1 sm:border-t-0">
-                                <p className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{property.guests_max || '-'}</p>
-                                <p className="mt-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px]">Guests</p>
+                            <div className="col-span-2 border-t border-accent/20 px-3 py-5 text-center sm:col-span-1 sm:border-t-0">
+                                <p className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{property.guests_max || '-'}</p>
+                                <p className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-accent sm:text-[10px]">Guests</p>
                             </div>
                         </div>
                     </div>
@@ -442,7 +442,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-            {/* Photo Gallery - Modern Grid Layout */}
+            {/* Photo Gallery - Modern Grid Layout (Commented Out)
             <section id="gallery" className="py-16 md:py-24 bg-white">
                 <div className="text-center mb-10 md:mb-16 px-6">
                     <p className="text-accent uppercase tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm font-semibold mb-2 md:mb-3">Visual Tour</p>
@@ -451,9 +451,9 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
 
                 <div className="max-w-7xl mx-auto px-6">
-                    {/* Modern Grid (Desktop/Tablet) */}
+                    {-- Modern Grid (Desktop/Tablet) --}
                     <div className="hidden md:flex gap-4 h-[350px] lg:h-[420px] rounded-[2rem] overflow-hidden shadow-2xl">
-                        {/* Main Image (Left, 50%) */}
+                        {-- Main Image (Left, 50%) --}
                         <div 
                             className="w-1/2 relative group cursor-pointer overflow-hidden"
                             onClick={() => openLightbox(sliderImages[0])}
@@ -464,7 +464,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                             <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
 
-                        {/* 4 Grid Images (Right, 50%) */}
+                        {-- 4 Grid Images (Right, 50%) --}
                         {sliderImages.length >= 5 ? (
                             <div className="w-1/2 grid grid-cols-2 grid-rows-2 gap-4">
                                 {sliderImages.slice(1, 4).map((imgSrc, idx) => (
@@ -478,7 +478,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                                     </div>
                                 ))}
                                 
-                                {/* 5th Image with View All Overlay */}
+                                {-- 5th Image with View All Overlay --}
                                 <div 
                                     className="relative group cursor-pointer overflow-hidden"
                                     onClick={() => openLightbox(sliderImages[4])}
@@ -506,7 +506,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         )}
                     </div>
 
-                    {/* Mobile swipe gallery with attached controls */}
+                    {-- Mobile swipe gallery with attached controls --}
                     <div className="md:hidden">
                         <div
                             ref={mobileGalleryRef}
@@ -543,6 +543,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     </div>
                 </div>
             </section>
+            */}
 
             {/* Amenities Section */}
             <section className="py-24 bg-slate-50 relative">
