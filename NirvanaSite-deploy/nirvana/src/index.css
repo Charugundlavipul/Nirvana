@@ -114,3 +114,14 @@ h1, h2, h3, h4, h5, h6 {
 .main-content:has(.site-hero, .hero-section) {
   padding-top: 0;
 }
+/* Card carousel navigation stays discoverable on touch devices. */
+@media (hover: hover) and (pointer: fine) {
+  .group .card-carousel-controls {
+    opacity: 0;
+  }
+
+  .group:hover .card-carousel-controls,
+  .group:focus-within .card-carousel-controls {
+    opacity: 1;
+  }
+}

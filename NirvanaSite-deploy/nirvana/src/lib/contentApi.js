@@ -262,6 +262,25 @@ export async function fetchPropertyBySlug(slug) {
 
 export async function fetchPropertyCards() {
   const properties = await fetchPropertiesWithCurated();
+  const propertyIds = properties.map((property) => property.id).filter(Boolean);
+  const highlightsByPropertyId = {};
+
+  if (propertyIds.length) {
+    const { data, error } = await supabase
+      .from("property_highlight_images")
+      .select("property_id,url,display_order")
+      .in("property_id", propertyIds)
+      .order("display_order", { ascending: true });
+
+    if (error) throw error;
+    (data || []).forEach((row) => {
+      if (!highlightsByPropertyId[row.property_id]) {
+        highlightsByPropertyId[row.property_id] = [];
+      }
+      highlightsByPropertyId[row.property_id].push(row.url);
+    });
+  }
+
   return properties.map((property) => ({
     slug: property.slug,
     title: property.name,
@@ -290,6 +309,7 @@ export async function fetchPropertyCards() {
     pet_fee: property.pet_fee,
     video_url: property.video_url || "",
     curated: property.curated,
+    highlightImages: (highlightsByPropertyId[property.id] || []).slice(0, 4),
   }));
 }
 

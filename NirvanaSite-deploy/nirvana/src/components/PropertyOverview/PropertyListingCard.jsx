@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FaHeart, FaRegHeart, FaStar, FaChevronLeft, FaChevronRight, FaBed, FaBath, FaUsers, FaArrowRight } from "react-icons/fa";
+import { FaStar, FaChevronLeft, FaChevronRight, FaBed, FaBath, FaUsers, FaArrowRight } from "react-icons/fa";
 import { getCompactBathroomSummary } from "../../lib/bathrooms";
 
 const PropertyListingCard = ({ property }) => {
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const highlightCandidate = property.highlightImages && property.highlightImages.length > 0
     ? property.highlightImages
@@ -22,21 +21,8 @@ const PropertyListingCard = ({ property }) => {
       if (uniqueImages.has(img)) return false;
       uniqueImages.add(img);
       return true;
-    });
-
-  // Force the browser to secretly download all carousel images in the background
-  // so that clicking the arrow buttons feels completely instantaneous.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      images.forEach((url) => {
-        if (url) {
-          const img = new window.Image();
-          img.src = url;
-        }
-      });
-    }, 1000); // 1s delay to prioritize the main page load
-    return () => clearTimeout(timer);
-  }, [images]);
+    })
+    .slice(0, 5);
 
   const nextImage = (e) => {
     e.stopPropagation();
@@ -48,11 +34,6 @@ const PropertyListingCard = ({ property }) => {
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
-  const toggleFavorite = (e) => {
-    e.stopPropagation();
-    setIsFavorite(!isFavorite);
-  };
-
   const handleBookNow = (e) => {
     e.stopPropagation();
     router.push(`/book/${property.slug}`);
@@ -61,19 +42,23 @@ const PropertyListingCard = ({ property }) => {
   return (
     <article
       className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)]"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => router.push(property.propertyRoute)}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
         {images[0] ? (
           images.map((img, idx) => (
-            <img
+            <Image
               key={`${img}-${idx}`}
               src={img}
-              alt={`${property.title} - image ${idx + 1}`}
-              className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-110 ${
-                idx === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              alt={idx === currentImageIndex ? `${property.title} — image ${idx + 1}` : ""}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              quality={65}
+              loading="lazy"
+              decoding="async"
+              aria-hidden={idx !== currentImageIndex}
+              className={`pointer-events-none object-cover transition-[opacity,transform] duration-500 group-hover:scale-105 ${
+                idx === currentImageIndex ? 'opacity-100' : 'opacity-0'
               }`}
             />
           ))
@@ -83,32 +68,20 @@ const PropertyListingCard = ({ property }) => {
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/45 via-transparent to-black/10 opacity-40 transition-opacity duration-300 group-hover:opacity-70" />
 
-        <button
-          onClick={toggleFavorite}
-          className="absolute right-3 top-3 z-10 rounded-full bg-white/20 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white/40 active:scale-90"
-          aria-label="Add to favorites"
-        >
-          {isFavorite ? (
-            <FaHeart className="text-xl text-rose-500 drop-shadow-sm" />
-          ) : (
-            <FaRegHeart className="text-xl text-white drop-shadow-md" />
-          )}
-        </button>
-
-        {images.length > 1 && isHovered && (
+        {images.length > 1 && (
           <>
             <button
               onClick={prevImage}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white p-2 text-slate-700 shadow-lg transition-all duration-200 hover:scale-110"
+              className="card-carousel-controls absolute left-3 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-white/70 text-slate-700 opacity-100 shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/90 active:scale-95 md:h-10 md:w-10"
               aria-label="Previous image"
             >
               <FaChevronLeft size={14} />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white p-2 text-slate-700 shadow-lg transition-all duration-200 hover:scale-110"
+              className="card-carousel-controls absolute right-3 top-1/2 z-30 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-white/70 text-slate-700 opacity-100 shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/90 active:scale-95 md:h-10 md:w-10"
               aria-label="Next image"
             >
               <FaChevronRight size={14} />
@@ -117,15 +90,17 @@ const PropertyListingCard = ({ property }) => {
         )}
 
         {images.length > 1 && (
-          <div className={`absolute bottom-16 left-1/2 flex -translate-x-1/2 gap-1.5 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}>
-            {images.slice(0, 5).map((_, index) => (
+          <div className="card-carousel-controls absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2.5 py-2 opacity-100 backdrop-blur-sm transition-opacity duration-200">
+            {images.map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentImageIndex(index);
                 }}
-                className={`h-2 rounded-full shadow-sm transition-all duration-200 ${index === currentImageIndex % 5 ? "w-4 bg-white" : "w-2 bg-white/60 hover:bg-white/80"}`}
+                aria-label={`Show image ${index + 1} of ${images.length}`}
+                aria-current={index === currentImageIndex ? "true" : undefined}
+                className={`h-1.5 rounded-full shadow-sm transition-all duration-200 ${index === currentImageIndex ? "w-4 bg-white" : "w-1.5 bg-white/60 hover:bg-white/90"}`}
               />
             ))}
           </div>

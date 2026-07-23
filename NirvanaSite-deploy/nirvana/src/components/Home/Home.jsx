@@ -525,22 +525,26 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
 // Signature Retreat Card Component
 const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, link, stats, badge }) => {
   const safeIndex = images.length ? currentIndex % images.length : 0;
-  const currentImage = images[safeIndex] || "";
 
   return (
     <div className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left" onClick={() => window.location.href = link}>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
-        {currentImage && (
+        {images.map((image, index) => (
           <Image
-            key={currentImage}
-            src={currentImage}
-            alt={`${title} — luxury vacation rental in ${location}`}
+            key={image}
+            src={image}
+            alt={index === safeIndex ? `${title} — luxury vacation rental in ${location}` : ""}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={65}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+            aria-hidden={index !== safeIndex}
+            className={`pointer-events-none object-cover transition-[opacity,transform] duration-500 group-hover:scale-105 ${
+              index === safeIndex ? "opacity-100" : "opacity-0"
+            }`}
           />
-        )}
+        ))}
 
         {/* Gradient Header for Badge */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent opacity-60"></div>
@@ -552,13 +556,13 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
           </div>
         )}
 
-        {/* Carousel Controls - Only visible on hover */}
+        {/* Always visible for touch; hover reveal keeps desktop cards visually quiet. */}
         {images.length > 1 && (
-          <div className="absolute inset-x-0 top-1/2 z-30 flex -translate-y-1/2 justify-between px-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="card-carousel-controls absolute inset-x-0 top-1/2 z-30 flex -translate-y-1/2 justify-between px-3 opacity-100 transition-opacity duration-300">
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onPrev(e); }}
-              className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-white/70 text-slate-800 shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-white/90 active:scale-95 md:h-10 md:w-10"
               aria-label="Previous image"
             >
               <FaChevronLeft size={14} />
@@ -566,7 +570,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onNext(e); }}
-              className="rounded-full bg-white/60 backdrop-blur-sm p-2 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-white"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-white/70 text-slate-800 shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-white/90 active:scale-95 md:h-10 md:w-10"
               aria-label="Next image"
             >
               <FaChevronRight size={14} />
@@ -576,7 +580,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
         {/* Image Indicator Dots */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="card-carousel-controls absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2.5 py-2 opacity-100 backdrop-blur-sm transition-opacity duration-300">
             {images.slice(0, 5).map((_, idx) => (
               <div
                 key={idx}
