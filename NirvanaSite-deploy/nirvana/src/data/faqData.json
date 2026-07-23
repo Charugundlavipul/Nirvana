@@ -1,7 +1,7 @@
 {
   "common": [
     {
-      "answer": "We offer a flexible cancellation policy: Guests who cancel at least 14 days before check-in will receive a full refund. Cancellations made between 7 and 13 days before check-in will receive a 50% refund. Cancellations made less than 7 days before check-in are non-refundable. Please review our full Terms and Conditions for complete details, or contact us if you have questions about a specific booking.",
+      "answer": "For direct bookings, guests who cancel at least 14 days before check-in will receive a full refund. Cancellations made between 7 and 13 days before check-in will receive a 50% refund. Cancellations made less than 7 days before check-in are non-refundable. Review our dedicated Cancellation Policy for full details. Airbnb and Vrbo reservations follow the policy shown on the respective platform and in the guest's trip details.",
       "question": "What is your cancellation policy?",
       "pinned": true
     },

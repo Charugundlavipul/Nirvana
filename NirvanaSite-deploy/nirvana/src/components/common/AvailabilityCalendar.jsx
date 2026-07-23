@@ -624,7 +624,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                                     Free cancellation 14+ days before check-in
                                 </span>
                                 <span aria-hidden="true">·</span>
-                                <a href="/terms" className="inline-flex items-center underline underline-offset-2 transition-colors hover:text-slate-600">Full policy</a>
+                                <a href="/cancellation-policy" className="inline-flex items-center underline underline-offset-2 transition-colors hover:text-slate-600">Full policy</a>
                             </p>
                         </div>
                     ) : null}

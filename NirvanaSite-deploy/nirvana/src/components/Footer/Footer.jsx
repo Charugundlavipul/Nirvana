@@ -166,7 +166,7 @@ const Footer = () => {
                 <div className="border-t border-slate-700">
                     <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-slate-400">
                         <span>© {currentYear} Nirvana Luxe. All rights reserved.</span>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                             <Link href="/faq" className="transition hover:text-accent">FAQ</Link>
                             <span className="text-slate-600">|</span>
                             <Link href="/about" className="transition hover:text-accent">About</Link>
@@ -177,7 +177,7 @@ const Footer = () => {
                             <span className="text-slate-600">|</span>
                             <Link href="/terms" className="transition hover:text-accent">Terms</Link>
                             <span className="text-slate-600">|</span>
-                            <Link href="/terms#cancellation" className="transition hover:text-accent">Cancellation Policy</Link>
+                            <Link href="/cancellation-policy" className="transition hover:text-accent">Cancellation Policy</Link>
                             <span className="text-slate-600">|</span>
                             <Link href="/privacy" className="transition hover:text-accent">Privacy</Link>
                         </div>

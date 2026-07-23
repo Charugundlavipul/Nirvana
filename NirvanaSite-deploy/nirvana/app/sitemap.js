@@ -22,6 +22,7 @@ export default async function sitemap() {
     "/review",
     "/blog",
     "/terms",
+    "/cancellation-policy",
     "/privacy",
   ];
 

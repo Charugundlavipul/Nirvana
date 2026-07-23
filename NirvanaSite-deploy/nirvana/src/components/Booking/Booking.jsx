@@ -238,7 +238,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
             Questions about a property? <a href="/contact" className="text-accent font-semibold hover:underline">Contact us</a>
           </p>
           <p className="text-[11px] text-gray-400 text-center">
-            Free cancellation 14+ days before check-in. <a href="/terms#cancellation" className="underline underline-offset-2 hover:text-gray-600 transition-colors">View policy</a>
+            Free cancellation 14+ days before check-in. <a href="/cancellation-policy" className="underline underline-offset-2 hover:text-gray-600 transition-colors">View policy</a>
           </p>
         </div>
       </div>
