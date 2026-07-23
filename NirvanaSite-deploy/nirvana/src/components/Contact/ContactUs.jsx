@@ -134,7 +134,7 @@ const ContactUs = () => {
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
                         <h4 className="font-bold text-gray-900 mb-3">Follow Us</h4>
                         <div className="flex justify-center gap-3">
-                            <a href="https://www.youtube.com/@nirvanaaluxe" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
+                            <a href="https://www.youtube.com/@nirvanaluxevacations" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">
                                 <FaYoutube size={18} />
                             </a>
                             <a href="https://www.instagram.com/nirvanaluxevacations/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-accent hover:text-accent hover:shadow-md">

@@ -601,10 +601,13 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         <Link
                             href="/cancellation-policy"
                             className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-slate-800"
-                            aria-label="Full refund 14 or more days before check-in; 50% refund 7 to 13 days before check-in. View cancellation policy."
+                            aria-label="Flexible cancellation: 100% refund when cancelled 14 or more days before check-in; 50% refund when cancelled 7 to 13 days before check-in. View cancellation policy."
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-emerald-500 flex-shrink-0"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
-                            <span>Full refund 14+ days <span aria-hidden="true">·</span> 50% refund 7–13 days</span>
+                            <span>
+                                <span className="block font-medium text-slate-700">Flexible cancellation</span>
+                                <span className="block text-xs text-slate-500">100% refund if cancelled 14+ days before check-in; 50% if cancelled 7–13 days before check-in</span>
+                            </span>
                         </Link>
                         <div className="flex items-center gap-2.5 text-sm text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-accent flex-shrink-0"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /></svg>
