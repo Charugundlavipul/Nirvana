@@ -19,7 +19,7 @@ export const STATIC_PAGE_METADATA = [
   { pageKey: "/review", label: "Guest reviews", group: "Content", title: "5-Star Guest Reviews - Nirvana Luxe Rentals", description: "Read verified guest reviews for Nirvana Luxe cabins and lake homes, shared by real families and groups." },
   { pageKey: "/privacy", label: "Privacy policy", group: "Legal & utility", title: "Privacy Policy", description: "Read the privacy policy for Nirvana Luxe." },
   { pageKey: "/terms", label: "Terms and conditions", group: "Legal & utility", title: "Terms and Conditions", description: "Read the terms and conditions for Nirvana Luxe." },
-  { pageKey: "/cancellation-policy", label: "Cancellation policy", group: "Legal & utility", title: "Cancellation Policy - Direct Bookings", description: "Review the Nirvana Luxe cancellation policy for direct bookings and find where to view the policy for Airbnb or Vrbo reservations." },
+  { pageKey: "/cancellation-policy", label: "Cancellation policy", group: "Legal & utility", title: "Cancellation Policy - Direct Bookings", description: "Review the Nirvana Luxe cancellation policy for direct bookings and find where to view the policy for Airbnb, Vrbo, or Booking.com reservations." },
   { pageKey: "/unsubscribe", label: "Unsubscribe", group: "Legal & utility", title: "Unsubscribe", description: "Manage your Nirvana Luxe alert subscription preferences.", noindex: true, follow: true },
 ];
 

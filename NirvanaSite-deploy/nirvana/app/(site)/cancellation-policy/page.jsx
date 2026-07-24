@@ -5,7 +5,6 @@ import {
   FiCalendar,
   FiCheck,
   FiClock,
-  FiHelpCircle,
   FiShield,
   FiX,
 } from "react-icons/fi";
@@ -17,7 +16,7 @@ export async function generateMetadata() {
   return getManagedPageMetadata("/cancellation-policy", {
     title: "Cancellation Policy - Direct Bookings",
     description:
-      "Review the Nirvana Luxe cancellation policy for direct bookings and find where to view the policy for Airbnb or Vrbo reservations.",
+      "Review the Nirvana Luxe cancellation policy for direct bookings and find where to view the policy for Airbnb, Vrbo, or Booking.com reservations.",
     pathname: "/cancellation-policy",
     keywords: [
       "Nirvana Luxe cancellation policy",
@@ -60,8 +59,8 @@ const directBookingWindows = [
 const platformPolicies = [
   {
     name: "Airbnb",
-    accent: "text-[#e51d53]",
-    dot: "bg-[#ff385c]",
+    logoSrc: "/assets/airbnb.svg",
+    logoClass: "h-10 w-auto",
     description:
       "Your Airbnb reservation is governed by the cancellation policy shown on Airbnb when you booked. Review the exact deadlines and estimated refund under Reservation details in Trips.",
     tripHref: "https://www.airbnb.com/trips",
@@ -70,13 +69,24 @@ const platformPolicies = [
   },
   {
     name: "Vrbo",
-    accent: "text-[#174ea6]",
-    dot: "bg-[#1a73e8]",
+    logoSrc: "/assets/vrbo.svg",
+    logoClass: "h-10 w-auto",
     description:
       "Your Vrbo reservation is governed by the cancellation policy attached to that booking. Sign in and open My Trips to review the applicable terms and request a cancellation.",
     tripHref: "https://www.vrbo.com/trips",
     tripLabel: "View Vrbo trips",
     helpHref: "https://help.vrbo.com/articles/Can-a-traveler-cancel-a-reservation",
+  },
+  {
+    name: "Booking.com",
+    logoSrc: "/assets/bookingdotcom.svg",
+    logoClass: "h-10 w-10 rounded-md",
+    logoText: "Booking.com",
+    description:
+      "Your Booking.com reservation follows the cancellation policy accepted at checkout. Review your confirmation or manage the booking online to see any applicable deadlines, fees, and refund details.",
+    tripHref: "https://secure.booking.com/mytrips.en-gb.html",
+    tripLabel: "Manage Booking.com trip",
+    helpHref: "https://www.booking.com/customer-service.en-gb.html",
   },
 ];
 
@@ -103,7 +113,7 @@ export default function CancellationPolicyPage() {
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-slate-500 sm:text-base">
             Plans can change. Review your cancellation options for a direct booking,
-            or find the policy that applies to your Airbnb or Vrbo reservation.
+            or find the policy that applies to your Airbnb, Vrbo, or Booking.com reservation.
           </p>
         </div>
       </section>
@@ -158,12 +168,8 @@ export default function CancellationPolicyPage() {
               <FiCalendar aria-hidden="true" className="mt-1 shrink-0 text-lg text-accent" />
               <p>
                 Refund eligibility is based on how many calendar days remain before
-                the property&apos;s scheduled check-in date. To start a cancellation,
-                please{" "}
-                <Link href="/contact" className="font-semibold text-slate-900 underline decoration-accent underline-offset-4">
-                  contact our team
-                </Link>
-                .
+                the property&apos;s scheduled check-in date. Once your booking is
+                confirmed, you can cancel your reservation through your Guest Portal.
               </p>
             </div>
           </div>
@@ -172,7 +178,7 @@ export default function CancellationPolicyPage() {
         <section aria-labelledby="other-platforms" className="mt-20 md:mt-24">
           <div className="max-w-3xl">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-accent">
-              Airbnb &amp; Vrbo bookings
+              Airbnb, Vrbo &amp; Booking.com bookings
             </p>
             <h2 id="other-platforms" className="text-3xl font-bold tracking-tight md:text-4xl">
               Booked through another platform?
@@ -185,16 +191,28 @@ export default function CancellationPolicyPage() {
             </p>
           </div>
 
-          <div className="mt-9 grid gap-6 md:grid-cols-2">
+          <div className="mt-9 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {platformPolicies.map((platform) => (
               <article
                 key={platform.name}
                 className="flex flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.06)] md:p-8"
               >
-                <div className="mb-5 flex items-center gap-3">
-                  <span aria-hidden="true" className={`h-3 w-3 rounded-full ${platform.dot}`} />
-                  <h3 className={`text-2xl font-bold ${platform.accent}`}>{platform.name}</h3>
-                </div>
+                <h3
+                  aria-label={platform.name}
+                  className="mb-5 flex h-10 items-center gap-3"
+                >
+                  <img
+                    src={platform.logoSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className={platform.logoClass}
+                  />
+                  {platform.logoText && (
+                    <span aria-hidden="true" className="text-2xl font-bold tracking-tight text-[#003580]">
+                      {platform.logoText}
+                    </span>
+                  )}
+                </h3>
                 <p className="flex-1 leading-7 text-slate-600">{platform.description}</p>
                 <div className="mt-7 flex flex-wrap items-center gap-4">
                   <a
@@ -221,40 +239,6 @@ export default function CancellationPolicyPage() {
           </div>
         </section>
 
-        <section className="mt-20 overflow-hidden rounded-[2rem] bg-[#111d30] px-7 py-10 text-white md:px-12 md:py-12">
-          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
-            <div className="max-w-2xl">
-              <div className="mb-4 flex items-center gap-2 text-accent">
-                <FiHelpCircle aria-hidden="true" className="text-xl" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em]">
-                  Need help?
-                </p>
-              </div>
-              <h2 className="text-2xl font-bold md:text-3xl">Not sure which policy applies?</h2>
-              <p className="mt-3 leading-7 text-slate-300">
-                Tell us where you booked and share your reservation details. We&apos;ll
-                point you to the correct policy and next step.
-              </p>
-            </div>
-            <Link
-              href="/contact"
-              className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-bold text-white transition hover:brightness-110"
-            >
-              Contact us
-              <FiArrowRight aria-hidden="true" />
-            </Link>
-          </div>
-        </section>
-
-        <p className="mt-8 text-center text-xs leading-5 text-slate-500">
-          This page summarizes cancellation terms for convenience. For direct
-          bookings, it should be read together with our{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-slate-800">
-            Terms and Conditions
-          </Link>
-          . Third-party bookings remain subject to the terms displayed by the
-          respective platform.
-        </p>
       </div>
     </div>
   );
