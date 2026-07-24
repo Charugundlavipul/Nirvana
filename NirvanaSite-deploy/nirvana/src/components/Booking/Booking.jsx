@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaBed, FaBath, FaUsers, FaChevronRight, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 import AvailabilityCalendar from '../common/AvailabilityCalendar';
@@ -302,7 +303,19 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                   <FaMapMarkerAlt />
                   <span className="uppercase tracking-wider font-medium">{selectedProperty?.location}</span>
                 </div>
-                <h2 className="text-3xl font-bold">{selectedProperty?.title}</h2>
+                <Link
+                  href={`/${selectedProperty.slug}`}
+                  className="group inline-flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  aria-label={`View ${selectedProperty.title} property details`}
+                >
+                  <h2 className="text-3xl font-bold decoration-2 underline-offset-4 group-hover:underline">
+                    {selectedProperty.title}
+                  </h2>
+                  <FaChevronRight
+                    aria-hidden="true"
+                    className="mt-1 text-xl transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-300">
                   <span className="flex items-center gap-1"><FaBed /> {selectedProperty?.bedroom_count} {selectedProperty?.bedroom_count === 1 ? 'bdrm' : 'bdrms'}</span>
                   {selectedProperty?.bed_count > 0 && (

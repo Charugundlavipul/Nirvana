@@ -83,19 +83,25 @@ const platformPolicies = [
 export default function CancellationPolicyPage() {
   return (
     <div className="min-h-screen bg-[#f7f6f1] font-sans text-slate-900">
-      <section className="relative isolate overflow-hidden bg-[#0b1324]">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_18%,rgba(174,154,99,0.2),transparent_34%),radial-gradient(circle_at_85%_80%,rgba(60,95,118,0.26),transparent_38%)]" />
-        <div className="mx-auto max-w-6xl px-6 pb-20 pt-24 text-center md:pb-28 md:pt-32">
-          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-accent">
-            <FiShield aria-hidden="true" className="text-xl" />
+      <section className="hero-section relative overflow-hidden border-b border-slate-100 bg-white px-4 pb-4 pt-28 sm:px-6 sm:pb-4 sm:pt-28 md:pb-6 md:pt-28">
+        <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-amber-50 sm:h-96 sm:w-96" />
+          <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-accent/5 sm:h-[420px] sm:w-[420px]" />
+          <div className="absolute left-1/3 top-1/2 h-40 w-40 rounded-full bg-blue-50/60 blur-2xl" />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5">
+            <FiShield aria-hidden="true" className="text-xs text-accent" />
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">
+              Book with confidence
+            </span>
           </div>
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-            Book with confidence
-          </p>
-          <h1 className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-white md:text-6xl">
-            Cancellation policy
+          <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            Cancellation Policy
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
+          <p className="mx-auto max-w-2xl text-sm text-slate-500 sm:text-base">
             Plans can change. Review your cancellation options for a direct booking,
             or find the policy that applies to your Airbnb or Vrbo reservation.
           </p>
