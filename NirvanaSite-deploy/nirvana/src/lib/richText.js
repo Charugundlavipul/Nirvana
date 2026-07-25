@@ -13,10 +13,14 @@ const ALLOWED_TAGS = new Set([
   "h4",
   "blockquote",
   "a",
+  "figure",
+  "figcaption",
+  "img",
 ]);
 
 const ALLOWED_ATTRS_BY_TAG = {
   a: new Set(["href", "target", "rel"]),
+  img: new Set(["src", "alt", "title", "loading", "decoding"]),
 };
 
 function isSafeUrl(value) {
@@ -70,6 +74,10 @@ function sanitizeElement(node) {
         node.setAttribute("rel", "noopener noreferrer");
       }
     }
+  }
+
+  if (tag === "img" && !node.getAttribute("src")) {
+    node.parentNode?.removeChild(node);
   }
 }
 

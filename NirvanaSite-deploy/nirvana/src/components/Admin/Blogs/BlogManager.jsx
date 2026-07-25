@@ -13,9 +13,17 @@ import AdminLayout from '../AdminLayout';
 import { compressImageToWebp } from '../../../lib/imageCompressor';
 import RichTextContent from '../../common/RichTextContent';
 import { sanitizeRichText } from '../../../lib/richText';
+import { removeBlogAssets } from '../../../lib/blogAssets';
 import formStyles from "../Properties/PropertyEditor.module.css";
 
 const BLOG_FALLBACK_LOGO = "/favicon.png";
+
+const escapeHtml = (value) => String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 const DEFAULT_BLOG_FORM = {
     id: null,
@@ -143,7 +151,12 @@ const BlogManager = () => {
     const [uploading, setUploading] = useState(false);
     const [adminRole, setAdminRole] = useState(null);
     const [contentMode, setContentMode] = useState("visual");
+    const [inlineImageDraft, setInlineImageDraft] = useState(null);
+    const [uploadingInlineImage, setUploadingInlineImage] = useState(false);
     const contentEditorRef = useRef(null);
+    const inlineImageInputRef = useRef(null);
+    const savedEditorRangeRef = useRef(null);
+    const inlineImageDraftRef = useRef(null);
     const isSuper = isSuperAdminRole(adminRole);
 
     const [formData, setFormData] = useState(DEFAULT_BLOG_FORM);
@@ -174,6 +187,16 @@ const BlogManager = () => {
             editor.innerHTML = sanitized;
         }
     }, [formData.content, isEditing, contentMode]);
+
+    useEffect(() => {
+        inlineImageDraftRef.current = inlineImageDraft;
+    }, [inlineImageDraft]);
+
+    useEffect(() => () => {
+        if (inlineImageDraftRef.current?.previewUrl) {
+            URL.revokeObjectURL(inlineImageDraftRef.current.previewUrl);
+        }
+    }, []);
 
     const fetchBlogs = async (roleOverride = adminRole) => {
         setLoading(true);
@@ -235,8 +258,17 @@ const BlogManager = () => {
 
             if (isSuper) {
                 const { error } = await supabase.from('blogs').delete().eq('id', id);
-                if (error) alert("Error: " + error.message);
-                else fetchBlogs();
+                if (error) {
+                    alert("Error: " + error.message);
+                } else {
+                    try {
+                        await removeBlogAssets(supabase, blogToRemove, { excludeBlogId: id });
+                    } catch (cleanupError) {
+                        console.error("Blog image cleanup failed:", cleanupError);
+                        alert(cleanupError.message);
+                    }
+                    fetchBlogs();
+                }
             } else {
                 await submitOrUpdateApproval({
                     entityType: 'blog',
@@ -254,11 +286,15 @@ const BlogManager = () => {
     };
 
     const handleCreate = () => {
+        cancelInlineImage();
+        savedEditorRangeRef.current = null;
         setFormData(DEFAULT_BLOG_FORM);
         setIsEditing(true);
     };
 
     const handleEdit = (blog) => {
+        cancelInlineImage();
+        savedEditorRangeRef.current = null;
         setFormData({
             ...DEFAULT_BLOG_FORM,
             id: blog.id,
@@ -301,6 +337,132 @@ const BlogManager = () => {
             alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const saveEditorSelection = () => {
+        const editor = contentEditorRef.current;
+        const selection = window.getSelection();
+        if (!editor || !selection?.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        if (editor.contains(range.commonAncestorContainer)) {
+            savedEditorRangeRef.current = range.cloneRange();
+        }
+    };
+
+    const restoreEditorSelection = () => {
+        const editor = contentEditorRef.current;
+        if (!editor) return;
+
+        editor.focus();
+        const selection = window.getSelection();
+        if (!selection) return;
+
+        selection.removeAllRanges();
+        const savedRange = savedEditorRangeRef.current;
+        if (savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+            selection.addRange(savedRange);
+            return;
+        }
+
+        const fallbackRange = document.createRange();
+        fallbackRange.selectNodeContents(editor);
+        fallbackRange.collapse(false);
+        selection.addRange(fallbackRange);
+    };
+
+    const openInlineImagePicker = () => {
+        saveEditorSelection();
+        inlineImageInputRef.current?.click();
+    };
+
+    const handleInlineImagePick = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file.");
+            return;
+        }
+
+        const previousPreview = inlineImageDraft?.previewUrl;
+        if (previousPreview) {
+            URL.revokeObjectURL(previousPreview);
+        }
+
+        const defaultAlt = file.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        setInlineImageDraft({
+            file,
+            previewUrl: URL.createObjectURL(file),
+            alt: defaultAlt,
+            caption: "",
+        });
+    };
+
+    const cancelInlineImage = () => {
+        if (inlineImageDraft?.previewUrl) {
+            URL.revokeObjectURL(inlineImageDraft.previewUrl);
+        }
+        setInlineImageDraft(null);
+        savedEditorRangeRef.current = null;
+    };
+
+    const closeEditor = () => {
+        cancelInlineImage();
+        setIsEditing(false);
+    };
+
+    const insertInlineImage = async () => {
+        const editor = contentEditorRef.current;
+        const draft = inlineImageDraft;
+        if (!editor || !draft?.file) return;
+        if (!draft.alt.trim()) {
+            alert("Please add descriptive alt text for the image.");
+            return;
+        }
+
+        setUploadingInlineImage(true);
+        try {
+            const compressedBlob = await compressImageToWebp(draft.file, { quality: 0.82, maxWidth: 2000 });
+            const safeBaseName = draft.file.name
+                .replace(/\.[^.]+$/, "")
+                .replace(/[^a-zA-Z0-9]/g, "_");
+            const fileName = `blog/content/${Date.now()}-${safeBaseName}.webp`;
+
+            const { error: uploadErr } = await supabase.storage
+                .from("property-assets")
+                .upload(fileName, compressedBlob, { contentType: "image/webp" });
+
+            if (uploadErr) throw uploadErr;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from("property-assets")
+                .getPublicUrl(fileName);
+
+            const captionHtml = draft.caption.trim()
+                ? `<figcaption>${escapeHtml(draft.caption.trim())}</figcaption>`
+                : "";
+            const figureHtml = `<figure><img src="${escapeHtml(publicUrl)}" alt="${escapeHtml(draft.alt.trim())}" loading="lazy" decoding="async">${captionHtml}</figure><p><br></p>`;
+
+            restoreEditorSelection();
+            document.execCommand("insertHTML", false, figureHtml);
+            syncContentFromEditor();
+            saveEditorSelection();
+
+            if (draft.previewUrl) {
+                URL.revokeObjectURL(draft.previewUrl);
+            }
+            setInlineImageDraft(null);
+        } catch (error) {
+            alert("Image upload failed: " + error.message);
+        } finally {
+            setUploadingInlineImage(false);
         }
     };
 
@@ -436,7 +598,7 @@ const BlogManager = () => {
                 alert(draft_request_id ? 'Draft updated successfully.' : 'Draft submitted to approval queue.');
             }
 
-            setIsEditing(false);
+            closeEditor();
             fetchBlogs();
         } catch (error) {
             alert("Error saving: " + getBlogSchemaErrorMessage(error));
@@ -447,7 +609,7 @@ const BlogManager = () => {
         return (
             <AdminLayout title={formData.id ? "Edit Post" : "New Post"}>
                 <div className="p-4 sm:p-6">
-                    <button onClick={() => setIsEditing(false)} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors">
+                    <button onClick={closeEditor} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors">
                         <FaChevronLeft /> Back to List
                     </button>
 
@@ -534,6 +696,9 @@ const BlogManager = () => {
                                         )}
                                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, "cover_image")} disabled={uploading} className="text-sm w-full sm:w-auto" />
                                     </div>
+                                    <span className="mt-2 block text-xs leading-5 text-slate-500">
+                                        Used as the Journal thumbnail and article hero. Add images inside the article with Insert Image in the content toolbar.
+                                    </span>
                                     {uploading && <span className="text-xs text-slate-400 mt-1 block">Compressing & Uploading...</span>}
                                 </div>
                             </div>
@@ -587,8 +752,97 @@ const BlogManager = () => {
                                                 <button type="button" className={formStyles.richToolbarBtn} onClick={() => setBlock("blockquote")}>Quote</button>
                                                 <button type="button" className={formStyles.richToolbarBtn} onClick={createLink}>Link</button>
                                                 <button type="button" className={formStyles.richToolbarBtn} onClick={() => runEditorCommand("unlink")}>Unlink</button>
+                                                <button
+                                                    type="button"
+                                                    className={formStyles.richToolbarBtn}
+                                                    onMouseDown={(event) => {
+                                                        event.preventDefault();
+                                                        saveEditorSelection();
+                                                    }}
+                                                    onClick={openInlineImagePicker}
+                                                    disabled={uploadingInlineImage}
+                                                >
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <FaImage aria-hidden="true" />
+                                                        Insert Image
+                                                    </span>
+                                                </button>
+                                                <input
+                                                    ref={inlineImageInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleInlineImagePick}
+                                                    style={{ display: "none" }}
+                                                    tabIndex={-1}
+                                                    aria-hidden="true"
+                                                />
                                                 <button type="button" className={formStyles.richToolbarBtn} onClick={() => runEditorCommand("removeFormat")}>Clear</button>
                                             </div>
+                                            {inlineImageDraft && (
+                                                <div className="border-b border-slate-200 bg-slate-50 p-4 sm:p-5" aria-live="polite">
+                                                    <div className="grid gap-4 sm:grid-cols-[160px_1fr] sm:items-start">
+                                                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                            <img
+                                                                src={inlineImageDraft.previewUrl}
+                                                                alt=""
+                                                                className="aspect-[4/3] w-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="mb-1 text-sm font-bold text-slate-900">Image details</p>
+                                                            <p className="mb-4 text-xs leading-5 text-slate-500">
+                                                                The image will be inserted at your last cursor position in the article.
+                                                            </p>
+                                                            <div className="grid gap-3">
+                                                                <label className="mb-0">
+                                                                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                                                        Alt text <span className="text-rose-500">*</span>
+                                                                    </span>
+                                                                    <input
+                                                                        value={inlineImageDraft.alt}
+                                                                        onChange={(event) => setInlineImageDraft((current) => ({
+                                                                            ...current,
+                                                                            alt: event.target.value,
+                                                                        }))}
+                                                                        placeholder="Describe what is shown in the image"
+                                                                    />
+                                                                </label>
+                                                                <label className="mb-0">
+                                                                    <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                                                                        Caption <span className="font-normal text-slate-400">(optional)</span>
+                                                                    </span>
+                                                                    <input
+                                                                        value={inlineImageDraft.caption}
+                                                                        onChange={(event) => setInlineImageDraft((current) => ({
+                                                                            ...current,
+                                                                            caption: event.target.value,
+                                                                        }))}
+                                                                        placeholder="Add context, a location, or photo credit"
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={insertInlineImage}
+                                                                    disabled={uploadingInlineImage || !inlineImageDraft.alt.trim()}
+                                                                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                >
+                                                                    {uploadingInlineImage ? "Uploading..." : "Insert into article"}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={cancelInlineImage}
+                                                                    disabled={uploadingInlineImage}
+                                                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div
                                                 ref={contentEditorRef}
                                                 className={formStyles.richEditor}
@@ -596,15 +850,24 @@ const BlogManager = () => {
                                                 role="textbox"
                                                 aria-multiline="true"
                                                 data-placeholder="Write the article content here..."
-                                                onInput={syncContentFromEditor}
-                                                onBlur={syncContentFromEditor}
+                                                onInput={() => {
+                                                    syncContentFromEditor();
+                                                    saveEditorSelection();
+                                                }}
+                                                onBlur={() => {
+                                                    saveEditorSelection();
+                                                    syncContentFromEditor();
+                                                }}
+                                                onFocus={saveEditorSelection}
+                                                onMouseUp={saveEditorSelection}
+                                                onKeyUp={saveEditorSelection}
                                                 onPaste={handleContentPaste}
                                                 suppressContentEditableWarning
                                                 style={{ minHeight: "360px" }}
                                             />
                                         </div>
                                         <p className={formStyles.richHelpText}>
-                                            Type directly, paste formatted content, and use the toolbar for headings, lists, quotes, and links.
+                                            Place your cursor where you want an image, choose Insert Image, then add alt text and an optional caption.
                                         </p>
                                     </>
                                 ) : (
@@ -635,7 +898,7 @@ const BlogManager = () => {
                             </div>
 
                             <div className={`${formStyles.actionBar} flex flex-col-reverse sm:flex-row gap-3 sm:gap-4`}>
-                                <button type="button" className={`${formStyles.cancelBtn} w-full sm:w-auto`} onClick={() => setIsEditing(false)}>Discard</button>
+                                <button type="button" className={`${formStyles.cancelBtn} w-full sm:w-auto`} onClick={closeEditor}>Discard</button>
                                 <button type="submit" className={`${formStyles.saveBtn} w-full sm:w-auto`}>
                                     {isSuper
                                         ? (formData.id ? "Save Changes" : "Create Post")

@@ -451,6 +451,30 @@
     font-style: italic;
 }
 
+.richEditor figure {
+    margin: 24px 0;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.richEditor figure img {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.richEditor figcaption {
+    padding: 10px 8px 2px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
 .richEditor ul {
     margin: 0 0 10px 20px;
     list-style-type: disc;
@@ -548,4 +572,25 @@
     border-left: 3px solid #d0d0d0;
     color: #555;
     font-style: italic;
+}
+
+.richPreviewContent figure {
+    margin: 24px 0;
+}
+
+.richPreviewContent figure img {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.richPreviewContent figcaption {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
 }

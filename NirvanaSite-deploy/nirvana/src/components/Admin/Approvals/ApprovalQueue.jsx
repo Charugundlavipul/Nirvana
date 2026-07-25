@@ -6,6 +6,7 @@ import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnow
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
 import { getBathroomSummary, normalizeBathroomCounts } from "../../../lib/bathrooms";
+import { removeBlogAssets } from "../../../lib/blogAssets";
 
 const cardStyle = {
   border: "1px solid #e5e7eb",
@@ -1996,6 +1997,22 @@ const ApprovalQueue = () => {
       alert(`Failed to ${decision}: ${getApprovalErrorMessage(error)}`);
     } else {
       if (decision === "approved") {
+        if (
+          String(req.entity_type || "").toLowerCase() === "blog" &&
+          String(req.action || "").toLowerCase() === "delete"
+        ) {
+          try {
+            const deletedBlog = {
+              ...parseSnapshot(req.before_snapshot),
+              id: req.entity_id || parseSnapshot(req.before_snapshot).id,
+            };
+            await removeBlogAssets(supabase, deletedBlog, { excludeBlogId: req.entity_id });
+          } catch (cleanupError) {
+            console.error("Approved blog deletion image cleanup failed:", cleanupError);
+            alert(cleanupError.message);
+          }
+        }
+
         try {
           if (String(req.entity_type || "").toLowerCase() === "page_metadata") {
             const payload = parseSnapshot(req.payload);

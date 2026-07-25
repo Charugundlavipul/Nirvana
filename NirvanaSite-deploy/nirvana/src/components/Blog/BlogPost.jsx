@@ -174,7 +174,10 @@ const BlogPost = ({ slug: propSlug }) => {
                         [&_ul]:mb-8 [&_ul]:ml-8 [&_ul]:list-disc [&_ul]:space-y-2
                         [&_ol]:mb-8 [&_ol]:ml-8 [&_ol]:list-decimal [&_ol]:space-y-2
                         [&_blockquote]:my-10 [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-slate-50 [&_blockquote]:p-6 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_blockquote]:rounded-r-xl
-                        [&_img]:rounded-2xl [&_img]:shadow-lg [&_img]:my-10 [&_img]:w-full"
+                        [&_figure]:my-12
+                        [&_figure_img]:m-0 [&_figure_img]:w-full [&_figure_img]:rounded-2xl [&_figure_img]:object-cover [&_figure_img]:shadow-lg
+                        [&_figcaption]:mx-auto [&_figcaption]:mt-4 [&_figcaption]:max-w-2xl [&_figcaption]:text-center [&_figcaption]:text-sm [&_figcaption]:font-normal [&_figcaption]:leading-6 [&_figcaption]:text-slate-500
+                        [&>img]:my-10 [&>img]:w-full [&>img]:rounded-2xl [&>img]:object-cover [&>img]:shadow-lg"
                     />
 
                     {/* Social Sharing */}
