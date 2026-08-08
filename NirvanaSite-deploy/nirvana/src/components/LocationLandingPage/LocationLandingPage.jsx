@@ -70,7 +70,8 @@ const LocationLandingPage = ({
   const [guestCount, setGuestCount] = useState(1);
   const [isSearchingAvailability, setIsSearchingAvailability] = useState(false);
   const [availablePropertyIds, setAvailablePropertyIds] = useState(null);
-  
+  const [propertyPrices, setPropertyPrices] = useState({});
+
   // Multi-select amenity filters array
   const [selectedAmenities, setSelectedAmenities] = useState(['all']);
 
@@ -413,10 +414,14 @@ const LocationLandingPage = ({
   const filteredProperties = useMemo(() => {
     return stateProperties.filter((p) => {
       const propId = p.id || p.bookingPropertyId || p.slug;
-      
+      const hospitableId = p.hospitable_property_id || p.hospitablePropertyId;
+
       // If live availability search was performed, filter by available property IDs
       if (availablePropertyIds !== null && Array.isArray(availablePropertyIds)) {
-        if (!availablePropertyIds.includes(propId) && !availablePropertyIds.includes(p.slug)) {
+        const matches = availablePropertyIds.some(
+          (id) => id && (id === propId || id === p.slug || id === hospitableId)
+        );
+        if (!matches) {
           return false;
         }
       }
@@ -489,8 +494,8 @@ const LocationLandingPage = ({
   }, [stateProperties, guestCount, selectedAmenities, isTN, isSelectedAll, availablePropertyIds]);
 
   // Handle Search Availability button submit
-  const handleSearchAvailability = async (e) => {
-    if (e) e.preventDefault();
+  const handleSearchAvailability = async (e, shouldScroll = true) => {
+    if (e && e.preventDefault) e.preventDefault();
 
     setIsSearchingAvailability(true);
 
@@ -508,26 +513,56 @@ const LocationLandingPage = ({
 
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data)) {
-            const availableIds = data
-              .filter((item) => item.available !== false)
-              .map((item) => item.bookingPropertyId || item.id || item.slug);
-            setAvailablePropertyIds(availableIds);
-          }
+          const list = Array.isArray(data) ? data : (data?.properties || []);
+          
+          const availableIds = list
+            .filter((item) => item.available !== false && item.availability?.available !== false)
+            .flatMap((item) => [
+              item.bookingPropertyId,
+              item.id,
+              item.slug,
+              item.hospitablePropertyId,
+              item.availability?.hospitablePropertyId
+            ])
+            .filter(Boolean);
+
+          setAvailablePropertyIds(availableIds);
+
+          const prices = {};
+          list.forEach((item) => {
+            if (item.availability?.totalPriceLabel) {
+              if (item.slug) prices[item.slug] = item.availability.totalPriceLabel;
+              if (item.bookingPropertyId) prices[item.bookingPropertyId] = item.availability.totalPriceLabel;
+              if (item.id) prices[item.id] = item.availability.totalPriceLabel;
+            }
+          });
+          setPropertyPrices(prices);
         }
       }
     } catch (err) {
       console.error('Failed to search availability:', err);
     } finally {
       setIsSearchingAvailability(false);
-      
-      // Smooth scroll to property collection section
-      const targetEl = document.getElementById('properties-collection');
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: 'smooth' });
+
+      if (shouldScroll) {
+        // Smooth scroll to property collection section
+        const targetEl = document.getElementById('properties-collection');
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     }
   };
+
+  // Auto-search when dates change
+  useEffect(() => {
+    if (checkInDate && checkOutDate) {
+      handleSearchAvailability(null, false);
+    } else {
+      setAvailablePropertyIds(null);
+      setPropertyPrices({});
+    }
+  }, [checkInDate, checkOutDate]);
 
   // Helper to build URL with query params to pass dates & guests to property page
   const getPropUrl = (slug) => {
@@ -781,11 +816,10 @@ const LocationLandingPage = ({
                   key={filter.key}
                   type="button"
                   onClick={() => handleAmenityToggle(filter.key)}
-                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer ${
-                    isSelected
+                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer ${isSelected
                       ? 'bg-accent text-white shadow-accent/20 shadow-lg scale-105 ring-2 ring-accent/30'
                       : 'bg-white text-slate-600 border border-slate-200 hover:border-accent hover:text-accent'
-                  }`}
+                    }`}
                 >
                   {filter.label} {isSelected && filter.key !== 'all' && '✓'}
                 </button>
@@ -820,9 +854,8 @@ const LocationLandingPage = ({
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={70}
-                        className={`pointer-events-none object-cover transition-opacity duration-500 ${
-                          i === safeIndex ? 'opacity-100' : 'opacity-0'
-                        }`}
+                        className={`pointer-events-none object-cover transition-opacity duration-500 ${i === safeIndex ? 'opacity-100' : 'opacity-0'
+                          }`}
                       />
                     ))}
 
@@ -869,6 +902,13 @@ const LocationLandingPage = ({
                         <FaUsers className="text-accent" /> Up to {prop.guests_max || 0} Guests
                       </span>
                     </div>
+
+                    {(propertyPrices[prop.slug] || propertyPrices[prop.id]) && (
+                      <div className="mb-3 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-800 flex items-center justify-between">
+                        <span>Stay Total:</span>
+                        <span className="text-sm font-extrabold text-emerald-700">{propertyPrices[prop.slug] || propertyPrices[prop.id]}</span>
+                      </div>
+                    )}
 
                     <div className="mt-auto pt-2">
                       <button
