@@ -126,7 +126,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
   }, [isMobile, selectedProperty?.slug]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 lg:flex-row">
+    <div className="booking-page flex min-h-screen flex-col bg-gray-100 lg:h-screen lg:min-h-0 lg:overflow-hidden lg:flex-row">
       <div className="z-20 flex w-full flex-col border-r border-gray-200 bg-white pt-24 shadow-2xl lg:w-[360px] lg:pt-24 xl:w-[400px]">
         <div className="px-6 pb-5 border-b border-gray-100">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Book Your Stay</h1>
