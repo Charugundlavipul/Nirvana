@@ -20,3 +20,8 @@ Current project constraints:
 - **UI/UX Audit**: Identifying opportunities to improve visual hierarchy and accessibility.
 - **Interactive Prototyping**: Building functional components with complex state management and animations.
 - **Supabase Integration**: Powering high-fidelity UI with dynamic, real-time data.
+
+## Database & Schema Workflow
+- **Original Schema File**: The user only runs `supabase_schema.sql` repeatedly in the Supabase SQL Editor.
+- **Do NOT rely on separate migration files** (`supabase/migrations/*.sql`). Always update `supabase_schema.sql` directly with any new tables, columns, indexes, triggers, or stored procedures.
+

@@ -1,6 +1,13 @@
 -- Idempotent schema for repeated runs in Supabase SQL editor.
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE OR REPLACE FUNCTION public.uuid_generate_v4()
+RETURNS uuid AS $$
+BEGIN
+    RETURN gen_random_uuid();
+END;
+$$ LANGUAGE plpgsql;
+
 -- Reusable trigger function for updated_at fields.
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER
@@ -14,7 +21,7 @@ $$;
 
 -- 1. Properties
 CREATE TABLE IF NOT EXISTS properties (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
     booking_url TEXT,
@@ -114,7 +121,7 @@ $$;
 --   bg        -> background/parallax image
 --   secondary -> secondary curated image
 CREATE TABLE IF NOT EXISTS property_curated_images (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
     slot TEXT NOT NULL CHECK (slot IN ('home', 'bg', 'secondary')),
     url TEXT NOT NULL,
@@ -144,7 +151,7 @@ $$;
 
 -- 3. Gallery Images (bulk uploads only)
 CREATE TABLE IF NOT EXISTS property_images (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
     url TEXT NOT NULL,
     category TEXT NOT NULL DEFAULT 'gallery',
@@ -174,7 +181,7 @@ $$;
 
 -- 4. Highlight Images (separate from gallery for homepage/featured sets)
 CREATE TABLE IF NOT EXISTS property_highlight_images (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
     url TEXT NOT NULL,
     display_order INT DEFAULT 0,
@@ -203,7 +210,7 @@ $$;
 
 -- 5. Reviews
 CREATE TABLE IF NOT EXISTS reviews (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID REFERENCES properties(id) ON DELETE CASCADE, -- @deprecated: Use property_reviews
     author_name TEXT NOT NULL,
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -216,7 +223,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 -- 6. FAQs
 CREATE TABLE IF NOT EXISTS faqs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID REFERENCES properties(id) ON DELETE CASCADE, -- @deprecated: Use property_faqs
     question TEXT NOT NULL,
     answer TEXT NOT NULL,
@@ -227,7 +234,7 @@ CREATE TABLE IF NOT EXISTS faqs (
 
 -- 7. Amenities
 CREATE TABLE IF NOT EXISTS amenities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
@@ -237,7 +244,7 @@ CREATE TABLE IF NOT EXISTS amenities (
 
 -- 8. Activities
 CREATE TABLE IF NOT EXISTS activities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
     image_url TEXT,
@@ -312,7 +319,7 @@ CREATE TABLE IF NOT EXISTS property_activities (
 -- Page-level SEO and social metadata. Rows are created lazily when an admin
 -- publishes an override; routes without a row continue to use code defaults.
 CREATE TABLE IF NOT EXISTS page_metadata (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     page_key TEXT NOT NULL UNIQUE,
     seo_title TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -349,7 +356,7 @@ $$;
 
 -- 9b. Approval workflow (maker-checker)
 CREATE TABLE IF NOT EXISTS approval_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     entity_type TEXT NOT NULL,
     action TEXT NOT NULL CHECK (action IN ('create', 'update', 'delete')),
     entity_id UUID,
@@ -795,7 +802,7 @@ BEGIN
                 twitter_title, twitter_description, twitter_image,
                 noindex, follow, updated_by, updated_at
             ) VALUES (
-                COALESCE(NULLIF(req.payload->>'id', '')::uuid, req.entity_id, uuid_generate_v4()),
+                COALESCE(NULLIF(req.payload->>'id', '')::uuid, req.entity_id, gen_random_uuid()),
                 req.payload->>'page_key',
                 req.payload->>'seo_title',
                 req.payload->>'description',
@@ -896,7 +903,7 @@ BEGIN
             twitter_title, twitter_description, twitter_image,
             noindex, follow, updated_by, updated_at
         ) VALUES (
-            COALESCE(NULLIF(req.payload->>'id', '')::uuid, req.entity_id, uuid_generate_v4()),
+            COALESCE(NULLIF(req.payload->>'id', '')::uuid, req.entity_id, gen_random_uuid()),
             req.payload->>'page_key', req.payload->>'seo_title', req.payload->>'description',
             ARRAY(SELECT jsonb_array_elements_text(COALESCE(req.payload->'keywords', '[]'::jsonb))),
             COALESCE(NULLIF(req.payload->>'canonical_path', ''), req.payload->>'page_key'),
@@ -1483,7 +1490,7 @@ $$;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS knowledge_hubs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scope_type TEXT NOT NULL CHECK (scope_type IN ('general', 'property')),
     property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -1547,7 +1554,7 @@ END;
 $$;
 
 CREATE TABLE IF NOT EXISTS knowledge_sources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
     source_type TEXT NOT NULL CHECK (source_type IN ('system_snapshot', 'manual_note', 'upload')),
     source_key TEXT,
@@ -1603,7 +1610,7 @@ END;
 $$;
 
 CREATE TABLE IF NOT EXISTS knowledge_sections (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     slug TEXT NOT NULL,
@@ -1641,7 +1648,7 @@ END;
 $$;
 
 CREATE TABLE IF NOT EXISTS knowledge_questions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
     section_id UUID REFERENCES knowledge_sections(id) ON DELETE SET NULL,
     question TEXT NOT NULL,
@@ -1676,7 +1683,7 @@ END;
 $$;
 
 CREATE TABLE IF NOT EXISTS knowledge_sync_runs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed')),
     trigger_source_id UUID REFERENCES knowledge_sources(id) ON DELETE SET NULL,
@@ -1694,7 +1701,7 @@ CREATE INDEX IF NOT EXISTS knowledge_sync_runs_hub_started_idx
     ON knowledge_sync_runs (hub_id, started_at DESC);
 
 CREATE TABLE IF NOT EXISTS knowledge_chunks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hub_id UUID NOT NULL REFERENCES knowledge_hubs(id) ON DELETE CASCADE,
     source_id UUID REFERENCES knowledge_sources(id) ON DELETE CASCADE,
     section_id UUID REFERENCES knowledge_sections(id) ON DELETE CASCADE,
@@ -2060,7 +2067,7 @@ CREATE TRIGGER update_blogs_modtime
 
 -- 1. Chat Conversations
 CREATE TABLE IF NOT EXISTS chat_conversations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     guest_name TEXT NOT NULL DEFAULT 'Guest',
     guest_email TEXT,
     guest_phone TEXT,
@@ -2090,7 +2097,7 @@ $$;
 
 -- 2. Chat Messages
 CREATE TABLE IF NOT EXISTS chat_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
     sender_type TEXT NOT NULL CHECK (sender_type IN ('guest', 'host', 'system')),
     body TEXT NOT NULL,
