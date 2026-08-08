@@ -354,6 +354,11 @@ BEGIN
 END;
 $$;
 
+INSERT INTO page_metadata (page_key, seo_title, description, keywords, canonical_path) VALUES
+    ('/tennessee-vacation-rentals', 'Luxury Tennessee Vacation Rentals - Smoky Mountains | Book Direct', 'Browse luxury cabin rentals in Sevierville, Gatlinburg & Pigeon Forge TN. Private indoor pools, hot tubs & mountain views. Sleep up to 26. Book direct & save.', ARRAY['Tennessee vacation rentals', 'luxury cabins Sevierville TN', 'Gatlinburg luxury cabin rentals', 'Pigeon Forge cabins with indoor pool', 'Smoky Mountains large group cabins', 'direct booking Tennessee cabins'], '/tennessee-vacation-rentals'),
+    ('/north-carolina-vacation-rentals', 'Luxury North Carolina Waterfront Rentals - Lake Norman | Book Direct', 'Browse luxury lakefront vacation rentals on Lake Norman & Lake Wylie NC near Charlotte. Private boat docks, hot tubs & lake views. Book direct & save.', ARRAY['North Carolina vacation rentals', 'Lake Norman luxury rentals', 'Mooresville lakefront homes', 'Lake Wylie cabin rentals', 'Charlotte waterfront vacation rentals', 'rentals with private boat dock NC'], '/north-carolina-vacation-rentals')
+ON CONFLICT (page_key) DO NOTHING;
+
 -- 9b. Approval workflow (maker-checker)
 CREATE TABLE IF NOT EXISTS approval_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

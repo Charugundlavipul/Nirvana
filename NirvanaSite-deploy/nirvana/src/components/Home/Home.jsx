@@ -421,7 +421,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Link href="/properties" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
+            <Link href="/tennessee-vacation-rentals" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
               <Image 
                 src="/images/smoky_mountains.png" 
                 alt="Luxury cabin in the Smoky Mountains at sunset" 
@@ -449,7 +449,7 @@ const Home = ({ initialProperties = [], initialReviews = [] }) => {
               </div>
             </Link>
 
-            <Link href="/properties" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
+            <Link href="/north-carolina-vacation-rentals" className="group relative overflow-hidden rounded-[2rem] min-h-[500px] flex flex-col justify-end p-8 block w-full hover:shadow-2xl transition-shadow duration-500 cursor-pointer shadow-lg">
               <Image 
                 src="/images/lake_norman.png" 
                 alt="Luxury lakefront home on Lake Norman or Lake Wylie" 
