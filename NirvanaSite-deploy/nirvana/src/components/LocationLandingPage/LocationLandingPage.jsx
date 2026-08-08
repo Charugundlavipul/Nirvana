@@ -1190,35 +1190,49 @@ const LocationLandingPage = ({
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {filteredReviews.slice(reviewIndex, reviewIndex + 3).map((rev, idx) => (
-                <div
-                  key={rev.id || idx}
-                  className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/15 shadow-xl flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex text-amber-400">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar key={i} size={14} />
-                        ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-start">
+              {filteredReviews.slice(reviewIndex, reviewIndex + 3).map((rev, idx) => {
+                const cardId = rev.id || `${rev.author || rev.name || 'guest'}-${idx}`;
+                const isExpanded = expandedReviewId === cardId;
+
+                return (
+                  <div
+                    key={cardId}
+                    className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/15 shadow-xl flex flex-col justify-between h-full"
+                  >
+                    <div className="flex flex-col text-left">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex text-amber-400">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar key={i} size={14} />
+                          ))}
+                        </div>
+                        <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                          {rev.source || 'Direct'}
+                        </span>
                       </div>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                        {rev.source || 'Direct'}
+                      <p className={`text-slate-200 text-sm italic leading-relaxed transition-all ${isExpanded ? '' : 'line-clamp-4'}`}>
+                        "{rev.text}"
+                      </p>
+                      {rev.text && rev.text.length > 130 && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedReviewId(isExpanded ? null : cardId)}
+                          className="text-accent text-xs font-semibold mt-2 hover:underline text-left self-start focus:outline-none cursor-pointer"
+                        >
+                          {isExpanded ? 'Read less' : 'Read full review'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="border-t border-white/10 pt-4 mt-6 flex items-center justify-between">
+                      <span className="font-bold text-white text-sm">{rev.name || rev.author}</span>
+                      <span className="text-xs text-accent font-medium truncate max-w-[140px]">
+                        {rev.propertyName || 'Nirvana Luxe'}
                       </span>
                     </div>
-                    <p className="text-slate-200 text-sm italic leading-relaxed mb-6">
-                      "{rev.text}"
-                    </p>
                   </div>
-                  <div className="border-t border-white/10 pt-4 flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">{rev.name || rev.author}</span>
-                    <span className="text-xs text-accent font-medium">
-                      {rev.propertyName || 'Nirvana Luxe'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {filteredReviews.length > 3 && (
