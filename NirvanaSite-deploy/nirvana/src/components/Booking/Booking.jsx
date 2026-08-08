@@ -249,7 +249,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
         className={`relative flex min-h-[70vh] flex-1 scroll-mt-24 flex-col transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}
       >
         {!selectedPropertyId ? (
-          <div className="h-full w-full relative hidden lg:flex items-center justify-center">
+          <div className="h-full w-full relative hidden lg:flex items-center justify-center min-h-[500px]">
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
               {initialProperties.slice(0, 4).map((property) => (
                 <div key={property.slug} className="relative overflow-hidden">
@@ -258,24 +258,24 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                     alt={property.title}
                     className="w-full h-full object-cover scale-105 hover:scale-110 transition-transform duration-1000"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-gray-900/20"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/50 to-gray-900/30"></div>
                 </div>
               ))}
             </div>
 
-            <div className="relative z-10 text-center text-white p-12 max-w-2xl">
-              <div className="inline-block px-4 py-2 bg-accent/90 rounded-full text-sm font-bold uppercase tracking-widest mb-6">
+            <div className="relative z-10 text-center text-white p-6 md:p-8 max-w-xl mx-auto flex flex-col items-center justify-center">
+              <div className="inline-block px-4 py-1.5 bg-accent/90 rounded-full text-xs font-bold uppercase tracking-widest mb-4 shadow-md">
                 Luxury Awaits
               </div>
-              <h2 className="text-5xl font-bold mb-6 leading-tight">
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight drop-shadow-md">
                 Find Your Perfect<br />Getaway
               </h2>
-              <p className="text-xl text-gray-300 mb-8 font-light">
+              <p className="text-sm md:text-base text-gray-200 mb-6 font-light max-w-md leading-relaxed drop-shadow-sm">
                 Select a property from our curated collection to check availability and book your unforgettable stay.
               </p>
-              <div className="flex items-center justify-center gap-2 text-gray-400">
-                <span className="animate-pulse">←</span>
-                <span className="text-sm">Choose a property to begin</span>
+              <div className="inline-flex items-center justify-center gap-2 text-gray-300 text-xs font-medium bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-sm">
+                <span className="animate-pulse text-accent">←</span>
+                <span>Choose a property from the left to begin</span>
               </div>
             </div>
           </div>
