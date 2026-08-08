@@ -68,7 +68,9 @@ const LocationLandingPage = ({
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [guestCount, setGuestCount] = useState(1);
-  const [activeAmenity, setActiveAmenity] = useState('all');
+  
+  // Multi-select amenity filters array
+  const [selectedAmenities, setSelectedAmenities] = useState(['all']);
 
   // Carousel & Cards State
   const [imageIndices, setImageIndices] = useState({});
@@ -385,6 +387,26 @@ const LocationLandingPage = ({
     });
   }, [initialProperties, isTN]);
 
+  // Toggle multi-select amenity pills
+  const handleAmenityToggle = (key) => {
+    if (key === 'all') {
+      setSelectedAmenities(['all']);
+      return;
+    }
+
+    setSelectedAmenities((prev) => {
+      const withoutAll = prev.filter((k) => k !== 'all');
+      if (withoutAll.includes(key)) {
+        const next = withoutAll.filter((k) => k !== key);
+        return next.length === 0 ? ['all'] : next;
+      } else {
+        return [...withoutAll, key];
+      }
+    });
+  };
+
+  const isSelectedAll = selectedAmenities.includes('all') || selectedAmenities.length === 0;
+
   // Apply amenity & guest filters
   const filteredProperties = useMemo(() => {
     return stateProperties.filter((p) => {
@@ -392,22 +414,59 @@ const LocationLandingPage = ({
         return false;
       }
 
-      if (activeAmenity === 'all') return true;
+      if (isSelectedAll) return true;
 
       const desc = (p.description || '').toLowerCase();
+      const descNoPoolTable = desc.replace(/pool table/gi, '');
+      const slug = (p.slug || '').toLowerCase();
+      const name = (p.name || p.title || '').toLowerCase();
 
-      if (activeAmenity === 'pool') return desc.includes('pool') || desc.includes('swim');
-      if (activeAmenity === 'hottub') return p.hot_tub || desc.includes('hot tub');
-      if (activeAmenity === 'theatre') return desc.includes('theater') || desc.includes('theatre') || desc.includes('cinema');
-      if (activeAmenity === 'game') return desc.includes('game') || desc.includes('arcade') || desc.includes('pool table');
-      if (activeAmenity === 'mountain') return desc.includes('mountain') || desc.includes('view');
-      if (activeAmenity === 'waterfront') return desc.includes('lake') || desc.includes('waterfront') || desc.includes('dock');
-      if (activeAmenity === 'dock') return desc.includes('dock') || desc.includes('boat');
-      if (activeAmenity === 'large_group') return (p.guests_max || 0) >= (isTN ? 14 : 12);
-
-      return true;
+      return selectedAmenities.every((amenityKey) => {
+        if (amenityKey === 'pool') {
+          return (
+            slug === 'nirvana' ||
+            slug === 'halftime' ||
+            descNoPoolTable.includes('indoor pool') ||
+            descNoPoolTable.includes('swimming pool') ||
+            descNoPoolTable.includes('heated pool')
+          );
+        }
+        if (amenityKey === 'hottub') {
+          return p.hot_tub || desc.includes('hot tub') || desc.includes('spa');
+        }
+        if (amenityKey === 'theatre') {
+          return (
+            desc.includes('theater') ||
+            desc.includes('theatre') ||
+            desc.includes('cinema') ||
+            desc.includes('movie')
+          );
+        }
+        if (amenityKey === 'game') {
+          return desc.includes('game') || desc.includes('arcade') || desc.includes('pool table');
+        }
+        if (amenityKey === 'mountain') {
+          return desc.includes('mountain') || desc.includes('view') || name.includes('summit');
+        }
+        if (amenityKey === 'waterfront') {
+          return (
+            desc.includes('lake') ||
+            desc.includes('waterfront') ||
+            desc.includes('dock') ||
+            slug === 'shoreside' ||
+            slug === 'chalet-du-lac-lakefront-retreat'
+          );
+        }
+        if (amenityKey === 'dock') {
+          return desc.includes('dock') || desc.includes('boat');
+        }
+        if (amenityKey === 'large_group') {
+          return (p.guests_max || 0) >= (isTN ? 14 : 12);
+        }
+        return true;
+      });
     });
-  }, [stateProperties, guestCount, activeAmenity, isTN]);
+  }, [stateProperties, guestCount, selectedAmenities, isTN, isSelectedAll]);
 
   // Filter reviews by state properties
   const filteredReviews = useMemo(() => {
@@ -420,7 +479,8 @@ const LocationLandingPage = ({
     const indices = {};
     const initialCardImages = {};
     stateProperties.forEach((property) => {
-      indices[property.id] = 0;
+      const propId = property.id || property.slug;
+      indices[propId] = 0;
       initialCardImages[property.slug] = getPropertyCardImages(property);
     });
 
@@ -429,16 +489,17 @@ const LocationLandingPage = ({
   }, [stateProperties]);
 
   const moveCardImage = (property, direction) => {
+    const propId = property.id || property.slug;
     const images = cardImagesBySlug[property.slug] || [property.primary_image || property.image];
     if (images.length <= 1) return;
 
     setImageIndices((prev) => {
-      const current = prev[property.id] || 0;
+      const current = prev[propId] || 0;
       const nextIndex =
         direction === 'next'
           ? (current + 1) % images.length
           : (current - 1 + images.length) % images.length;
-      return { ...prev, [property.id]: nextIndex };
+      return { ...prev, [propId]: nextIndex };
     });
   };
 
@@ -476,7 +537,7 @@ const LocationLandingPage = ({
       itemListElement: stateProperties.map((p, idx) => ({
         '@type': 'ListItem',
         position: idx + 1,
-        name: p.name,
+        name: p.name || p.title,
         url: absoluteUrl(`/${p.slug}`),
       })),
     },
@@ -500,18 +561,20 @@ const LocationLandingPage = ({
       <StructuredData data={collectionJsonLd} />
       <StructuredData data={faqJsonLd} />
 
-      {/* 1. Hero Section & Intro */}
-      <section className="relative overflow-hidden bg-slate-900 text-white min-h-[580px] flex items-center justify-center pt-28 pb-16 px-6">
-        <Image
-          src={pageData.heroImage}
-          alt={pageData.heroTitle}
-          fill
-          priority
-          sizes="100vw"
-          quality={85}
-          className="object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-slate-900/60 to-slate-900"></div>
+      {/* 1. Hero Section & Intro (Overflow visible so date picker dropdown never clips) */}
+      <section className="relative bg-slate-900 text-white min-h-[580px] flex items-center justify-center pt-28 pb-16 px-6">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <Image
+            src={pageData.heroImage}
+            alt={pageData.heroTitle}
+            fill
+            priority
+            sizes="100vw"
+            quality={85}
+            className="object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-slate-900/60 to-slate-900"></div>
+        </div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <p className="text-accent uppercase tracking-[0.3em] text-xs sm:text-sm font-bold mb-4">
@@ -525,31 +588,29 @@ const LocationLandingPage = ({
           </p>
 
           {/* 2. Date and Guest Search Bar */}
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl text-slate-800 max-w-4xl mx-auto border border-white/20">
+          <div className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl text-slate-800 max-w-4xl mx-auto border border-white/20">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-              <div>
+              <div className="relative z-50">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-left">
                   Check-In
                 </label>
                 <CustomDatePicker
-                  selectedDate={checkInDate}
-                  onDateChange={setCheckInDate}
+                  value={checkInDate}
+                  onChange={setCheckInDate}
                   placeholder="Select check-in"
                   minDate={new Date().toISOString().split('T')[0]}
-                  className="w-full text-sm font-semibold"
                 />
               </div>
 
-              <div>
+              <div className="relative z-50">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-left">
                   Check-Out
                 </label>
                 <CustomDatePicker
-                  selectedDate={checkOutDate}
-                  onDateChange={setCheckOutDate}
+                  value={checkOutDate}
+                  onChange={setCheckOutDate}
                   placeholder="Select check-out"
                   minDate={checkInDate || new Date().toISOString().split('T')[0]}
-                  className="w-full text-sm font-semibold"
                 />
               </div>
 
@@ -594,24 +655,32 @@ const LocationLandingPage = ({
             {pageData.stateName} Luxury Properties
           </h2>
           <p className="text-slate-500 text-base mt-2">
-            Filter by preferred amenity or group size to find your ideal stay.
+            Filter by preferred amenities or group size to find your ideal stay (multi-select enabled).
           </p>
 
-          {/* Amenity Filter Buttons */}
+          {/* Multi-Select Amenity Filter Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-8">
-            {pageData.amenityFilters.map((filter) => (
-              <button
-                key={filter.key}
-                onClick={() => setActiveAmenity(filter.key)}
-                className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-sm ${
-                  activeAmenity === filter.key
-                    ? 'bg-accent text-white shadow-accent/20 shadow-lg scale-105'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-accent hover:text-accent'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+            {pageData.amenityFilters.map((filter) => {
+              const isSelected =
+                filter.key === 'all'
+                  ? isSelectedAll
+                  : selectedAmenities.includes(filter.key);
+
+              return (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => handleAmenityToggle(filter.key)}
+                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer ${
+                    isSelected
+                      ? 'bg-accent text-white shadow-accent/20 shadow-lg scale-105 ring-2 ring-accent/30'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  {filter.label} {isSelected && filter.key !== 'all' && '✓'}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -619,13 +688,15 @@ const LocationLandingPage = ({
         {filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProperties.map((prop, index) => {
+              const propName = prop.name || prop.title || 'Nirvana Luxe Property';
+              const propId = prop.id || prop.slug;
               const images = cardImagesBySlug[prop.slug] || [prop.primary_image || prop.image];
-              const currentIndex = imageIndices[prop.id] || 0;
+              const currentIndex = imageIndices[propId] || 0;
               const safeIndex = images.length ? currentIndex % images.length : 0;
 
               return (
                 <div
-                  key={prop.id}
+                  key={propId}
                   className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl text-left flex flex-col"
                   onClick={() => router.push(`/${prop.slug}`)}
                 >
@@ -634,7 +705,7 @@ const LocationLandingPage = ({
                       <Image
                         key={img}
                         src={img}
-                        alt={`${prop.name} — ${prop.location}`}
+                        alt={`${propName} — ${prop.location}`}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={70}
@@ -670,7 +741,7 @@ const LocationLandingPage = ({
 
                   <div className="px-3 pb-3 pt-4 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold text-slate-900 group-hover:text-accent transition-colors mb-1">
-                      {prop.name}
+                      {propName}
                     </h3>
                     <p className="text-sm text-slate-500 mb-3 flex items-center gap-1">
                       <FaMapMarkerAlt className="text-accent" /> {prop.location}
@@ -708,14 +779,14 @@ const LocationLandingPage = ({
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 max-w-xl mx-auto shadow-sm">
             <p className="text-lg font-bold text-slate-800 mb-2">No matching properties</p>
             <p className="text-slate-500 text-sm mb-6">
-              Try selecting another amenity filter or adjusting your guest count.
+              Try selecting another amenity combination or adjusting your guest count.
             </p>
             <button
               onClick={() => {
-                setActiveAmenity('all');
+                setSelectedAmenities(['all']);
                 setGuestCount(1);
               }}
-              className="px-6 py-2.5 bg-accent text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md hover:bg-accent/90"
+              className="px-6 py-2.5 bg-accent text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md hover:bg-accent/90 cursor-pointer"
             >
               Reset Filters
             </button>
@@ -779,20 +850,37 @@ const LocationLandingPage = ({
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {stateProperties.map((prop) => {
+                const propName = prop.name || prop.title || 'Nirvana Luxe Property';
+                const propId = prop.id || prop.slug;
                 const desc = (prop.description || '').toLowerCase();
-                const hasPool = desc.includes('pool') || desc.includes('swim');
-                const hasHotTub = prop.hot_tub || desc.includes('hot tub');
-                const hasTheatre = desc.includes('theater') || desc.includes('theatre') || desc.includes('cinema');
-                const hasDock = desc.includes('dock') || desc.includes('waterfront');
+                const descNoPoolTable = desc.replace(/pool table/gi, '');
+                const slug = (prop.slug || '').toLowerCase();
+
+                // Accurate indoor pool check (avoid matching 'pool table')
+                const hasIndoorPool =
+                  slug === 'nirvana' ||
+                  slug === 'halftime' ||
+                  descNoPoolTable.includes('indoor pool') ||
+                  descNoPoolTable.includes('private pool') ||
+                  descNoPoolTable.includes('swimming pool') ||
+                  descNoPoolTable.includes('heated pool');
+
+                const hasHotTub = prop.hot_tub || desc.includes('hot tub') || desc.includes('spa');
+                const hasTheatre =
+                  desc.includes('theater') ||
+                  desc.includes('theatre') ||
+                  desc.includes('cinema') ||
+                  desc.includes('movie');
+                const hasDock = desc.includes('dock') || desc.includes('waterfront') || slug === 'shoreside';
 
                 return (
-                  <tr key={prop.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 sm:p-5 font-bold text-slate-900">{prop.name}</td>
+                  <tr key={propId} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 sm:p-5 font-bold text-slate-900">{propName}</td>
                     <td className="p-4 sm:p-5">{prop.bedroom_count || '-'} Beds</td>
                     <td className="p-4 sm:p-5">Up to {prop.guests_max || '-'}</td>
                     <td className="p-4 sm:p-5">
                       {isTN ? (
-                        hasPool ? (
+                        hasIndoorPool ? (
                           <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
                             <FaCheck size={12} /> Yes (Indoor)
                           </span>
