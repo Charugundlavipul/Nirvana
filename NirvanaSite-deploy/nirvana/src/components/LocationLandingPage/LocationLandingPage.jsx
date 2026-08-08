@@ -68,6 +68,8 @@ const LocationLandingPage = ({
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [guestCount, setGuestCount] = useState(1);
+  const [isSearchingAvailability, setIsSearchingAvailability] = useState(false);
+  const [availablePropertyIds, setAvailablePropertyIds] = useState(null);
   
   // Multi-select amenity filters array
   const [selectedAmenities, setSelectedAmenities] = useState(['all']);
@@ -199,7 +201,7 @@ const LocationLandingPage = ({
               'Extremely suitable! Our cabins feature large open-concept kitchens, double refrigerators, expansive dining tables, home theater spaces, and separate entertainment levels that accommodate multi-generational family reunions with ease.',
           },
         ],
-        comparisonCols: ['Property', 'Bedrooms', 'Guests', 'Indoor Pool', 'Hot Tub', 'Theatre', 'Location'],
+        comparisonCols: ['Property', 'Bedrooms', 'Guests', 'Indoor Pool', 'Hot Tub', 'Theatre Room', 'Game Lounge', 'Location'],
         guides: [
           {
             title: 'Nirvana Retreat Activities & Attractions',
@@ -335,7 +337,7 @@ const LocationLandingPage = ({
             'Yes! The open floor plans, multiple bathrooms, private waterfront spaces, and high-speed Wi-Fi make them ideal for both family gatherings and executive off-site retreats.',
         },
       ],
-      comparisonCols: ['Property', 'Bedrooms', 'Guests', 'Waterfront Dock', 'Hot Tub', 'Game Room', 'Location'],
+      comparisonCols: ['Property', 'Bedrooms', 'Guests', 'Waterfront Dock', 'Hot Tub', 'Theatre Room', 'Game Lounge', 'Location'],
       guides: [
         {
           title: 'Shoreside Oasis Lake Guide',
@@ -407,9 +409,18 @@ const LocationLandingPage = ({
 
   const isSelectedAll = selectedAmenities.includes('all') || selectedAmenities.length === 0;
 
-  // Apply amenity & guest filters
+  // Apply amenity & guest filters & live availability
   const filteredProperties = useMemo(() => {
     return stateProperties.filter((p) => {
+      const propId = p.id || p.bookingPropertyId || p.slug;
+      
+      // If live availability search was performed, filter by available property IDs
+      if (availablePropertyIds !== null && Array.isArray(availablePropertyIds)) {
+        if (!availablePropertyIds.includes(propId) && !availablePropertyIds.includes(p.slug)) {
+          return false;
+        }
+      }
+
       if (guestCount > 1 && (p.guests_max || 0) < guestCount) {
         return false;
       }
@@ -436,6 +447,8 @@ const LocationLandingPage = ({
         }
         if (amenityKey === 'theatre') {
           return (
+            slug === 'nirvana' ||
+            slug === 'halftime' ||
             desc.includes('theater') ||
             desc.includes('theatre') ||
             desc.includes('cinema') ||
@@ -443,7 +456,14 @@ const LocationLandingPage = ({
           );
         }
         if (amenityKey === 'game') {
-          return desc.includes('game') || desc.includes('arcade') || desc.includes('pool table');
+          return (
+            slug === 'nirvana' ||
+            slug === 'halftime' ||
+            slug === 'shoreside' ||
+            desc.includes('game') ||
+            desc.includes('arcade') ||
+            desc.includes('pool table')
+          );
         }
         if (amenityKey === 'mountain') {
           return desc.includes('mountain') || desc.includes('view') || name.includes('summit');
@@ -466,7 +486,58 @@ const LocationLandingPage = ({
         return true;
       });
     });
-  }, [stateProperties, guestCount, selectedAmenities, isTN, isSelectedAll]);
+  }, [stateProperties, guestCount, selectedAmenities, isTN, isSelectedAll, availablePropertyIds]);
+
+  // Handle Search Availability button submit
+  const handleSearchAvailability = async (e) => {
+    if (e) e.preventDefault();
+
+    setIsSearchingAvailability(true);
+
+    try {
+      if (checkInDate && checkOutDate) {
+        const res = await fetch('/api/properties/availability-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            startDate: checkInDate,
+            endDate: checkOutDate,
+            adults: guestCount,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const availableIds = data
+              .filter((item) => item.available !== false)
+              .map((item) => item.bookingPropertyId || item.id || item.slug);
+            setAvailablePropertyIds(availableIds);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to search availability:', err);
+    } finally {
+      setIsSearchingAvailability(false);
+      
+      // Smooth scroll to property collection section
+      const targetEl = document.getElementById('properties-collection');
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  // Helper to build URL with query params to pass dates & guests to property page
+  const getPropUrl = (slug) => {
+    const params = new URLSearchParams();
+    if (checkInDate) params.append('checkIn', checkInDate);
+    if (checkOutDate) params.append('checkOut', checkOutDate);
+    if (guestCount > 1) params.append('guests', guestCount.toString());
+    const q = params.toString();
+    return `/${slug}${q ? `?${q}` : ''}`;
+  };
 
   // Filter reviews by state properties
   const filteredReviews = useMemo(() => {
@@ -588,8 +659,8 @@ const LocationLandingPage = ({
           </p>
 
           {/* 2. Date and Guest Search Bar */}
-          <div className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl text-slate-800 max-w-4xl mx-auto border border-white/20">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+          <div className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl text-slate-800 max-w-5xl mx-auto border border-white/20">
+            <form onSubmit={handleSearchAvailability} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
               <div className="relative z-50">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-left">
                   Check-In
@@ -618,35 +689,51 @@ const LocationLandingPage = ({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-left">
                   Guests
                 </label>
-                <div className="flex items-center justify-between bg-slate-100 rounded-xl px-4 py-2 border border-slate-200">
+                <div className="flex items-center justify-between bg-slate-100 rounded-xl px-3 py-2 border border-slate-200">
                   <span className="text-sm font-bold text-slate-800">
                     {guestCount} {guestCount === 1 ? 'Guest' : 'Guests'}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => setGuestCount((prev) => Math.max(1, prev - 1))}
-                      className="w-7 h-7 rounded-full bg-white text-slate-700 font-bold border border-slate-300 flex items-center justify-center hover:bg-accent hover:text-white transition-colors"
+                      className="w-7 h-7 rounded-full bg-white text-slate-700 font-bold border border-slate-300 flex items-center justify-center hover:bg-accent hover:text-white transition-colors cursor-pointer"
                     >
-                      <FaMinus size={10} />
+                      <FaMinus size={9} />
                     </button>
                     <button
                       type="button"
                       onClick={() => setGuestCount((prev) => prev + 1)}
-                      className="w-7 h-7 rounded-full bg-white text-slate-700 font-bold border border-slate-300 flex items-center justify-center hover:bg-accent hover:text-white transition-colors"
+                      className="w-7 h-7 rounded-full bg-white text-slate-700 font-bold border border-slate-300 flex items-center justify-center hover:bg-accent hover:text-white transition-colors cursor-pointer"
                     >
-                      <FaPlus size={10} />
+                      <FaPlus size={9} />
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isSearchingAvailability}
+                  className="w-full bg-accent hover:bg-green-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer border border-accent"
+                >
+                  {isSearchingAvailability ? (
+                    <span>Searching...</span>
+                  ) : (
+                    <>
+                      <FaSearch size={13} /> Search Availability
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
 
       {/* 3. Amenity Filters & Property Cards */}
-      <section className="py-16 px-6 max-w-7xl mx-auto">
+      <section id="properties-collection" className="py-16 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-10">
           <p className="text-accent uppercase tracking-[0.25em] text-xs font-bold mb-2">
             EXPLORE THE COLLECTION
@@ -657,6 +744,29 @@ const LocationLandingPage = ({
           <p className="text-slate-500 text-base mt-2">
             Filter by preferred amenities or group size to find your ideal stay (multi-select enabled).
           </p>
+
+          {/* Active Search Date Banner */}
+          {(checkInDate || checkOutDate) && (
+            <div className="mt-6 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 max-w-3xl mx-auto text-sm shadow-sm">
+              <div className="flex items-center gap-2 font-medium">
+                <FaCalendarAlt className="text-emerald-600 flex-shrink-0" />
+                <span>
+                  Searching stay for <strong>{checkInDate || 'Check-in'}</strong> to <strong>{checkOutDate || 'Check-out'}</strong> ({guestCount} {guestCount === 1 ? 'Guest' : 'Guests'})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckInDate('');
+                  setCheckOutDate('');
+                  setAvailablePropertyIds(null);
+                }}
+                className="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+              >
+                Clear Dates
+              </button>
+            </div>
+          )}
 
           {/* Multi-Select Amenity Filter Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-8">
@@ -693,12 +803,13 @@ const LocationLandingPage = ({
               const images = cardImagesBySlug[prop.slug] || [prop.primary_image || prop.image];
               const currentIndex = imageIndices[propId] || 0;
               const safeIndex = images.length ? currentIndex % images.length : 0;
+              const targetUrl = getPropUrl(prop.slug);
 
               return (
                 <div
                   key={propId}
                   className="group cursor-pointer rounded-[28px] border border-slate-200 bg-white p-3 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl text-left flex flex-col"
-                  onClick={() => router.push(`/${prop.slug}`)}
+                  onClick={() => router.push(targetUrl)}
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
                     {images.map((img, i) => (
@@ -763,9 +874,9 @@ const LocationLandingPage = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/${prop.slug}`);
+                          router.push(targetUrl);
                         }}
-                        className="w-full rounded-xl bg-accent py-3 text-white text-xs font-bold tracking-widest uppercase transition-all hover:bg-green-700 shadow-md"
+                        className="w-full rounded-xl bg-accent py-3 text-white text-xs font-bold tracking-widest uppercase transition-all hover:bg-green-700 shadow-md cursor-pointer"
                       >
                         EXPLORE PROPERTY
                       </button>
@@ -779,12 +890,15 @@ const LocationLandingPage = ({
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 max-w-xl mx-auto shadow-sm">
             <p className="text-lg font-bold text-slate-800 mb-2">No matching properties</p>
             <p className="text-slate-500 text-sm mb-6">
-              Try selecting another amenity combination or adjusting your guest count.
+              Try selecting another amenity combination or adjusting your dates / guest count.
             </p>
             <button
               onClick={() => {
                 setSelectedAmenities(['all']);
                 setGuestCount(1);
+                setCheckInDate('');
+                setCheckOutDate('');
+                setAvailablePropertyIds(null);
               }}
               className="px-6 py-2.5 bg-accent text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md hover:bg-accent/90 cursor-pointer"
             >
@@ -867,10 +981,22 @@ const LocationLandingPage = ({
 
                 const hasHotTub = prop.hot_tub || desc.includes('hot tub') || desc.includes('spa');
                 const hasTheatre =
+                  slug === 'nirvana' ||
+                  slug === 'halftime' ||
                   desc.includes('theater') ||
                   desc.includes('theatre') ||
                   desc.includes('cinema') ||
                   desc.includes('movie');
+
+                const hasGameLounge =
+                  slug === 'nirvana' ||
+                  slug === 'halftime' ||
+                  slug === 'shoreside' ||
+                  desc.includes('game') ||
+                  desc.includes('arcade') ||
+                  desc.includes('pool table') ||
+                  desc.includes('lounge');
+
                 const hasDock = desc.includes('dock') || desc.includes('waterfront') || slug === 'shoreside';
 
                 return (
@@ -910,9 +1036,16 @@ const LocationLandingPage = ({
                           <FaCheck size={12} /> Theater Room
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-blue-600 font-medium">
-                          Game Lounge
+                        <span className="text-slate-400">No</span>
+                      )}
+                    </td>
+                    <td className="p-4 sm:p-5">
+                      {hasGameLounge ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                          <FaCheck size={12} /> Game Lounge
                         </span>
+                      ) : (
+                        <span className="text-slate-400">No</span>
                       )}
                     </td>
                     <td className="p-4 sm:p-5 text-slate-500 font-medium">{prop.location}</td>
