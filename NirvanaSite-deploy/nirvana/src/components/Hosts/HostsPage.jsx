@@ -147,8 +147,8 @@ const processSteps = [
   },
   {
     step: "4",
-    title: "Passive Returns",
-    desc: "You receive direct payouts and transparent monthly reports while your property appreciates in value."
+    title: "Performance & Reporting",
+    desc: "You receive direct monthly distributions and transparent financial reports while we oversee day-to-day operations."
   }
 ];
 
@@ -496,11 +496,11 @@ const HostsPage = () => {
         <section className="bg-[#eef0eb] py-20 sm:py-28">
           <div className="mx-auto max-w-7xl space-y-10 px-5 sm:space-y-14 sm:px-6">
           <div className="text-center max-w-2xl mx-auto px-4">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">The Roadmap</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-accent mb-2 sm:mb-3">The Process</p>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-slate-950">
-              Your Path to Passive Income
+              How Our Partnership Works
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">A clear, accountable process from first conversation to consistent owner returns.</p>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">A clear, transparent roadmap from onboarding and property setup to ongoing management and reporting.</p>
           </div>
 
           <div className="relative grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-0 max-w-6xl mx-auto">
