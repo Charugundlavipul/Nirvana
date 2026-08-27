@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS properties (
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
     booking_url TEXT,
+    hospitable_widget_code TEXT,
     hospitable_property_id TEXT,
     video_url TEXT,
     is_published BOOLEAN DEFAULT TRUE,
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS properties (
 );
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathroom_count NUMERIC(3,1);
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bed_count INT;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS hospitable_widget_code TEXT;
 UPDATE properties
 SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
 WHERE hospitable_property_id IS NOT NULL;
@@ -484,13 +486,14 @@ BEGIN
             END LOOP;
 
             INSERT INTO public.properties (
-                slug, name, booking_url, hospitable_property_id, video_url, is_published, location, description,
+                slug, name, booking_url, hospitable_widget_code, hospitable_property_id, video_url, is_published, location, description,
                 guests_max, bedroom_count, bed_count, bed_details, full_bath_count, half_bath_count, bath_details,
                 pet_friendly, pet_fee, hot_tub, spaces
             ) VALUES (
                 v_slug,
                 req.payload->>'name',
                 req.payload->>'booking_url',
+                req.payload->>'hospitable_widget_code',
                 NULLIF(LOWER(BTRIM(req.payload->>'hospitable_property_id')), ''),
                 req.payload->>'video_url',
                 COALESCE((req.payload->>'is_published')::boolean, true),
@@ -526,6 +529,7 @@ BEGIN
                 slug = req.payload->>'slug',
                 name = req.payload->>'name',
                 booking_url = req.payload->>'booking_url',
+                hospitable_widget_code = req.payload->>'hospitable_widget_code',
                 hospitable_property_id = NULLIF(LOWER(BTRIM(req.payload->>'hospitable_property_id')), ''),
                 video_url = req.payload->>'video_url',
                 is_published = COALESCE((req.payload->>'is_published')::boolean, true),

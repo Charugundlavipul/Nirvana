@@ -1,75 +1,96 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { parseHospitableWidgetCode } from '../../lib/hospitableWidget';
 
-/**
- * HospitableWidget
- * 
- * Embeds the property's Hospitable Direct booking page (booking_url) in a 
- * minimal, below-the-fold iframe container so Hospitable's health check 
- * detects it and Google Vacation Rentals listing can be verified.
- * 
- * Users primarily interact with the custom AvailabilityCalendar above.
- * This widget is technically visible (not display:none) — just collapsed
- * in a 1px-height overflow-hidden container, expandable on click.
- */
-const HospitableWidget = ({ bookingUrl }) => {
-    const [expanded, setExpanded] = useState(false);
+const HospitableWidget = ({ widgetCode, propertyName }) => {
+    const reactId = useId();
+    const containerId = useMemo(
+        () => `hospitable-widget-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`,
+        [reactId]
+    );
+    const containerRef = useRef(null);
+    const [loadError, setLoadError] = useState('');
+    const parsedWidget = useMemo(() => parseHospitableWidgetCode(widgetCode), [widgetCode]);
 
-    if (!bookingUrl) return null;
+    useEffect(() => {
+        const config = parsedWidget.config;
+        const container = containerRef.current;
+        if (!config || !container) return undefined;
+
+        const existingIframe = document.getElementById('booking-iframe');
+        if (existingIframe && !container.contains(existingIframe)) {
+            setLoadError('Another Hospitable booking widget is already active on this page.');
+            return undefined;
+        }
+
+        setLoadError('');
+
+        const handleReady = () => {
+            const iframe = document.getElementById('booking-iframe');
+            if (iframe && container.contains(iframe)) {
+                iframe.dataset.nirvanaHospitableWidget = containerId;
+            }
+        };
+
+        window.addEventListener('hospitable:widget-loader:ready', handleReady);
+
+        const script = document.createElement('script');
+        script.src = config.src;
+        script.async = true;
+        script.dataset.siteUuid = config.siteUuid;
+        script.dataset.propertyId = config.propertyId;
+        script.dataset.container = containerId;
+        if (config.theme) script.dataset.theme = config.theme;
+        if (config.height) script.dataset.height = config.height;
+        script.addEventListener('error', () => {
+            setLoadError('Hospitable checkout could not be loaded. Please try again shortly.');
+        });
+
+        container.appendChild(script);
+
+        return () => {
+            window.removeEventListener('hospitable:widget-loader:ready', handleReady);
+            script.remove();
+
+            const iframe = document.getElementById('booking-iframe');
+            if (iframe && container.contains(iframe)) {
+                iframe.remove();
+            }
+        };
+    }, [containerId, parsedWidget.config]);
+
+    if (!parsedWidget.config) return null;
 
     return (
-        <div className="border-t border-slate-100">
-            {/* Minimal "powered by" line — technically visible, below the fold */}
-            <div className="max-w-7xl mx-auto px-6 py-3">
-                <button
-                    type="button"
-                    onClick={() => setExpanded((prev) => !prev)}
-                    className="flex items-center gap-1.5 text-[11px] text-slate-300 hover:text-slate-400 transition-colors mx-auto font-medium tracking-wide"
-                    aria-expanded={expanded}
-                >
-                    <svg
-                        className={`w-2.5 h-2.5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path d="M6 4l8 6-8 6V4z" />
-                    </svg>
-                    Powered by Hospitable Direct
-                </button>
-            </div>
-
-            {/* 
-                Widget container — ALWAYS in the DOM so Hospitable's 
-                health-check crawler can detect the booking_url iframe.
-                
-                When collapsed: max-h-[1px] + overflow-hidden + near-zero opacity.
-                Technically rendered (not display:none/visibility:hidden),
-                so crawlers can see the iframe src.
-                
-                When expanded: full height, fully visible.
-            */}
-            <div
-                className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                    expanded 
-                        ? 'max-h-[700px] opacity-100 pb-8' 
-                        : 'max-h-[1px] opacity-[0.01]'
-                }`}
-                aria-hidden={!expanded}
-            >
-                <div className="max-w-xl mx-auto px-6 flex justify-center">
-                    <iframe
-                        src={bookingUrl}
-                        title="Book this property via Hospitable Direct"
-                        className="w-full border-0 rounded-xl"
-                        style={{ height: expanded ? '600px' : '1px' }}
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        allow="payment"
-                    />
+        <section className="border-t border-slate-200 bg-slate-50 py-16" aria-label="Hospitable secure checkout">
+            <div className="mx-auto max-w-5xl px-6">
+                <div className="mb-8 text-center">
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-accent">
+                        Secure Direct Booking
+                    </p>
+                    <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">
+                        Complete your stay{propertyName ? ` at ${propertyName}` : ''}
+                    </h2>
+                    <p className="mt-3 text-sm text-slate-500">
+                        Availability, checkout, and payment are securely handled by Hospitable.
+                    </p>
                 </div>
+
+                {loadError && (
+                    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm font-medium text-red-700">
+                        {loadError}
+                    </div>
+                )}
+
+                <div
+                    id={containerId}
+                    ref={containerRef}
+                    className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
+                    data-hospitable-widget-container="true"
+                />
             </div>
-        </div>
+        </section>
     );
 };
 

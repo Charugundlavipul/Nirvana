@@ -633,9 +633,12 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-            {/* Hospitable Direct Widget (for Google Vacation Rentals listing) */}
-            {property.booking_url && (
-                <HospitableWidget bookingUrl={property.booking_url} />
+            {/* Optional per-property Hospitable loader configured by an admin. */}
+            {property.hospitable_widget_code && (
+                <HospitableWidget
+                    widgetCode={property.hospitable_widget_code}
+                    propertyName={property.name}
+                />
             )}
 
             {/* Location & Area Guide — SEO content section */}

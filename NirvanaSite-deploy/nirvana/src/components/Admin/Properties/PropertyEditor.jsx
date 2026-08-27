@@ -13,6 +13,7 @@ import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
 import { normalizePropertySpaces } from "../../../lib/propertySpaces";
 import { normalizeBathroomCounts } from "../../../lib/bathrooms";
+import { normalizeHospitableWidgetCode, parseHospitableWidgetCode } from "../../../lib/hospitableWidget";
 
 const slugify = (v) => `${v || ""}`.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 const toFormState = (data = {}) => {
@@ -22,6 +23,7 @@ const toFormState = (data = {}) => {
         name: data.name || "",
         slug: data.slug || "",
         booking_url: data.booking_url || "",
+        hospitable_widget_code: data.hospitable_widget_code || "",
         hospitable_property_id: normalizeHospitablePropertyId(data.hospitable_property_id),
         video_url: data.video_url || "",
         location: data.location || "",
@@ -44,12 +46,14 @@ const buildPropertyPayload = (formData) => {
     const payload = {
         ...formData,
         hospitable_property_id: normalizeHospitablePropertyId(formData.hospitable_property_id),
+        hospitable_widget_code: normalizeHospitableWidgetCode(formData.hospitable_widget_code),
         spaces: normalizePropertySpaces(formData.spaces),
     };
 
     delete payload.bathroom_count;
 
     if (!payload.booking_url) delete payload.booking_url;
+    if (!payload.hospitable_widget_code) payload.hospitable_widget_code = null;
     if (!payload.hospitable_property_id) {
         delete payload.hospitable_property_id;
     } else if (!isValidHospitablePropertyId(payload.hospitable_property_id)) {
@@ -95,6 +99,7 @@ const PropertyEditor = () => {
         name: "",
         slug: "",
         booking_url: "",
+        hospitable_widget_code: "",
         hospitable_property_id: "",
         video_url: "",
         location: "",
@@ -114,6 +119,10 @@ const PropertyEditor = () => {
 
     const [propertyId, setPropertyId] = useState(null);
     const superAdmin = isSuperAdminRole(adminRole);
+    const hospitableWidgetValidation = useMemo(
+        () => parseHospitableWidgetCode(formData.hospitable_widget_code),
+        [formData.hospitable_widget_code]
+    );
     const approvalRequiredForEdits = !superAdmin && isPublished;
     const isDraftProperty = !isNew && !isPublished;
 
@@ -627,8 +636,29 @@ const PropertyEditor = () => {
                                     <input name="location" value={formData.location} onChange={handleChange} />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Booking URL (Hospitable)</label>
-                                    <input name="booking_url" value={formData.booking_url} onChange={handleChange} placeholder="https://booking.hospitable.com/..." />
+                                    <label>Hospitable Direct Widget Script</label>
+                                    <textarea
+                                        name="hospitable_widget_code"
+                                        value={formData.hospitable_widget_code}
+                                        onChange={handleChange}
+                                        rows={7}
+                                        spellCheck={false}
+                                        placeholder={'<script\n  src="https://cdn.hsptb.com/direct-booking-widget/widget-loader.prod.js"\n  data-site-uuid="..."\n  data-property-id="..."\n  data-theme="multi">\n</script>'}
+                                        style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                                    />
+                                    <p style={{ marginTop: "8px", color: "#666", fontSize: "12px" }}>
+                                        Paste the widget code exported by Hospitable for this property. Only the official Hospitable loader is accepted.
+                                    </p>
+                                    {hospitableWidgetValidation.error && (
+                                        <p style={{ marginTop: "6px", color: "#b91c1c", fontSize: "12px" }}>
+                                            {hospitableWidgetValidation.error}
+                                        </p>
+                                    )}
+                                    {hospitableWidgetValidation.config && (
+                                        <p style={{ marginTop: "6px", color: "#047857", fontSize: "12px", fontWeight: 600 }}>
+                                            Valid widget for property {hospitableWidgetValidation.config.propertyId}.
+                                        </p>
+                                    )}
                                 </div>
                                 <div className={styles.fieldGroup}>
                                     <label>Hospitable Property ID</label>
