@@ -65,9 +65,13 @@ function sanitizeElement(node) {
   if (tag === "a") {
     const href = node.getAttribute("href");
     if (!href) {
+      node.removeAttribute("title");
       node.removeAttribute("target");
       node.removeAttribute("rel");
     } else {
+      // Always expose the real destination on hover instead of trusting a
+      // user-supplied title that could describe a different URL.
+      node.setAttribute("title", href);
       if (node.getAttribute("target") === "_blank") {
         node.setAttribute("rel", "noopener noreferrer");
       } else if (!node.getAttribute("rel")) {

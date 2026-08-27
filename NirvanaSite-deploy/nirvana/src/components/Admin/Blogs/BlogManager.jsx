@@ -481,9 +481,17 @@ const BlogManager = () => {
         return sanitizeRichText(normalized).trim();
     };
 
+    const exposeEditorLinkDestinations = (root) => {
+        root?.querySelectorAll?.("a[href]").forEach((anchor) => {
+            const href = anchor.getAttribute("href");
+            if (href) anchor.setAttribute("title", href);
+        });
+    };
+
     const syncContentFromEditor = () => {
         const editor = contentEditorRef.current;
         if (!editor) return;
+        exposeEditorLinkDestinations(editor);
         const nextContent = normalizeEditorHtml(editor.innerHTML);
         setFormData((prev) =>
             prev.content === nextContent
@@ -528,6 +536,22 @@ const BlogManager = () => {
         const url = window.prompt("Enter URL", "https://");
         if (!url) return;
         runEditorCommand("createLink", url);
+    };
+
+    const handleRichTextLinkClick = (event) => {
+        const anchor = event.target?.closest?.("a[href]");
+        if (!anchor || !event.currentTarget.contains(anchor)) return;
+
+        if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            const popup = window.open(anchor.href, "_blank", "noopener,noreferrer");
+            if (popup) popup.opener = null;
+            return;
+        }
+
+        if (event.currentTarget.isContentEditable) {
+            event.preventDefault();
+        }
     };
 
     const handleContentPaste = (event) => {
@@ -859,9 +883,11 @@ const BlogManager = () => {
                                                     syncContentFromEditor();
                                                 }}
                                                 onFocus={saveEditorSelection}
-                                                onMouseUp={saveEditorSelection}
-                                                onKeyUp={saveEditorSelection}
-                                                onPaste={handleContentPaste}
+                                                 onMouseUp={saveEditorSelection}
+                                                 onKeyUp={saveEditorSelection}
+                                                 onClick={handleRichTextLinkClick}
+                                                 onMouseOver={(event) => exposeEditorLinkDestinations(event.currentTarget)}
+                                                 onPaste={handleContentPaste}
                                                 suppressContentEditableWarning
                                                 style={{ minHeight: "360px" }}
                                             />
@@ -888,7 +914,11 @@ const BlogManager = () => {
                                 <div className={formStyles.richPreview}>
                                     <p className={formStyles.richPreviewTitle}>Preview</p>
                                     {formData.content ? (
-                                        <RichTextContent value={formData.content} className={formStyles.richPreviewContent} />
+                                        <RichTextContent
+                                            value={formData.content}
+                                            className={formStyles.richPreviewContent}
+                                            onClick={handleRichTextLinkClick}
+                                        />
                                     ) : (
                                         <p className={formStyles.richHelpText} style={{ marginTop: 0 }}>
                                             No content yet. Start typing above.
