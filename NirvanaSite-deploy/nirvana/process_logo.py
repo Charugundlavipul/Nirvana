@@ -5,6 +5,7 @@ from PIL import Image
 def process_logo(input_path, output_cropped, output_transparent):
     img = Image.open(input_path).convert('RGBA')
     
+    
     # Get bounding box of non-white pixels
     bg = Image.new(img.mode, img.size, (255, 255, 255, 255))
     diff = Image.composite(img, bg, img)
