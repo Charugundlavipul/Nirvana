@@ -9,6 +9,13 @@ function formatDisplayDate(dateStr) {
     return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
+function getLocalDateString(d = new Date()) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 PM', checkOutTime = '10:00 AM' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState({});
@@ -66,19 +73,22 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
     if (!propertyId) return;
 
     const fetchCalendar = async () => {
-      setLoading(true);
+      // Only show full loading spinner on initial load when cache is empty
+      if (Object.keys(calendarData).length === 0) {
+        setLoading(true);
+      }
       setError(null);
       
       try {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        // Fetch 3 months of data to ensure smooth sliding
+        // Fetch 12 months of data to ensure smooth navigation across all months
         const startDate = new Date(year, month, 1);
-        const endDate = new Date(year, month + 3, 0);
+        const endDate = new Date(year, month + 12, 0);
         
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
+        const startStr = getLocalDateString(startDate);
+        const endStr = getLocalDateString(endDate);
 
         const response = await fetch(`/api/properties/${propertyId}/calendar?start_date=${startStr}&end_date=${endStr}`);
         if (!response.ok) {
@@ -103,7 +113,8 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
           prevStatus = day.status?.available ? 'available' : 'unavailable';
         });
 
-        setCalendarData(availabilityMap);
+        // Merge newly fetched data into existing data to preserve previously loaded months
+        setCalendarData(prev => ({ ...prev, ...availabilityMap }));
       } catch (err) {
         console.error(err);
         setError('Calendar currently unavailable');
@@ -147,8 +158,15 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
       }
   };
 
+  const now = new Date();
+  const isCurrentMonth = currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() === now.getMonth();
+
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    const prevMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (prevMonthDate >= currentMonthStart) {
+      setCurrentDate(prevMonthDate);
+    }
   };
 
   const handleNextMonth = () => {
@@ -175,7 +193,8 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
   };
 
   const handleDateClick = (dateStr) => {
-      const isPast = new Date(dateStr + "T00:00:00") < new Date(new Date().setHours(0,0,0,0));
+      const todayStr = getLocalDateString();
+      const isPast = dateStr < todayStr;
       if (isPast) return;
 
       const status = calendarData[dateStr];
@@ -195,25 +214,31 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
          setQuote(null);
          setQuoteError(null);
       } else {
-         const dIn = new Date(checkInDate + "T12:00:00Z");
-         const dOut = new Date(dateStr + "T12:00:00Z");
-         if (dOut <= dIn) {
+         if (dateStr <= checkInDate) {
+            // Selected an earlier date or same date: set as new check-in date
             setCheckInDate(dateStr);
             setCheckOutDate(null);
          } else {
+            // Validate all intermediate nights between checkInDate and checkOutDate
             let valid = true;
+            const dIn = new Date(checkInDate + "T12:00:00Z");
+            const dOut = new Date(dateStr + "T12:00:00Z");
             let current = new Date(dIn);
-            current.setDate(current.getDate() + 1);
+            current.setUTCDate(current.getUTCDate() + 1);
+
             while (current < dOut) {
                 const s = current.toISOString().split('T')[0];
                 const dayStatus = calendarData[s];
-                if (dayStatus !== 'available' && dayStatus !== 'check-out') {
+                // Middle nights cannot be unavailable or booked ('check-in' means night is occupied)
+                if (dayStatus === 'unavailable' || dayStatus === 'check-in') {
                     valid = false;
                     break;
                 }
-                current.setDate(current.getDate() + 1);
+                current.setUTCDate(current.getUTCDate() + 1);
             }
+
             if (!valid) {
+                 // Intermediate night is booked; reset check-in to clicked date
                  setCheckInDate(dateStr);
                  setCheckOutDate(null);
             } else {
@@ -244,13 +269,50 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
     const blanks = Array.from({ length: firstDayOfWeek });
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    const todayDateStr = new Date().toISOString().split('T')[0];
+    const todayDateStr = getLocalDateString();
+
+    const showPrevBtn = !showTwoMonths || monthOffset === 0;
+    const showNextBtn = !showTwoMonths || monthOffset === 1;
 
     return (
       <div className="flex-1 min-w-[200px] mb-4">
-        <h4 className="text-center font-semibold text-slate-800 text-base mb-4 font-sans tracking-wide">
-          {monthName} {year}
-        </h4>
+        {/* Month Header with Navigation Controls */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          {showPrevBtn ? (
+            <button
+              type="button"
+              disabled={isCurrentMonth && monthOffset === 0}
+              onClick={handlePrevMonth}
+              className={`p-2 rounded-full border border-slate-200 transition-all ${
+                isCurrentMonth && monthOffset === 0
+                  ? "opacity-25 cursor-not-allowed text-slate-300 border-slate-100"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer shadow-xs"
+              }`}
+              aria-label="Previous Month"
+            >
+              <FaChevronLeft size={12} />
+            </button>
+          ) : (
+            <div className="w-7" />
+          )}
+
+          <h4 className="text-center font-semibold text-slate-800 text-base font-sans tracking-wide">
+            {monthName} {year}
+          </h4>
+
+          {showNextBtn ? (
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              className="p-2 rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer shadow-xs"
+              aria-label="Next Month"
+            >
+              <FaChevronRight size={12} />
+            </button>
+          ) : (
+            <div className="w-7" />
+          )}
+        </div>
         
         <div className="bg-white rounded-xl">
           <div className="grid grid-cols-7 text-center mb-2">
@@ -271,7 +333,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
               const isToday = dateStr === todayDateStr;
               let status = calendarData[dateStr] || 'available';
               
-              const isPast = new Date(dateStr + "T00:00:00") < new Date(new Date().setHours(0,0,0,0));
+              const isPast = dateStr < todayDateStr;
               if (isPast && status === 'available') {
                 status = 'past';
               }
@@ -404,15 +466,20 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     {/* Bottom Navigation Arrows */}
                     <div className="flex items-center justify-center gap-8 mt-6">
                         <button 
+                            disabled={isCurrentMonth}
                             onClick={handlePrevMonth}
-                            className="text-slate-400 hover:text-accent bg-white shadow-sm border border-slate-100 hover:border-accent/20 hover:bg-accent/5 p-3 rounded-full transition-all"
+                            className={`p-3 rounded-full transition-all bg-white shadow-sm border ${
+                              isCurrentMonth 
+                                ? "opacity-25 cursor-not-allowed text-slate-300 border-slate-100" 
+                                : "text-slate-400 hover:text-accent border-slate-100 hover:border-accent/20 hover:bg-accent/5 cursor-pointer"
+                            }`}
                             aria-label="Previous Month"
                         >
                             <FaChevronLeft size={14}/>
                         </button>
                         <button 
                             onClick={handleNextMonth}
-                            className="text-slate-400 hover:text-accent bg-white shadow-sm border border-slate-100 hover:border-accent/20 hover:bg-accent/5 p-3 rounded-full transition-all"
+                            className="text-slate-400 hover:text-accent bg-white shadow-sm border border-slate-100 hover:border-accent/20 hover:bg-accent/5 p-3 rounded-full transition-all cursor-pointer"
                             aria-label="Next Month"
                         >
                             <FaChevronRight size={14}/>
