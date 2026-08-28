@@ -63,34 +63,25 @@ const HospitableWidget = ({ widgetCode, propertyName }) => {
     if (!parsedWidget.config) return null;
 
     return (
-        <section className="border-t border-slate-200 bg-slate-50 py-16" aria-label="Hospitable secure checkout">
-            <div className="mx-auto max-w-5xl px-6">
-                <div className="mb-8 text-center">
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-                        Secure Direct Booking
-                    </p>
-                    <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">
-                        Complete your stay{propertyName ? ` at ${propertyName}` : ''}
-                    </h2>
-                    <p className="mt-3 text-sm text-slate-500">
-                        Availability, checkout, and payment are securely handled by Hospitable.
-                    </p>
-                </div>
-
-                {loadError && (
-                    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm font-medium text-red-700">
-                        {loadError}
-                    </div>
-                )}
-
-                <div
-                    id={containerId}
-                    ref={containerRef}
-                    className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
-                    data-hospitable-widget-container="true"
-                />
-            </div>
-        </section>
+        <div
+            id={containerId}
+            ref={containerRef}
+            aria-hidden="true"
+            style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+                opacity: 0,
+                pointerEvents: 'none',
+            }}
+            data-hospitable-widget-container="true"
+        />
     );
 };
 
