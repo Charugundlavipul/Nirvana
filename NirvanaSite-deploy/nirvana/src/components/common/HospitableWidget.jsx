@@ -38,12 +38,11 @@ const HospitableWidget = ({ widgetCode, propertyName }) => {
         const handleMessage = (event) => {
             try {
                 const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-                const height = data?.height || data?.payload?.height || (data?.event === 'resize' ? data?.value : null);
-                if (height && typeof height === 'number' && height > 400) {
+                const height = data?.iframeHeight || data?.height || data?.payload?.height || (data?.event === 'resize' ? data?.value : null);
+                if (height && typeof height === 'number' && height > 200) {
                     const iframe = document.getElementById('booking-iframe');
                     if (iframe && container.contains(iframe)) {
-                        iframe.style.height = `${height + 40}px`;
-                        container.style.minHeight = `${height + 40}px`;
+                        iframe.style.height = `${height}px`;
                     }
                 }
             } catch (e) {
@@ -61,7 +60,7 @@ const HospitableWidget = ({ widgetCode, propertyName }) => {
         script.dataset.propertyId = config.propertyId;
         script.dataset.container = containerId;
         if (config.theme) script.dataset.theme = config.theme;
-        script.dataset.height = config.height || '900px';
+        script.dataset.height = config.height || '480px';
         script.addEventListener('error', () => {
             setLoadError('Hospitable checkout could not be loaded. Please try again shortly.');
         });
@@ -87,7 +86,7 @@ const HospitableWidget = ({ widgetCode, propertyName }) => {
             <div
                 id={containerId}
                 ref={containerRef}
-                className="w-full max-w-[480px] min-h-[850px] rounded-3xl bg-white shadow-2xl shadow-slate-300/50 border border-slate-200 p-4 sm:p-6 transition-all duration-300 hospitable-widget-container mx-auto"
+                className="w-full max-w-[480px] rounded-3xl bg-white shadow-2xl shadow-slate-300/50 border border-slate-200 p-4 sm:p-6 transition-all duration-300 hospitable-widget-container mx-auto"
                 data-hospitable-widget-container="true"
             >
                 {loadError && (

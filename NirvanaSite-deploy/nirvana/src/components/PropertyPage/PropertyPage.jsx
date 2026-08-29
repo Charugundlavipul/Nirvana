@@ -852,11 +852,11 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     <div className="max-w-4xl mx-auto px-4 sm:px-6">
                         <div className="text-center mb-8">
                             <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent font-semibold text-xs uppercase tracking-widest rounded-full mb-3">
-                                Direct Reservation
+                                Direct Booking
                             </span>
-                            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Instant Booking & Pricing</h3>
+                            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Reserve Your Stay</h3>
                             <p className="text-slate-500 text-sm md:text-base max-w-lg mx-auto">
-                                Select dates below to reserve directly with best rate guarantee
+                                Select your dates and guests to view live rates and reserve directly.
                             </p>
                         </div>
                         <HospitableWidget
