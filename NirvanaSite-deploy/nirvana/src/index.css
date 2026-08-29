@@ -130,3 +130,23 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 1;
   }
 }
+
+/* Hospitable Direct Booking Widget Styling */
+.hospitable-widget-container,
+[data-hospitable-widget-container] {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.hospitable-widget-container iframe,
+[data-hospitable-widget-container] iframe,
+#booking-iframe {
+  width: 100% !important;
+  border: none !important;
+  border-radius: 1.5rem !important;
+  display: block !important;
+  overflow: hidden !important;
+  transition: height 0.25s ease;
+}

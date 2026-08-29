@@ -542,8 +542,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         </button>
                     </div>
                 </div>
-            </section>
-            */}
+            </section> */}
 
             {/* Amenities Section */}
             <section className="py-24 bg-slate-50 relative">
@@ -583,7 +582,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
 
             {/* Interactive Availability Calendar */}
             {property.hospitable_property_id && (
-                <section className="py-24 bg-white">
+                <section className="py-24 bg-white" id="availability">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center mb-16">
                             <p className="text-accent uppercase tracking-[0.2em] text-sm font-semibold mb-3">Plan Your Stay</p>
@@ -617,7 +616,6 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-
             {/* Custom Review & Activity Sections */}
             <InlineReviews reviews={initialReviews} />
             <InlineActivities activities={initialActivities} slug={slug} />
@@ -632,14 +630,6 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     <ContactForm />
                 </div>
             </section>
-
-            {/* Optional per-property Hospitable loader configured by an admin. */}
-            {property.hospitable_widget_code && (
-                <HospitableWidget
-                    widgetCode={property.hospitable_widget_code}
-                    propertyName={property.name}
-                />
-            )}
 
             {/* Location & Area Guide — SEO content section */}
             <section className="py-16 md:py-24 bg-white">
@@ -841,7 +831,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href={`/book/${slug}`}
+                            href={property.hospitable_widget_code ? "#direct-booking" : `/book/${slug}`}
                             className="inline-block px-12 py-5 bg-accent hover:bg-accent/90 text-white text-lg font-bold uppercase tracking-wider transition-all shadow-2xl"
                         >
                             Book Now
@@ -856,11 +846,30 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                 </div>
             </section>
 
-            {/* Lightbox */}
-                  {(lightboxImage || lightboxType) && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-8" onClick={closeLightbox}>
-                    {/* Local close buttons are used instead inside the components */}
+            {/* Direct Reservation Widget Section (after CTA) */}
+            {property.hospitable_widget_code && (
+                <section className="py-20 bg-slate-50 border-t border-slate-200" id="direct-booking">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6">
+                        <div className="text-center mb-8">
+                            <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent font-semibold text-xs uppercase tracking-widest rounded-full mb-3">
+                                Direct Reservation
+                            </span>
+                            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Instant Booking & Pricing</h3>
+                            <p className="text-slate-500 text-sm md:text-base max-w-lg mx-auto">
+                                Select dates below to reserve directly with best rate guarantee
+                            </p>
+                        </div>
+                        <HospitableWidget
+                            widgetCode={property.hospitable_widget_code}
+                            propertyName={property.name}
+                        />
+                    </div>
+                </section>
+            )}
 
+            {/* Lightbox */}
+            {(lightboxImage || lightboxType) && (
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-8" onClick={closeLightbox}>
                     <div className="relative max-w-6xl w-full max-h-[95vh] flex justify-center" onClick={(e) => e.stopPropagation()}>
                         {lightboxType === 'description' ? (
                             <div className="bg-white rounded-[2rem] w-full max-w-4xl max-h-[85vh] flex flex-col relative overflow-hidden shadow-2xl">
@@ -956,7 +965,8 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                         ) : null}
                     </div>
                 </div>
-            )}  </div>
+            )}
+        </div>
     );
 };
 
