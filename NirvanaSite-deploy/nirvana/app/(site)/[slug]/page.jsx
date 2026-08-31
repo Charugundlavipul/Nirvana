@@ -68,8 +68,8 @@ export async function generateMetadata({ params }) {
   const locationKeywords = location.toLowerCase().includes("sevierville")
     ? ["Gatlinburg cabin rental", "Pigeon Forge luxury cabin", "Sevierville TN vacation home", "Walland luxury retreat", "Smoky Mountains cabin"]
     : location.toLowerCase().includes("lake norman") || location.toLowerCase().includes("mooresville")
-    ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
-    : ["luxury vacation rental", "premium vacation home"];
+      ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
+      : ["luxury vacation rental", "premium vacation home"];
 
   const metadata = await getManagedPageMetadata(`/${property.slug}`, {
     title: override?.title || `${property.name} — ${location}`,
@@ -127,6 +127,7 @@ export default async function PropertyDetailPage({ params }) {
     { name: "Properties", url: absoluteUrl("/properties") },
     { name: bundle.property.name, url: absoluteUrl(`/${slug}`) },
   ]);
+
 
   const webPageJsonLd = buildWebPageJsonLd({
     name: bundle.property.name,
