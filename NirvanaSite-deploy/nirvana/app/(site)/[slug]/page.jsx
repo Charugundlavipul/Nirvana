@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import PropertyPage from "../../../src/components/PropertyPage/PropertyPage";
 import StructuredData from "../../../src/components/StructuredData";
 import { getHospitablePropertyById, getManagedPageMetadata, getPropertyBundleBySlug, getPropertyBySlug, getPropertyCards, getPropertySlugs, getReviews, getActivitiesBySlug } from "../../../src/lib/serverContentApi";
+import { parseHospitableWidgetCode } from "../../../src/lib/hospitableWidget";
 import { buildMetadata, buildPropertyJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 import { SITE_NAME, absoluteUrl } from "../../../src/lib/siteConfig";
 
@@ -70,7 +71,7 @@ export async function generateMetadata({ params }) {
     ? ["Lake Norman vacation home", "lakefront rental NC", "Mooresville NC rental", "North Carolina lake house"]
     : ["luxury vacation rental", "premium vacation home"];
 
-  return getManagedPageMetadata(`/${property.slug}`, {
+  const metadata = await getManagedPageMetadata(`/${property.slug}`, {
     title: override?.title || `${property.name} — ${location}`,
     description: override?.description || descriptionFromRichText(property.description, 160) || `Book ${property.name} in ${location}. Direct booking luxury vacation rental with Nirvana Luxe.`,
     pathname: `/${property.slug}`,
@@ -86,6 +87,23 @@ export async function generateMetadata({ params }) {
       ...locationKeywords,
     ],
   });
+
+  // Give Hospitable's URL validator a deterministic property identifier in
+  // the initial document head. The official widget loader mounts client-side,
+  // so its numeric Direct property ID is otherwise not exposed as metadata.
+  const widgetPropertyId = parseHospitableWidgetCode(
+    property.hospitable_widget_code
+  ).config?.propertyId;
+
+  if (!widgetPropertyId) return metadata;
+
+  return {
+    ...metadata,
+    other: {
+      ...metadata.other,
+      "hospitable-property-id": widgetPropertyId,
+    },
+  };
 }
 
 export default async function PropertyDetailPage({ params }) {
