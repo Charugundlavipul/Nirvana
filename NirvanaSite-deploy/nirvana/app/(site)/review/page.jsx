@@ -8,7 +8,7 @@ export const revalidate = 21600;
 
 export async function generateMetadata() {
   return getManagedPageMetadata("/review", {
-  title: "5-Star Guest Reviews - Nirvana Luxe Rentals",
+  title: "Guest Reviews - Nirvana Luxe Rentals",
   description: "100+ verified 5-star reviews for Nirvana Luxe cabins & lake homes. Real guests. Real experiences. See why families & groups come back.",
   pathname: "/review",
   keywords: [
