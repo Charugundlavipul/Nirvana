@@ -9,12 +9,15 @@ import PropertyList from "./Properties/PropertyList";
 import PropertyEditor from "./Properties/PropertyEditor";
 import GlobalContent from "./Global/GlobalContent";
 import ApprovalQueue from "./Approvals/ApprovalQueue";
-import AdminUsersManager from "./Users/AdminUsersManager";
 import SubscribersManager from "./Subscribers/SubscribersManager";
 import KnowledgeHubManager from "./Knowledge/KnowledgeHubManager";
 import BlogManager from "./Blogs/BlogManager";
 import AdminSignatures from "./Signatures/AdminSignatures";
 import PageMetadataManager from "./Metadata/PageMetadataManager";
+import ProfileManager from "./HR/ProfileManager";
+import LeaveManager from "./HR/LeaveManager";
+import PeopleManager from "./HR/PeopleManager";
+import PayrollManager from "./HR/PayrollManager";
 
 const AdminApp = () => {
   return (
@@ -31,7 +34,11 @@ const AdminApp = () => {
           <Route path="knowledge" element={<KnowledgeHubManager />} />
           <Route path="approvals" element={<ApprovalQueue />} />
           <Route path="subscribers" element={<SubscribersManager />} />
-          <Route path="admins" element={<AdminUsersManager />} />
+          <Route path="admins" element={<PeopleManager />} />
+          <Route path="people" element={<PeopleManager />} />
+          <Route path="profile" element={<ProfileManager />} />
+          <Route path="leave" element={<LeaveManager />} />
+          <Route path="payroll" element={<PayrollManager />} />
           <Route path="signatures" element={<AdminSignatures />} />
         </Route>
       </Routes>

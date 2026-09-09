@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaCheckCircle, FaChevronRight, FaClock, FaExternalLinkAlt, FaSearch, FaShareAlt, FaUpload } from "react-icons/fa";
 import AdminLayout from "../AdminLayout";
-import { fetchPageMetadataAdmin, isSuperAdminRole, savePageMetadataAdmin } from "../../../lib/adminApi";
+import { fetchPageMetadataAdmin, isContentReviewerRole, savePageMetadataAdmin } from "../../../lib/adminApi";
 import { compressImageToWebp } from "../../../lib/imageCompressor";
 import { supabase } from "../../../supabaseClient";
 import styles from "./PageMetadataManager.module.css";
@@ -120,7 +120,7 @@ const PageMetadataManager = () => {
   }, [filteredPages]);
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const isReviewer = isSuperAdminRole(role);
+  const isReviewer = isContentReviewerRole(role);
   const previewTitle = form.openGraphTitle || form.title || "Page title";
   const previewDescription = form.openGraphDescription || form.description || "Page description";
 
@@ -366,7 +366,7 @@ const PageMetadataManager = () => {
               <div className={styles.formActions}>
                 <div>
                   <strong>{isReviewer ? "Publish immediately" : "Approval required"}</strong>
-                  <span>{isReviewer ? "Your changes will become the live metadata." : "A superadmin will review these changes before they go live."}</span>
+                  <span>{isReviewer ? "Your changes will become the live metadata." : "An admin will review these changes before they go live."}</span>
                 </div>
                 <button type="submit" disabled={saving}>{saving ? "Saving..." : isReviewer ? "Publish metadata" : selectedPage.draft ? "Resubmit changes" : "Submit for approval"}</button>
               </div>

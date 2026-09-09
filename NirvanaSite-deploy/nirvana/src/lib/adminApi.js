@@ -1,8 +1,15 @@
 import { supabase } from "../supabaseClient";
 
-export const SUPERADMIN_ROLES = ["owner", "superadmin"];
+export const CONTENT_REVIEWER_ROLES = ["owner", "admin"];
 
-export const isSuperAdminRole = (role) => SUPERADMIN_ROLES.includes((role || "").toLowerCase());
+export const normalizeAdminRole = (role) => {
+  const value = (role || "").toLowerCase();
+  if (value === "superadmin") return "admin";
+  if (value === "editor" || value === "viewer") return "employee";
+  return value;
+};
+export const isContentReviewerRole = (role) => CONTENT_REVIEWER_ROLES.includes(normalizeAdminRole(role));
+export const isOwnerRole = (role) => normalizeAdminRole(role) === "owner";
 
 export async function adminRequest(path, options = {}) {
   const {
@@ -17,10 +24,19 @@ export async function adminRequest(path, options = {}) {
   const headers = new Headers(options.headers || {});
   headers.set("Authorization", `Bearer ${session.access_token}`);
 
+  const { raw = false, ...fetchOptions } = options;
   const response = await fetch(path, {
-    ...options,
+    ...fetchOptions,
     headers,
   });
+
+  if (raw) {
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || "Admin request failed.");
+    }
+    return response;
+  }
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -41,7 +57,7 @@ export async function getCurrentAdminRole() {
     .maybeSingle();
 
   if (error) return null;
-  return data?.role || null;
+  return data?.role ? normalizeAdminRole(data.role) : null;
 }
 
 export async function submitApprovalRequest({

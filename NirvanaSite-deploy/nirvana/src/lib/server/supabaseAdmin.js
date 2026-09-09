@@ -40,7 +40,7 @@ export function getBearerToken(request) {
 
 export async function requireAdminAccess(
   request,
-  allowedRoles = ["owner", "superadmin", "editor"]
+  allowedRoles = ["owner", "admin", "employee"]
 ) {
   const token = getBearerToken(request);
   if (!token) {
@@ -73,7 +73,8 @@ export async function requireAdminAccess(
     throw error;
   }
 
-  const normalizedRole = String(adminRecord.role || "").toLowerCase();
+  const storedRole = String(adminRecord.role || "").toLowerCase();
+  const normalizedRole = storedRole === "superadmin" ? "admin" : storedRole === "editor" || storedRole === "viewer" ? "employee" : storedRole;
   if (!allowedRoles.includes(normalizedRole)) {
     const error = new Error("Insufficient admin permissions.");
     error.status = 403;

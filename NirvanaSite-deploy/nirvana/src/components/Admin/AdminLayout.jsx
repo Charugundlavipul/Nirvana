@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import PortfolioChatWidget from "../common/PortfolioChatWidget";
+import NotificationCenter from "./HR/NotificationCenter";
 
 const AdminLayout = ({ children, title, subtitle }) => {
     const navigate = useNavigate();
@@ -30,6 +31,7 @@ const AdminLayout = ({ children, title, subtitle }) => {
                         {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}</div>
                     </div>
                     <div className={styles.actions}>
+                        <NotificationCenter />
                         <button onClick={handleSignOut} className={styles.signOutBtn}>
                             Sign Out
                         </button>

@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(request) {
     try {
-        const { adminClient } = await requireAdminAccess(request, ["owner", "superadmin", "editor"]);
+        const { adminClient } = await requireAdminAccess(request, ["owner", "admin", "employee"]);
         const { requestId } = await request.json().catch(() => ({}));
 
         if (!requestId) {

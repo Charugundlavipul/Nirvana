@@ -1,0 +1,50 @@
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+.full { grid-column: 1 / -1; }
+.half { grid-column: span 6; }
+.third { grid-column: span 4; }
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px; box-shadow: 0 8px 28px rgba(15, 23, 42, .05); }
+.card h2, .card h3 { color: #17201b; margin: 0 0 6px; }
+.muted { color: #64748b; font-size: 13px; margin: 0 0 18px; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.fieldWide { grid-column: 1 / -1; }
+.field label { color: #475569; font-size: 12px; font-weight: 700; }
+.input, .select, .textarea { width: 100%; border: 1px solid #dbe2e8; border-radius: 11px; padding: 10px 12px; background: #f8fafc; color: #0f172a; outline: none; }
+.textarea { min-height: 84px; resize: vertical; }
+.input:focus, .select:focus, .textarea:focus { border-color: #426743; box-shadow: 0 0 0 3px rgba(66, 103, 67, .12); background: white; }
+.button { border: 0; border-radius: 10px; padding: 10px 16px; background: #426743; color: #fff; font-weight: 700; cursor: pointer; }
+.button:hover { background: #345536; }
+.button:disabled { opacity: .5; cursor: not-allowed; }
+.secondary { background: #eef2ef; color: #2f4830; }
+.secondary:hover { background: #dde7df; }
+.danger { background: #fff1f2; color: #be123c; }
+.danger:hover { background: #ffe4e6; }
+.actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+.metricRow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.metric { padding: 14px; border-radius: 14px; background: #f4f7f3; }
+.metric span { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.metric strong { color: #253926; font-size: 23px; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #e7ece8; border-radius: 13px; padding: 13px 15px; }
+.rowMain { min-width: 0; }
+.rowMain strong { display: block; color: #1e293b; }
+.rowMain span { color: #64748b; font-size: 12px; }
+.badge { display: inline-flex; border-radius: 999px; padding: 4px 9px; background: #edf4ed; color: #365739; font-size: 11px; font-weight: 800; text-transform: capitalize; }
+.badgePending { background: #fff7df; color: #926617; }
+.badgeDanger { background: #fff0f1; color: #b4233b; }
+.alert { border-radius: 12px; padding: 12px 14px; background: #fff1f2; color: #9f1239; font-size: 13px; margin-bottom: 14px; }
+.success { background: #ecfdf3; color: #166534; }
+.directory { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.person { padding: 13px; border: 1px solid #e5ebe6; border-radius: 12px; }
+.person strong { display: block; }
+.person span { color: #64748b; font-size: 12px; text-transform: capitalize; }
+.split { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(0, 2fr); gap: 20px; }
+.peopleList { display: flex; flex-direction: column; gap: 6px; }
+.personButton { width: 100%; border: 1px solid transparent; border-radius: 10px; background: transparent; padding: 11px; text-align: left; cursor: pointer; }
+.personButton:hover, .personButtonActive { background: #f0f5f0; border-color: #dce8dd; }
+.empty { padding: 28px; text-align: center; color: #64748b; }
+.lineGrid { display: grid; grid-template-columns: 170px 1fr 130px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.notification { border-left: 3px solid #426743; padding: 10px 12px; background: #f7faf7; border-radius: 0 10px 10px 0; }
+.notificationRead { opacity: .62; border-left-color: #cbd5e1; }
+@media (max-width: 900px) { .half, .third { grid-column: 1 / -1; } .split { grid-template-columns: 1fr; } .directory { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { .formGrid, .metricRow, .directory { grid-template-columns: 1fr; } .lineGrid { grid-template-columns: 1fr; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; } .row { align-items: flex-start; flex-direction: column; } }

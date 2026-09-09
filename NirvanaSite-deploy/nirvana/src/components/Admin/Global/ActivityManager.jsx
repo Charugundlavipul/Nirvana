@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -105,7 +105,7 @@ const ActivityManager = () => {
     const handleDelete = async (id) => {
         if (!confirm("Delete this activity?")) return;
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (isContentReviewerRole(adminRole)) {
                 const target = activities.find((activity) => activity.id === id) || null;
                 await supabase.from("activities").delete().eq("id", id);
                 await queueKnowledgeRefresh({
@@ -213,7 +213,7 @@ const ActivityManager = () => {
                 ? activities.find((activity) => activity.id === formData.id) || null
                 : null;
 
-            if (isSuperAdminRole(adminRole)) {
+            if (isContentReviewerRole(adminRole)) {
                 let activityId = formData.id;
 
                 // Exclude property_ids from the direct table payload
@@ -412,7 +412,7 @@ const ActivityManager = () => {
                     <div className={formStyles.actionBar}>
                         <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Cancel</button>
                         <button type="submit" className={formStyles.saveBtn}>
-                            {isSuperAdminRole(adminRole) ? "Save Activity" : "Submit for Approval"}
+                            {isContentReviewerRole(adminRole) ? "Save Activity" : "Submit for Approval"}
                         </button>
                     </div>
                 </form>

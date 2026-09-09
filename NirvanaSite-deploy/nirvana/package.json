@@ -13,6 +13,7 @@
     "google-auth-library": "^10.7.0",
     "mime-types": "^3.0.2",
     "next": "^16.1.7",
+    "pdf-lib": "^1.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
@@ -25,6 +26,7 @@
     "dev": "next dev",
     "start": "next start",
     "build": "next build",
+    "test:hr": "node --experimental-default-type=module --test tests/hr.test.js",
     "cleanup:rejected": "node scripts/cleanup_rejected_requests.js",
     "preview": "next start"
   },

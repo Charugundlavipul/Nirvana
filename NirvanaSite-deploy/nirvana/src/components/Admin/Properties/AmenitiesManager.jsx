@@ -5,7 +5,7 @@ import { ICON_OPTIONS, BANK_OPTIONS, getAmenityIcon } from "../../../lib/amenity
 import {
     fetchOpenPropertyRequests,
     getCurrentAdminRole,
-    isSuperAdminRole,
+    isContentReviewerRole,
     parseApprovalObject,
     submitOrUpdateApproval,
     queueKnowledgeRefresh
@@ -118,7 +118,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
     const [draftById, setDraftById] = useState({});
     const [pendingDrafts, setPendingDrafts] = useState({ creates: [], updatesById: {}, deletesById: {} });
     const [savingAmenityId, setSavingAmenityId] = useState(null);
-    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
+    const canEditDirectly = isDraft || isContentReviewerRole(adminRole);
 
     useEffect(() => {
         if (propertyId) loadAmenities();

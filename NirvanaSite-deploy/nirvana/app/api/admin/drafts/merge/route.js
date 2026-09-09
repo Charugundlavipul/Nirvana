@@ -13,8 +13,8 @@ const parseApprovalObject = (val) => {
 
 export async function POST(request) {
     try {
-        // Authenticate as a valid admin/editor, and get the service-role client (adminClient)
-        const { adminClient, user, role } = await requireAdminAccess(request, ["owner", "superadmin", "editor"]);
+        // Authenticate as an owner/admin/employee and use the service-role client after authorization.
+        const { adminClient, user, role } = await requireAdminAccess(request, ["owner", "admin", "employee"]);
         const requestPayload = await request.json().catch(() => ({}));
 
         const {
@@ -47,7 +47,7 @@ export async function POST(request) {
             const ownerId = existing.submitted_by ? String(existing.submitted_by) : "";
             const userId = String(user.id || "");
             const isOwner = ownerId && ownerId === userId;
-            const canManageAnyDraft = role === "owner" || role === "superadmin";
+            const canManageAnyDraft = role === "owner" || role === "admin";
 
             if (!isOwner && !canManageAnyDraft) {
                 return apiErrorResponse(new Error("You can only edit your own draft requests."), 403);

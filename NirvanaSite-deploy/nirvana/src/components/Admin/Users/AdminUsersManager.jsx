@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
-import { getCurrentAdminRole, isSuperAdminRole } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isOwnerRole } from "../../../lib/adminApi";
 import {
   createAdminUser,
   deleteAdminUser,
@@ -10,7 +10,7 @@ import {
   updateAdminUserRole,
 } from "../../../lib/adminUsersApi";
 
-const ROLE_OPTIONS = ["superadmin", "owner", "editor"];
+const ROLE_OPTIONS = ["admin", "owner", "employee"];
 
 const panel = {
   border: "1px solid #e5e7eb",
@@ -31,7 +31,7 @@ const AdminUsersManager = () => {
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
-    role: "editor",
+    role: "employee",
   });
 
   const [rowEdit, setRowEdit] = useState({});
@@ -42,7 +42,7 @@ const AdminUsersManager = () => {
     try {
       const currentRole = await getCurrentAdminRole();
       setRole(currentRole);
-      if (!isSuperAdminRole(currentRole)) {
+      if (!isOwnerRole(currentRole)) {
         setLoading(false);
         return;
       }
@@ -71,7 +71,7 @@ const AdminUsersManager = () => {
     const current = rowEdit[u.user_id] || {};
     return {
       email: current.email ?? (u.email || ""),
-      role: current.role ?? (u.role || "editor"),
+      role: current.role ?? (u.role || "employee"),
       password: current.password ?? "",
     };
   };
@@ -94,7 +94,7 @@ const AdminUsersManager = () => {
     setBusyUserId("create");
     try {
       await createAdminUser(newUser);
-      setNewUser({ email: "", password: "", role: "editor" });
+      setNewUser({ email: "", password: "", role: "employee" });
       await load();
     } catch (e) {
       alert(e.message || "Failed to create admin user");
@@ -166,13 +166,13 @@ const AdminUsersManager = () => {
     );
   }
 
-  if (!isSuperAdminRole(role)) {
+  if (!isOwnerRole(role)) {
     return (
       <AdminLayout title="Admin Users" subtitle="Superadmin management panel">
         <div style={panel}>
           <h3 style={{ margin: 0 }}>Access Restricted</h3>
           <p style={{ marginTop: "8px", color: "#555" }}>
-            Only owner/superadmin can manage admin users.
+            Only owners can manage employee accounts.
           </p>
         </div>
       </AdminLayout>

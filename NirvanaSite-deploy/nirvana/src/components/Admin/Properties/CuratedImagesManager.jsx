@@ -4,7 +4,7 @@ import { supabase } from "../../../supabaseClient";
 import {
     fetchOpenPropertyRequests,
     getCurrentAdminRole,
-    isSuperAdminRole,
+    isContentReviewerRole,
     parseApprovalObject,
     submitOrUpdateApproval,
     queueKnowledgeRefresh
@@ -20,7 +20,7 @@ const CuratedImagesManager = ({ propertyId, isDraft = false }) => {
     const [uploading, setUploading] = useState({ home: false, bg: false, secondary: false });
     const [adminRole, setAdminRole] = useState(null);
     const fileInputRefs = useRef({});
-    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
+    const canEditDirectly = isDraft || isContentReviewerRole(adminRole);
 
     useEffect(() => {
         loadImages();

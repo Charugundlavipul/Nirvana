@@ -258,13 +258,9 @@ CREATE INDEX IF NOT EXISTS activities_title_idx ON activities (title);
 -- 8b. Admin users and role helper
 CREATE TABLE IF NOT EXISTS admin_users (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL CHECK (role IN ('owner', 'superadmin', 'editor')),
+    role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'employee')),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
-UPDATE admin_users
-SET role = 'editor'
-WHERE role = 'viewer';
 
 DO $$
 BEGIN
@@ -273,9 +269,11 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'admin_users'
     ) THEN
         ALTER TABLE admin_users DROP CONSTRAINT IF EXISTS admin_users_role_check;
+        UPDATE admin_users SET role = 'admin' WHERE role = 'superadmin';
+        UPDATE admin_users SET role = 'employee' WHERE role IN ('editor', 'viewer');
         ALTER TABLE admin_users
             ADD CONSTRAINT admin_users_role_check
-            CHECK (role IN ('owner', 'superadmin', 'editor'));
+            CHECK (role IN ('owner', 'admin', 'employee'));
     END IF;
 EXCEPTION WHEN duplicate_object THEN
     NULL;
@@ -430,8 +428,8 @@ DECLARE
     v_suffix INT;
 BEGIN
     v_actor_role := public.current_admin_role();
-    IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'superadmin') THEN
-        RAISE EXCEPTION 'Only superadmin/owner can approve or reject requests';
+    IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'admin') THEN
+        RAISE EXCEPTION 'Only admin/owner can approve or reject requests';
     END IF;
 
     SELECT * INTO req
@@ -882,8 +880,8 @@ DECLARE
     v_actor_role TEXT;
 BEGIN
     v_actor_role := public.current_admin_role();
-    IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'superadmin') THEN
-        RAISE EXCEPTION 'Only superadmin/owner can approve or reject requests';
+    IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'admin') THEN
+        RAISE EXCEPTION 'Only admin/owner can approve or reject requests';
     END IF;
 
     SELECT * INTO req FROM approval_requests WHERE id = p_request_id FOR UPDATE;
@@ -1035,7 +1033,7 @@ BEGIN
     ON approval_requests FOR INSERT
         WITH CHECK (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         );
 END;
 $$;
@@ -1043,12 +1041,13 @@ $$;
 DO $$
 BEGIN
     DROP POLICY IF EXISTS "Users can view own approval requests and superadmins see all" ON approval_requests;
-    CREATE POLICY "Users can view own approval requests and superadmins see all"
+    DROP POLICY IF EXISTS "Users can view own approval requests and reviewers see all" ON approval_requests;
+    CREATE POLICY "Users can view own approval requests and reviewers see all"
     ON approval_requests FOR SELECT
         USING (
             auth.role() = 'service_role'
             OR submitted_by = auth.uid()
-            OR public.current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'admin')
         );
 END;
 $$;
@@ -1060,11 +1059,11 @@ BEGIN
     ON approval_requests FOR UPDATE
         USING (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'admin')
         )
         WITH CHECK (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'admin')
         );
 END;
 $$;
@@ -1077,7 +1076,7 @@ BEGIN
         USING (
             auth.role() = 'service_role'
             OR user_id = auth.uid()
-            OR public.current_admin_role() IN ('owner', 'superadmin')
+            OR public.current_admin_role() IN ('owner', 'admin')
         );
 END;
 $$;
@@ -1088,6 +1087,7 @@ BEGIN
     DROP POLICY IF EXISTS "Superadmins can view all admin users" ON admin_users;
     DROP POLICY IF EXISTS "Superadmins can add admin users" ON admin_users;
     DROP POLICY IF EXISTS "Superadmins can delete admin users" ON admin_users;
+    DROP POLICY IF EXISTS "Admins can view employee roles" ON admin_users;
 
     -- 1. Owners have full control over all admin users
     CREATE POLICY "Owners can manage admin users"
@@ -1095,29 +1095,10 @@ BEGIN
         USING (auth.role() = 'service_role' OR public.current_admin_role() = 'owner')
         WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() = 'owner');
 
-    -- 2. Superadmins can view all admin users
-    CREATE POLICY "Superadmins can view all admin users"
+    -- Admins can see role assignments for the staff directory, but cannot mutate accounts.
+    CREATE POLICY "Admins can view employee roles"
     ON admin_users FOR SELECT
-        USING (public.current_admin_role() = 'superadmin');
-
-    -- 3. Superadmins can add editors or other superadmins (but never owners)
-    CREATE POLICY "Superadmins can add admin users"
-    ON admin_users FOR INSERT
-        WITH CHECK (
-            public.current_admin_role() = 'superadmin' 
-            AND role IN ('editor', 'superadmin')
-        );
-
-    -- 4. Superadmins can remove editors or other superadmins (but never owners)
-    CREATE POLICY "Superadmins can delete admin users"
-    ON admin_users FOR DELETE
-        USING (
-            public.current_admin_role() = 'superadmin' 
-            AND role IN ('editor', 'superadmin')
-        );
-
-    -- Note: Superadmins explicitly lack UPDATE permission to prevent role changes,
-    -- and their INSERT/DELETE policies prevent them from touching owner accounts.
+        USING (public.current_admin_role() = 'admin');
 END;
 $$;
 
@@ -1126,8 +1107,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage properties" ON properties;
     CREATE POLICY "Admins can manage properties"
     ON properties FOR ALL
-    USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-    WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+    USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+    WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
 END;
 $$;
 
@@ -1136,8 +1117,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage curated images" ON property_curated_images;
     CREATE POLICY "Admins can manage curated images"
     ON property_curated_images FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1147,8 +1128,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage gallery images" ON property_images;
     CREATE POLICY "Admins can manage gallery images"
     ON property_images FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1158,8 +1139,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage highlight images" ON property_highlight_images;
     CREATE POLICY "Admins can manage highlight images"
     ON property_highlight_images FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1169,8 +1150,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage reviews" ON reviews;
     CREATE POLICY "Admins can manage reviews"
     ON reviews FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1180,8 +1161,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage faqs" ON faqs;
     CREATE POLICY "Admins can manage faqs"
     ON faqs FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1191,8 +1172,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage amenities" ON amenities;
     CREATE POLICY "Admins can manage amenities"
     ON amenities FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1202,8 +1183,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage activities" ON activities;
     CREATE POLICY "Admins can manage activities"
     ON activities FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1213,8 +1194,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property activities" ON property_activities;
     CREATE POLICY "Admins can manage property activities"
     ON property_activities FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1234,8 +1215,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property reviews" ON property_reviews;
     CREATE POLICY "Admins can manage property reviews"
     ON property_reviews FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1254,8 +1235,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage property faqs" ON property_faqs;
     CREATE POLICY "Admins can manage property faqs"
     ON property_faqs FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
 END;
 $$;
 
@@ -1288,7 +1269,7 @@ BEGIN
         bucket_id IN ('property-assets', 'profile-pictures')
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1303,14 +1284,14 @@ BEGIN
         bucket_id IN ('property-assets', 'profile-pictures')
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     )
     WITH CHECK (
         bucket_id IN ('property-assets', 'profile-pictures')
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1325,7 +1306,7 @@ BEGIN
         bucket_id IN ('property-assets', 'profile-pictures')
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1434,7 +1415,7 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage site content" ON site_content;
     CREATE POLICY "Admins can manage site content"
     ON site_content FOR ALL
-        USING (public.current_admin_role() IN ('owner', 'superadmin'));
+        USING (public.current_admin_role() IN ('owner', 'admin'));
 END;
 $$;
 
@@ -1820,8 +1801,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge hubs" ON knowledge_hubs;
     CREATE POLICY "Admins can manage knowledge hubs"
     ON knowledge_hubs FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1831,8 +1812,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sources" ON knowledge_sources;
     CREATE POLICY "Admins can manage knowledge sources"
     ON knowledge_sources FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1842,8 +1823,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sections" ON knowledge_sections;
     CREATE POLICY "Admins can manage knowledge sections"
     ON knowledge_sections FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1853,8 +1834,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge questions" ON knowledge_questions;
     CREATE POLICY "Admins can manage knowledge questions"
     ON knowledge_questions FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1864,8 +1845,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge sync runs" ON knowledge_sync_runs;
     CREATE POLICY "Admins can manage knowledge sync runs"
     ON knowledge_sync_runs FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1875,8 +1856,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can manage knowledge chunks" ON knowledge_chunks;
     CREATE POLICY "Admins can manage knowledge chunks"
     ON knowledge_chunks FOR ALL
-        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'))
-        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'superadmin', 'editor'));
+        USING (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'))
+        WITH CHECK (auth.role() = 'service_role' OR public.current_admin_role() IN ('owner', 'admin', 'employee'));
     
 END;
 $$;
@@ -1895,7 +1876,7 @@ BEGIN
         bucket_id = 'knowledge-sources'
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1910,7 +1891,7 @@ BEGIN
         bucket_id = 'knowledge-sources'
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1925,14 +1906,14 @@ BEGIN
         bucket_id = 'knowledge-sources'
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     )
     WITH CHECK (
         bucket_id = 'knowledge-sources'
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -1947,7 +1928,7 @@ BEGIN
         bucket_id = 'knowledge-sources'
         AND (
             auth.role() = 'service_role'
-            OR public.current_admin_role() IN ('owner', 'superadmin', 'editor')
+            OR public.current_admin_role() IN ('owner', 'admin', 'employee')
         )
     );
 END;
@@ -2165,3 +2146,312 @@ EXCEPTION WHEN duplicate_object THEN
     NULL;
 END;
 $$;
+
+-- ============================================================
+-- Employee self-service, leave management, and payroll
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.current_user_is_owner()
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT COALESCE(public.current_admin_role() = 'owner', FALSE)
+$$;
+
+CREATE TABLE IF NOT EXISTS employee_directory (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE RESTRICT,
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS employee_private_profiles (
+    user_id UUID PRIMARY KEY REFERENCES employee_directory(user_id) ON DELETE CASCADE,
+    phone TEXT,
+    address_line_1 TEXT,
+    address_line_2 TEXT,
+    city TEXT,
+    region TEXT,
+    postal_code TEXT,
+    country TEXT,
+    job_title TEXT,
+    hire_date DATE,
+    employment_status TEXT NOT NULL DEFAULT 'active'
+        CHECK (employment_status IN ('active', 'inactive')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS employee_compensation (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    annual_salary NUMERIC(14, 2) NOT NULL CHECK (annual_salary >= 0),
+    currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency ~ '^[A-Z]{3}$'),
+    pay_frequency TEXT NOT NULL CHECK (pay_frequency IN ('weekly', 'biweekly', 'semimonthly', 'monthly')),
+    effective_from DATE NOT NULL,
+    effective_to DATE,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (effective_to IS NULL OR effective_to >= effective_from)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS employee_compensation_one_current_idx
+ON employee_compensation(user_id) WHERE effective_to IS NULL;
+CREATE INDEX IF NOT EXISTS employee_compensation_user_dates_idx
+ON employee_compensation(user_id, effective_from DESC);
+
+CREATE TABLE IF NOT EXISTS employee_bank_accounts (
+    user_id UUID PRIMARY KEY REFERENCES employee_directory(user_id) ON DELETE CASCADE,
+    bank_name TEXT,
+    account_type TEXT CHECK (account_type IN ('checking', 'savings')),
+    account_last4 TEXT CHECK (account_last4 IS NULL OR account_last4 ~ '^[0-9]{4}$'),
+    routing_last4 TEXT CHECK (routing_last4 IS NULL OR routing_last4 ~ '^[0-9]{4}$'),
+    encrypted_payload TEXT NOT NULL,
+    encryption_iv TEXT NOT NULL,
+    encryption_tag TEXT NOT NULL,
+    key_version INTEGER NOT NULL DEFAULT 1,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS leave_entitlements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    calendar_year INTEGER NOT NULL CHECK (calendar_year BETWEEN 2000 AND 2200),
+    allowance_days NUMERIC(6, 2) NOT NULL DEFAULT 0 CHECK (allowance_days >= 0),
+    override_reason TEXT,
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, calendar_year)
+);
+
+CREATE TABLE IF NOT EXISTS leave_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    day_portion TEXT NOT NULL DEFAULT 'full' CHECK (day_portion IN ('full', 'half')),
+    requested_days NUMERIC(6, 2) NOT NULL CHECK (requested_days > 0),
+    reason TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled', 'reversed')),
+    reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMPTZ,
+    decision_note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_date >= start_date),
+    CHECK (EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM end_date)),
+    CHECK (day_portion = 'full' OR start_date = end_date)
+);
+
+CREATE INDEX IF NOT EXISTS leave_requests_user_status_idx
+ON leave_requests(user_id, status, start_date DESC);
+
+CREATE TABLE IF NOT EXISTS employee_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('leave_decision', 'paystub_ready', 'profile_notice')),
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    action_url TEXT,
+    read_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS employee_notifications_user_idx
+ON employee_notifications(user_id, read_at, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS payroll_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    pay_date DATE NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency ~ '^[A-Z]{3}$'),
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'finalized', 'paid', 'void')),
+    notes TEXT,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    finalized_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    finalized_at TIMESTAMPTZ,
+    paid_at TIMESTAMPTZ,
+    voided_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (period_end >= period_start)
+);
+
+CREATE TABLE IF NOT EXISTS employee_paystubs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payroll_run_id UUID NOT NULL REFERENCES payroll_runs(id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    paystub_number TEXT UNIQUE,
+    employee_name_snapshot TEXT NOT NULL,
+    job_title_snapshot TEXT,
+    annual_salary_snapshot NUMERIC(14, 2),
+    pay_frequency_snapshot TEXT,
+    currency TEXT NOT NULL CHECK (currency ~ '^[A-Z]{3}$'),
+    gross_pay NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    employee_taxes NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    deductions NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    reimbursements NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    employer_taxes NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    net_pay NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    pdf_path TEXT,
+    replacement_for UUID REFERENCES employee_paystubs(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(payroll_run_id, user_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS payroll_runs_active_period_idx
+ON payroll_runs(period_start, period_end, pay_date, currency) WHERE status <> 'void';
+
+CREATE INDEX IF NOT EXISTS employee_paystubs_user_idx
+ON employee_paystubs(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS paystub_line_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paystub_id UUID NOT NULL REFERENCES employee_paystubs(id) ON DELETE CASCADE,
+    line_type TEXT NOT NULL CHECK (line_type IN (
+        'regular_earnings', 'additional_earnings', 'employee_tax',
+        'pretax_deduction', 'posttax_deduction', 'reimbursement', 'employer_tax'
+    )),
+    description TEXT NOT NULL,
+    amount NUMERIC(14, 2) NOT NULL CHECK (amount >= 0),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hr_audit_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    subject_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    event_type TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS hr_audit_events_created_idx ON hr_audit_events(created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.ensure_employee_profile()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    INSERT INTO public.employee_directory(user_id) VALUES (NEW.user_id)
+    ON CONFLICT (user_id) DO NOTHING;
+    INSERT INTO public.employee_private_profiles(user_id) VALUES (NEW.user_id)
+    ON CONFLICT (user_id) DO NOTHING;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS admin_users_ensure_employee_profile ON admin_users;
+CREATE TRIGGER admin_users_ensure_employee_profile
+AFTER INSERT ON admin_users
+FOR EACH ROW EXECUTE FUNCTION public.ensure_employee_profile();
+
+INSERT INTO employee_directory(user_id)
+SELECT user_id FROM admin_users
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO employee_private_profiles(user_id)
+SELECT user_id FROM employee_directory
+ON CONFLICT (user_id) DO NOTHING;
+
+DO $$
+DECLARE
+    table_name TEXT;
+BEGIN
+    FOREACH table_name IN ARRAY ARRAY[
+        'employee_directory', 'employee_private_profiles', 'leave_entitlements',
+        'leave_requests', 'payroll_runs', 'employee_paystubs'
+    ] LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_trigger
+            WHERE tgname = table_name || '_set_updated_at'
+        ) THEN
+            EXECUTE FORMAT(
+                'CREATE TRIGGER %I BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION set_updated_at()',
+                table_name || '_set_updated_at', table_name
+            );
+        END IF;
+    END LOOP;
+END;
+$$;
+
+ALTER TABLE employee_directory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_private_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_compensation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_bank_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leave_entitlements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_paystubs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE paystub_line_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hr_audit_events ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS employee_directory_read ON employee_directory;
+    CREATE POLICY employee_directory_read ON employee_directory FOR SELECT
+        USING (public.current_admin_role() IN ('owner', 'admin', 'employee'));
+
+    DROP POLICY IF EXISTS employee_private_profiles_read ON employee_private_profiles;
+    CREATE POLICY employee_private_profiles_read ON employee_private_profiles FOR SELECT
+        USING (user_id = auth.uid() OR public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS employee_compensation_read ON employee_compensation;
+    CREATE POLICY employee_compensation_read ON employee_compensation FOR SELECT
+        USING (user_id = auth.uid() OR public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS leave_entitlements_read ON leave_entitlements;
+    CREATE POLICY leave_entitlements_read ON leave_entitlements FOR SELECT
+        USING (user_id = auth.uid() OR public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS leave_requests_read ON leave_requests;
+    CREATE POLICY leave_requests_read ON leave_requests FOR SELECT
+        USING (user_id = auth.uid() OR public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS employee_notifications_read ON employee_notifications;
+    CREATE POLICY employee_notifications_read ON employee_notifications FOR SELECT
+        USING (user_id = auth.uid());
+
+    DROP POLICY IF EXISTS payroll_runs_read ON payroll_runs;
+    CREATE POLICY payroll_runs_read ON payroll_runs FOR SELECT
+        USING (public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS employee_paystubs_read ON employee_paystubs;
+    CREATE POLICY employee_paystubs_read ON employee_paystubs FOR SELECT
+        USING (user_id = auth.uid() OR public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS paystub_line_items_read ON paystub_line_items;
+    CREATE POLICY paystub_line_items_read ON paystub_line_items FOR SELECT
+        USING (EXISTS (
+            SELECT 1 FROM employee_paystubs p
+            WHERE p.id = paystub_id
+              AND (p.user_id = auth.uid() OR public.current_user_is_owner())
+        ));
+
+    DROP POLICY IF EXISTS hr_audit_events_owner_read ON hr_audit_events;
+    CREATE POLICY hr_audit_events_owner_read ON hr_audit_events FOR SELECT
+        USING (public.current_user_is_owner());
+END;
+$$;
+
+GRANT SELECT ON employee_directory, employee_private_profiles, employee_compensation,
+    leave_entitlements, leave_requests, employee_notifications, payroll_runs,
+    employee_paystubs, paystub_line_items, hr_audit_events TO authenticated;
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('paystubs', 'paystubs', FALSE, 5242880, ARRAY['application/pdf'])
+ON CONFLICT (id) DO UPDATE SET public = FALSE;

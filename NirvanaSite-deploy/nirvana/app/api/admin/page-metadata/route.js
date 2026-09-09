@@ -169,7 +169,7 @@ export async function GET(request) {
     if (approvalsResult.error) throw approvalsResult.error;
 
     const overrides = new Map((metadataResult.data || []).map((row) => [row.page_key, row]));
-    const isReviewer = role === "owner" || role === "superadmin";
+    const isReviewer = role === "owner" || role === "admin";
     const drafts = (approvalsResult.data || []).filter((row) => isReviewer || row.submitted_by === user.id);
     const draftByPage = new Map();
     for (const draft of drafts) {
@@ -224,7 +224,7 @@ export async function POST(request) {
       .maybeSingle();
     if (existingError) throw existingError;
 
-    const isReviewer = role === "owner" || role === "superadmin";
+    const isReviewer = role === "owner" || role === "admin";
     if (isReviewer) {
       const payload = toDatabasePayload(existing?.id || randomUUID(), normalizedPageKey, metadata, user.id);
       const { data, error } = await adminClient
@@ -269,7 +269,7 @@ export async function POST(request) {
       return normalizePageKey(payload.page_key) === normalizedPageKey;
     });
     if (matchingDraft && matchingDraft.submitted_by !== user.id) {
-      const error = new Error("Another editor already has a pending metadata change for this page.");
+      const error = new Error("Another employee already has a pending metadata change for this page.");
       error.status = 409;
       throw error;
     }
@@ -310,7 +310,7 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    await requireAdminAccess(request, ["owner", "superadmin"]);
+    await requireAdminAccess(request, ["owner", "admin"]);
     const body = await request.json().catch(() => ({}));
     const pageKey = normalizePageKey(body.pageKey);
     if (!pageKey) {

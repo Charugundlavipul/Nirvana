@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, submitOrUpdateApproval, queueKnowledgeRefresh } from "../../../lib/adminApi";
 import listStyles from "../Properties/PropertyList.module.css";
 import formStyles from "../Properties/PropertyEditor.module.css";
 
@@ -102,7 +102,7 @@ const FaqManager = () => {
     const handleDelete = async (id) => {
         if (!confirm("Delete this FAQ?")) return;
         try {
-            if (isSuperAdminRole(adminRole)) {
+            if (isContentReviewerRole(adminRole)) {
                 const target = faqs.find((faq) => faq.id === id) || null;
                 await supabase.from("faqs").delete().eq("id", id);
                 await queueKnowledgeRefresh({
@@ -181,7 +181,7 @@ const FaqManager = () => {
                 ? faqs.find((faq) => faq.id === formData.id) || null
                 : null;
 
-            if (isSuperAdminRole(adminRole)) {
+            if (isContentReviewerRole(adminRole)) {
                 let faqId = formData.id;
 
                 // Exclude property_ids from the direct table payload
@@ -362,7 +362,7 @@ const FaqManager = () => {
                     <div className={formStyles.actionBar}>
                         <button type="button" className={formStyles.cancelBtn} onClick={() => setIsEditing(false)}>Cancel</button>
                         <button type="submit" className={formStyles.saveBtn}>
-                            {isSuperAdminRole(adminRole) ? "Save FAQ" : "Submit for Approval"}
+                            {isContentReviewerRole(adminRole) ? "Save FAQ" : "Submit for Approval"}
                         </button>
                     </div>
                 </form>

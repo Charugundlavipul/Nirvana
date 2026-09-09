@@ -7,7 +7,7 @@ import MediaManager from "./MediaManager";
 import CuratedImagesManager from "./CuratedImagesManager";
 import AmenitiesManager from "./AmenitiesManager";
 import SpacesManager from "./SpacesManager";
-import { getCurrentAdminRole, isSuperAdminRole, submitOrUpdateApproval, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest, queueKnowledgeRefresh, adminRequest } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, submitOrUpdateApproval, findOpenRequest, findRevisionRequest, parseApprovalObject, resubmitApprovalRequest, queueKnowledgeRefresh, adminRequest } from "../../../lib/adminApi";
 import { isValidHospitablePropertyId, normalizeHospitablePropertyId } from "../../../lib/hospitablePropertyId";
 import RichTextContent from "../../common/RichTextContent";
 import { sanitizeRichText } from "../../../lib/richText";
@@ -118,12 +118,12 @@ const PropertyEditor = () => {
     });
 
     const [propertyId, setPropertyId] = useState(null);
-    const superAdmin = isSuperAdminRole(adminRole);
+    const canReview = isContentReviewerRole(adminRole);
     const hospitableWidgetValidation = useMemo(
         () => parseHospitableWidgetCode(formData.hospitable_widget_code),
         [formData.hospitable_widget_code]
     );
-    const approvalRequiredForEdits = !superAdmin && isPublished;
+    const approvalRequiredForEdits = !canReview && isPublished;
     const isDraftProperty = !isNew && !isPublished;
 
     const draftChangedFields = useMemo(() => {
@@ -195,7 +195,7 @@ const PropertyEditor = () => {
 
     useEffect(() => {
         const loadOpenDraft = async () => {
-            if (!propertyId || superAdmin || !isPublished) {
+            if (!propertyId || canReview || !isPublished) {
                 setPropertyDraftRequest(null);
                 return;
             }
@@ -219,7 +219,7 @@ const PropertyEditor = () => {
         };
 
         loadOpenDraft();
-    }, [propertyId, superAdmin, isPublished]);
+    }, [propertyId, canReview, isPublished]);
 
     const loadProperty = async () => {
         try {
@@ -344,7 +344,7 @@ const PropertyEditor = () => {
         try {
             const payload = buildPropertyPayload(formData);
 
-            if (superAdmin) {
+            if (canReview) {
                 // Superadmins save directly and always publish
                 payload.is_published = true;
                 validatePublishRequirements(payload);
@@ -458,7 +458,7 @@ const PropertyEditor = () => {
             });
             if (requestError) throw requestError;
 
-            alert("Publish request submitted to superadmin for approval.");
+            alert("Publish request submitted to an admin for approval.");
             navigate("/admin/properties");
         } catch (error) {
             console.error("Error submitting publish request:", error);
@@ -468,7 +468,7 @@ const PropertyEditor = () => {
         }
     };
 
-    const saveButtonLabel = superAdmin
+    const saveButtonLabel = canReview
         ? "Save Changes"
         : isNew
             ? "Create Draft"
@@ -536,7 +536,7 @@ const PropertyEditor = () => {
                 <div className={styles.tabContent}>
                     {activeTab === "details" && (
                         <form onSubmit={handleSave} className={styles.formGrid}>
-                            {!superAdmin && !isPublished && !isNew && (
+                            {!canReview && !isPublished && !isNew && (
                                 <div className={styles.card} style={{ borderLeft: "4px solid #f59e0b", background: "#fffbeb" }}>
                                     <h3 style={{ color: "#b45309" }}>Draft Property</h3>
                                     <p style={{ marginTop: "8px", color: "#92400e" }}>
@@ -544,7 +544,7 @@ const PropertyEditor = () => {
                                     </p>
                                 </div>
                             )}
-                            {!superAdmin && !isNew && isPublished && (
+                            {!canReview && !isNew && isPublished && (
                                 <div className={styles.card}>
                                     <h3>Approval Flow Enabled</h3>
                                     <p style={{ marginTop: "8px", color: "#555" }}>
@@ -552,7 +552,7 @@ const PropertyEditor = () => {
                                     </p>
                                 </div>
                             )}
-                            {!superAdmin && isPublished && propertyDraftRequest && (
+                            {!canReview && isPublished && propertyDraftRequest && (
                                 <div className={styles.card} style={{ borderLeft: "4px solid #0ea5e9", background: "#f0f9ff" }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                         <div>
@@ -759,13 +759,13 @@ const PropertyEditor = () => {
                                 </div>
                             </div>
 
-                            {!superAdmin && (
+                            {!canReview && (
                                 <div className={styles.card}>
                                     <h3>Note to Superadmin</h3>
                                     <textarea
                                         value={editorNote}
                                         onChange={(e) => setEditorNote(e.target.value)}
-                                        placeholder="Add a note for the superadmin (e.g. 'Added new photos, please review')..."
+                                        placeholder="Add a note for the admin (e.g. 'Added new photos, please review')..."
                                         rows={2}
                                         style={{
                                             width: "100%",
@@ -785,7 +785,7 @@ const PropertyEditor = () => {
                                 <button type="submit" className={styles.saveBtn} disabled={saving}>
                                     {saving ? "Saving..." : saveButtonLabel}
                                 </button>
-                                {!superAdmin && !isNew && !isPublished && (
+                                {!canReview && !isNew && !isPublished && (
                                     <button
                                         type="button"
                                         className={styles.saveBtn}
@@ -800,7 +800,7 @@ const PropertyEditor = () => {
                         </form>
                     )}
 
-                    {activeTab === "media" && propertyId && superAdmin && (
+                    {activeTab === "media" && propertyId && canReview && (
                         <>
                             <CuratedImagesManager propertyId={propertyId} isDraft={isDraftProperty} />
                             <div style={{ marginTop: '24px' }}></div>
@@ -808,7 +808,7 @@ const PropertyEditor = () => {
                         </>
                     )}
 
-                    {activeTab === "media" && propertyId && !superAdmin && (
+                    {activeTab === "media" && propertyId && !canReview && (
                         <>
                             <div className={styles.card}>
                                 <h3>{approvalRequiredForEdits ? "Approval Flow Enabled" : "Draft Mode Enabled"}</h3>
@@ -826,7 +826,7 @@ const PropertyEditor = () => {
 
                     {activeTab === "spaces" && propertyId && (
                         <>
-                            {!superAdmin && isPublished && (
+                            {!canReview && isPublished && (
                                 <div className={styles.card}>
                                     <h3>Approval Flow Enabled</h3>
                                     <p style={{ marginTop: "8px", color: "#555" }}>

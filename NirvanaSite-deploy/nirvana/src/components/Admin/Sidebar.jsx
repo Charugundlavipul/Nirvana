@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight, FaSearch } from "react-icons/fa";
-import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts } from "../../lib/adminApi";
+import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight, FaSearch, FaUserCircle, FaCalendarAlt, FaMoneyCheckAlt } from "react-icons/fa";
+import { getCurrentAdminRole, isContentReviewerRole, isOwnerRole, normalizeAdminRole, fetchMyPendingDrafts } from "../../lib/adminApi";
 
 const NAV_ITEMS = [
     { label: "Dashboard", path: "/admin", exact: true, icon: <FaChartPie size={18} />, draftBadgeKey: "all" },
@@ -11,12 +11,15 @@ const NAV_ITEMS = [
     { label: "Subscribers", path: "/admin/subscribers", icon: <FaUsers size={18} /> },
     { label: "Global Content", path: "/admin/global", icon: <FaGlobeAmericas size={18} /> },
     { label: "Page Metadata", path: "/admin/metadata", icon: <FaSearch size={18} /> },
-    { label: "Admins", path: "/admin/admins", icon: <FaUserShield size={18} />, superOnly: true },
-    { label: "Approvals", path: "/admin/approvals", icon: <FaCheckSquare size={18} />, superOnly: true },
+    { label: "My Profile", path: "/admin/profile", icon: <FaUserCircle size={18} /> },
+    { label: "Leave", path: "/admin/leave", icon: <FaCalendarAlt size={18} /> },
+    { label: "People", path: "/admin/people", icon: <FaUserShield size={18} />, ownerOnly: true },
+    { label: "Payroll", path: "/admin/payroll", icon: <FaMoneyCheckAlt size={18} />, ownerOnly: true },
+    { label: "Approvals", path: "/admin/approvals", icon: <FaCheckSquare size={18} />, reviewerOnly: true },
 ];
 
 const Sidebar = ({ isOpen, toggle }) => {
-    const [adminRole, setAdminRole] = useState(() => sessionStorage.getItem("nirvana_admin_role") || null);
+    const [adminRole, setAdminRole] = useState(() => normalizeAdminRole(sessionStorage.getItem("nirvana_admin_role")) || null);
     const [draftCount, setDraftCount] = useState(0);
 
     useEffect(() => {
@@ -30,17 +33,18 @@ const Sidebar = ({ isOpen, toggle }) => {
 
     useEffect(() => {
         if (adminRole === null) return;
-        if (!isSuperAdminRole(adminRole)) {
+        if (!isContentReviewerRole(adminRole)) {
             fetchMyPendingDrafts().then((drafts) => {
                 setDraftCount(drafts.length);
             });
         }
     }, [adminRole]);
 
-    const isSuperAdmin = isSuperAdminRole(adminRole);
+    const isReviewer = isContentReviewerRole(adminRole);
+    const isOwner = isOwnerRole(adminRole);
 
     const visibleItems = NAV_ITEMS.filter(
-        (item) => !item.superOnly || isSuperAdmin
+        (item) => (!item.reviewerOnly || isReviewer) && (!item.ownerOnly || isOwner)
     );
 
     return (
@@ -86,13 +90,13 @@ const Sidebar = ({ isOpen, toggle }) => {
                             </span>
                         )}
 
-                        {!isSuperAdmin && item.draftBadgeKey === "all" && draftCount > 0 && isOpen && (
+                        {!isReviewer && item.draftBadgeKey === "all" && draftCount > 0 && isOpen && (
                             <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm">
                                 {draftCount}
                             </span>
                         )}
                         
-                        {!isSuperAdmin && item.draftBadgeKey === "all" && draftCount > 0 && !isOpen && (
+                        {!isReviewer && item.draftBadgeKey === "all" && draftCount > 0 && !isOpen && (
                             <span className="absolute right-3 top-2 flex h-2 w-2 rounded-full bg-rose-500"></span>
                         )}
                     </NavLink>

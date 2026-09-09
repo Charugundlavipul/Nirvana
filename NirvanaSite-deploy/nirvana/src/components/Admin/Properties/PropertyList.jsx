@@ -4,7 +4,7 @@ import { FaBed, FaUsers } from "react-icons/fa";
 import AdminLayout from "../AdminLayout";
 import styles from "./PropertyList.module.css";
 import { supabase } from "../../../supabaseClient";
-import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, getApprovalRequestPropertyId } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, fetchMyPendingDrafts, getApprovalRequestPropertyId } from "../../../lib/adminApi";
 
 const PropertyList = () => {
     const navigate = useNavigate();
@@ -20,7 +20,7 @@ const PropertyList = () => {
 
     useEffect(() => {
         if (adminRole === null) return;
-        if (!isSuperAdminRole(adminRole)) {
+        if (!isContentReviewerRole(adminRole)) {
             fetchMyPendingDrafts().then((drafts) => {
                 const byProperty = {};
                 for (const draft of drafts) {

@@ -3,7 +3,7 @@ import { supabase } from '../../../supabaseClient';
 import {
     submitOrUpdateApproval,
     getCurrentAdminRole,
-    isSuperAdminRole,
+    isContentReviewerRole,
     fetchMyPendingDrafts,
     parseApprovalObject,
     resubmitApprovalRequest
@@ -157,7 +157,7 @@ const BlogManager = () => {
     const inlineImageInputRef = useRef(null);
     const savedEditorRangeRef = useRef(null);
     const inlineImageDraftRef = useRef(null);
-    const isSuper = isSuperAdminRole(adminRole);
+    const isSuper = isContentReviewerRole(adminRole);
 
     const [formData, setFormData] = useState(DEFAULT_BLOG_FORM);
 
@@ -206,7 +206,7 @@ const BlogManager = () => {
                 .from('blogs')
                 .select('*')
                 .order('created_at', { ascending: false }),
-            isSuperAdminRole(roleOverride) ? Promise.resolve([]) : fetchMyPendingDrafts()
+            isContentReviewerRole(roleOverride) ? Promise.resolve([]) : fetchMyPendingDrafts()
         ]);
 
         if (error) {

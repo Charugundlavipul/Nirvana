@@ -5,7 +5,7 @@ import ReviewManager from "./ReviewManager";
 import FaqManager from "./FaqManager";
 import ActivityManager from "./ActivityManager";
 import LegalPagesManager from "./LegalPagesManager";
-import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, parseApprovalObject } from "../../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, fetchMyPendingDrafts, parseApprovalObject } from "../../../lib/adminApi";
 
 const ENTITY_LABELS = {
     review: "Review",
@@ -30,7 +30,7 @@ const GlobalContent = () => {
 
     useEffect(() => {
         if (adminRole === null) return;
-        if (!isSuperAdminRole(adminRole)) {
+        if (!isContentReviewerRole(adminRole)) {
             fetchMyPendingDrafts().then((drafts) => {
                 const globalOnly = drafts.filter((draft) => {
                     const entityType = String(draft.entity_type || "").toLowerCase();
@@ -41,7 +41,7 @@ const GlobalContent = () => {
         }
     }, [adminRole]);
 
-    const isSuperAdmin = isSuperAdminRole(adminRole);
+    const isReviewer = isContentReviewerRole(adminRole);
 
     const getDraftSummary = (draft) => {
         const payload = parseApprovalObject(draft.payload);
@@ -59,7 +59,7 @@ const GlobalContent = () => {
 
     return (
         <AdminLayout title="Global Content" subtitle="Manage reviews, FAQs, and activities across the site">
-            {!isSuperAdmin && globalDrafts.length > 0 && (
+            {!isReviewer && globalDrafts.length > 0 && (
                 <div
                     style={{
                         background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
@@ -76,7 +76,7 @@ const GlobalContent = () => {
                                 You have {globalDrafts.length} pending draft{globalDrafts.length !== 1 ? "s" : ""} for global content
                             </h3>
                             <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#075985" }}>
-                                Revision notes from superadmins are shown inline below each draft.
+                                Revision notes from admins are shown inline below each draft.
                             </p>
                         </div>
                     </div>
@@ -189,7 +189,7 @@ const GlobalContent = () => {
                     >
                         Activities
                     </button>
-                    {isSuperAdmin && (
+                    {isReviewer && (
                         <button
                             className={`${styles.tab} ${activeTab === "legal" ? styles.active : ""}`}
                             onClick={() => setActiveTab("legal")}
@@ -203,7 +203,7 @@ const GlobalContent = () => {
                     {activeTab === "reviews" && <ReviewManager />}
                     {activeTab === "faqs" && <FaqManager />}
                     {activeTab === "activities" && <ActivityManager />}
-                    {activeTab === "legal" && isSuperAdmin && <LegalPagesManager />}
+                    {activeTab === "legal" && isReviewer && <LegalPagesManager />}
                 </div>
             </div>
         </AdminLayout>

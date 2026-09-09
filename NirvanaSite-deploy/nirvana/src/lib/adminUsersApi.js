@@ -25,8 +25,8 @@ export async function listAdminUsers() {
   return invokeAdminUsers("list");
 }
 
-export async function createAdminUser({ email, password, role }) {
-  return invokeAdminUsers("create", { email, password, role });
+export async function createAdminUser({ email, password, role, firstName, lastName }) {
+  return invokeAdminUsers("create", { email, password, role, firstName, lastName });
 }
 
 export async function updateAdminUserRole({ userId, role }) {
@@ -43,4 +43,8 @@ export async function updateAdminUserPassword({ userId, password }) {
 
 export async function deleteAdminUser({ userId }) {
   return invokeAdminUsers("delete", { userId });
+}
+
+export async function setAdminUserActive({ userId, active }) {
+  return invokeAdminUsers("set_active", { userId, active });
 }

@@ -4,7 +4,7 @@ import { supabase } from "../../../supabaseClient";
 import {
     fetchOpenPropertyRequests,
     getCurrentAdminRole,
-    isSuperAdminRole,
+    isContentReviewerRole,
     parseApprovalObject,
     submitOrUpdateApproval,
     queueKnowledgeRefresh
@@ -37,7 +37,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
     const [uploading, setUploading] = useState(false);
     const [togglingUrl, setTogglingUrl] = useState(null);
     const [adminRole, setAdminRole] = useState(null);
-    const canEditDirectly = isDraft || isSuperAdminRole(adminRole);
+    const canEditDirectly = isDraft || isContentReviewerRole(adminRole);
 
     useEffect(() => {
         loadImages();
@@ -177,7 +177,7 @@ const MediaManager = ({ propertyId, isDraft = false }) => {
                 return;
             }
 
-            // Non-superadmin: approval flow
+            // Non-reviewer: approval flow
             const hasPendingAdd = !!pendingHighlightDrafts.addsByUrl[img.url];
             const hasPendingRemove = !!pendingHighlightDrafts.removesByUrl[img.url];
 

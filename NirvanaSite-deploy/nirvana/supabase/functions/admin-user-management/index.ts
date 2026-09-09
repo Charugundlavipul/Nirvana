@@ -5,8 +5,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const ROLE_SET = new Set(["owner", "superadmin", "editor"]);
-const SUPERADMIN_SET = new Set(["owner", "superadmin"]);
+const ROLE_SET = new Set(["owner", "admin", "employee"]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -16,7 +15,12 @@ const json = (body: unknown, status = 200) =>
 
 const error = (message: string, status = 400) => json({ error: message }, status);
 
-const normalizeRole = (value: unknown) => String(value || "").trim().toLowerCase();
+const normalizeRole = (value: unknown) => {
+  const role = String(value || "").trim().toLowerCase();
+  if (role === "superadmin") return "admin";
+  if (role === "editor" || role === "viewer") return "employee";
+  return role;
+};
 
 const listAllAuthUsers = async (admin: ReturnType<typeof createClient>) => {
   const users: any[] = [];
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
     if (actorRoleError) return error(actorRoleError.message, 500);
 
     const actorRole = normalizeRole(actorRoleRow?.role);
-    if (!SUPERADMIN_SET.has(actorRole)) return error("Forbidden: superadmin access required", 403);
+    if (actorRole !== "owner") return error("Forbidden: owner access required", 403);
 
     const body = await req.json();
     const action = String(body?.action || "").trim().toLowerCase();
@@ -107,6 +111,8 @@ Deno.serve(async (req) => {
       const email = String(body?.email || "").trim().toLowerCase();
       const password = String(body?.password || "");
       const role = normalizeRole(body?.role);
+      const firstName = String(body?.firstName || "").trim().slice(0, 100);
+      const lastName = String(body?.lastName || "").trim().slice(0, 100);
       if (!email) return error("Email is required");
       if (!password || password.length < 8) return error("Password must be at least 8 chars");
       if (!ROLE_SET.has(role)) return error("Invalid role");
@@ -125,7 +131,20 @@ Deno.serve(async (req) => {
         user_id: newUserId,
         role,
       });
-      if (roleError) return error(roleError.message, 500);
+      if (roleError) {
+        await adminClient.auth.admin.deleteUser(newUserId);
+        return error(roleError.message, 500);
+      }
+
+      const { error: profileError } = await adminClient.from("employee_directory").upsert({
+        user_id: newUserId,
+        first_name: firstName,
+        last_name: lastName,
+      });
+      if (profileError) {
+        await adminClient.auth.admin.deleteUser(newUserId);
+        return error(profileError.message, 500);
+      }
 
       return json({ ok: true, user_id: newUserId, email, role });
     }
@@ -134,6 +153,7 @@ Deno.serve(async (req) => {
       const userId = String(body?.userId || "").trim();
       const role = normalizeRole(body?.role);
       if (!userId) return error("userId is required");
+      if (userId === actorId) return error("You cannot change your own owner role", 400);
       if (!ROLE_SET.has(role)) return error("Invalid role");
 
       const { error: updateErr } = await adminClient
@@ -167,15 +187,23 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    if (action === "delete") {
+    if (action === "delete" || action === "set_active") {
       const userId = String(body?.userId || "").trim();
       if (!userId) return error("userId is required");
-      if (userId === actorId) return error("You cannot delete your own account", 400);
+      if (userId === actorId) return error("You cannot deactivate your own account", 400);
+      const active = action === "set_active" ? Boolean(body?.active) : false;
 
-      const { error: deleteErr } = await adminClient.auth.admin.deleteUser(userId);
-      if (deleteErr) return error(deleteErr.message, 400);
+      const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(userId, {
+        ban_duration: active ? "none" : "876000h",
+      });
+      if (authUpdateError) return error(authUpdateError.message, 400);
+      const { error: profileUpdateError } = await adminClient
+        .from("employee_private_profiles")
+        .update({ employment_status: active ? "active" : "inactive" })
+        .eq("user_id", userId);
+      if (profileUpdateError) return error(profileUpdateError.message, 500);
 
-      return json({ ok: true });
+      return json({ ok: true, active });
     }
 
     return error("Unknown action", 400);

@@ -21,7 +21,7 @@ import {
     FaExclamationTriangle,
     FaPen
 } from "react-icons/fa";
-import { getCurrentAdminRole, isSuperAdminRole, fetchMyPendingDrafts, parseApprovalObject } from "../../lib/adminApi";
+import { getCurrentAdminRole, isContentReviewerRole, isOwnerRole, fetchMyPendingDrafts, parseApprovalObject } from "../../lib/adminApi";
 
 const StatCard = ({ title, value, icon: Icon, color, bgColor, subtitle }) => (
     <div className={styles.statCard} style={{ '--accent-color': color, '--bg-color': bgColor }}>
@@ -126,7 +126,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (adminRole === null) return;
-        if (!isSuperAdminRole(adminRole)) {
+        if (!isContentReviewerRole(adminRole)) {
             setDraftsLoading(true);
             fetchMyPendingDrafts().then((drafts) => {
                 setPendingDrafts(drafts);
@@ -176,14 +176,15 @@ const Dashboard = () => {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    const isSuperAdmin = isSuperAdminRole(adminRole);
+    const isReviewer = isContentReviewerRole(adminRole);
+    const isOwner = isOwnerRole(adminRole);
     const revisionDrafts = pendingDrafts.filter(d => d.status === "revision_requested");
     const pendingCount = pendingDrafts.length;
 
     return (
         <AdminLayout title="Dashboard" subtitle="Welcome back! Here's an overview of your portfolio.">
             {/* Pending Drafts Banner for Regular Admins */}
-            {!isSuperAdmin && !draftsLoading && pendingCount > 0 && (
+            {!isReviewer && !draftsLoading && pendingCount > 0 && (
                 <section style={{
                     background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
                     border: "1px solid #7dd3fc",
@@ -216,7 +217,7 @@ const Dashboard = () => {
                             <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#075985" }}>
                                 {revisionDrafts.length > 0
                                     ? `${revisionDrafts.length} need${revisionDrafts.length !== 1 ? "" : "s"} revision — please review and resubmit.`
-                                    : "Your changes are awaiting superadmin review."}
+                                    : "Your changes are awaiting admin review."}
                             </p>
                         </div>
                     </div>
@@ -415,13 +416,13 @@ const Dashboard = () => {
                         to="/admin/approvals"
                         color="#ef4444"
                     />
-                    <QuickAction
-                        title="Admin Users"
-                        description="Manage admin accounts"
+                    {isOwner && <QuickAction
+                        title="People"
+                        description="Manage employee records"
                         icon={FaEdit}
-                        to="/admin/admins"
+                        to="/admin/people"
                         color="#0ea5e9"
-                    />
+                    />}
                     <QuickAction
                         title="Email Signatures"
                         description="Copy team email signatures"

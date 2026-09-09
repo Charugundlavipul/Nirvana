@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../AdminLayout";
 import { supabase } from "../../../supabaseClient";
-import { fetchApprovalRequests, getCurrentAdminRole, isSuperAdminRole, queueKnowledgeRefresh, revalidatePageMetadata } from "../../../lib/adminApi";
+import { fetchApprovalRequests, getCurrentAdminRole, isContentReviewerRole, queueKnowledgeRefresh, revalidatePageMetadata } from "../../../lib/adminApi";
 import { getAmenityIcon } from "../../../lib/amenityIcons.jsx";
 import { normalizePropertySpaces, summarizeSpaces } from "../../../lib/propertySpaces";
 import { getBathroomSummary, normalizeBathroomCounts } from "../../../lib/bathrooms";
@@ -1959,7 +1959,7 @@ const ApprovalQueue = () => {
       setPropertyNamesById(map);
     }
 
-    const statusFilter = isSuperAdminRole(adminRole) ? ["pending", "revision_requested"] : null;
+    const statusFilter = isContentReviewerRole(adminRole) ? ["pending", "revision_requested"] : null;
     const { data: reqData, error: reqError } = await fetchApprovalRequests(statusFilter);
 
     if (reqError) {
@@ -2081,8 +2081,8 @@ const ApprovalQueue = () => {
     return propertyDraftBundlesById[String(req.entity_id)] || null;
   };
 
-  const superAdminFilteredRequests = useMemo(() => {
-    if (!isSuperAdminRole(role)) return requests;
+  const reviewerFilteredRequests = useMemo(() => {
+    if (!isContentReviewerRole(role)) return requests;
     return (requests || []).filter((req) => {
       const entityType = String(req?.entity_type || "").toLowerCase();
       const action = String(req?.action || "").toLowerCase();
@@ -2105,8 +2105,8 @@ const ApprovalQueue = () => {
     });
   }, [requests, role, entityFilter, actionFilter, searchText]);
 
-  const superAdminOverview = useMemo(() => {
-    const source = superAdminFilteredRequests;
+  const reviewerOverview = useMemo(() => {
+    const source = reviewerFilteredRequests;
     const byEntity = {};
     const byAction = {};
     source.forEach((req) => {
@@ -2116,9 +2116,9 @@ const ApprovalQueue = () => {
       byAction[action] = (byAction[action] || 0) + 1;
     });
     return { total: source.length, byEntity, byAction };
-  }, [superAdminFilteredRequests]);
+  }, [reviewerFilteredRequests]);
 
-  const superAdminAllEntityCounts = useMemo(() => {
+  const reviewerAllEntityCounts = useMemo(() => {
     const byEntity = {};
     (requests || []).forEach((req) => {
       const entityType = String(req?.entity_type || "").toLowerCase() || "unknown";
@@ -2127,13 +2127,13 @@ const ApprovalQueue = () => {
     return byEntity;
   }, [requests]);
 
-  if (!isSuperAdminRole(role)) {
+  if (!isContentReviewerRole(role)) {
     const revisionNeeded = requests.filter((req) => req.status === "revision_requested");
     const pending = requests.filter((req) => req.status === "pending");
     const processed = requests.filter((req) => req.status !== "pending" && req.status !== "revision_requested");
 
     return (
-      <AdminLayout title="My Approval Requests" subtitle="Track your submitted changes and owner/superadmin replies">
+      <AdminLayout title="My Approval Requests" subtitle="Track your submitted changes and owner/admin replies">
         {loading ? <div style={cardStyle}>Loading requests...</div> : null}
         {!loading && requests.length === 0 ? <div style={cardStyle}>No requests submitted yet.</div> : null}
 
@@ -2183,10 +2183,10 @@ const ApprovalQueue = () => {
       <div style={{ ...cardStyle, marginBottom: "14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <div style={{ fontSize: "12px", color: "#475569" }}>
-            Showing <strong>{superAdminOverview.total}</strong> request(s)
+            Showing <strong>{reviewerOverview.total}</strong> request(s)
           </div>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {Object.entries(superAdminOverview.byAction).map(([action, count]) => (
+            {Object.entries(reviewerOverview.byAction).map(([action, count]) => (
               <span
                 key={`action-overview-${action}`}
                 style={{
@@ -2219,11 +2219,11 @@ const ApprovalQueue = () => {
             style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "13px", background: "#fff" }}
           >
             <option value="all">All entities</option>
-            {Object.keys(superAdminAllEntityCounts)
+            {Object.keys(reviewerAllEntityCounts)
               .sort()
               .map((entity) => (
                 <option key={`entity-filter-${entity}`} value={entity}>
-                  {friendlyFieldName(entity)} ({superAdminAllEntityCounts[entity]})
+                  {friendlyFieldName(entity)} ({reviewerAllEntityCounts[entity]})
                 </option>
               ))}
           </select>
@@ -2243,10 +2243,10 @@ const ApprovalQueue = () => {
 
       {loading ? (
         <div style={cardStyle}>Loading requests...</div>
-      ) : superAdminFilteredRequests.length === 0 ? (
+      ) : reviewerFilteredRequests.length === 0 ? (
         <div style={cardStyle}>No pending requests.</div>
       ) : (
-        superAdminFilteredRequests.map((req) => {
+        reviewerFilteredRequests.map((req) => {
           const propertyDraftBundle = getPropertyDraftBundle(req);
           const isPropertyRequest = String(req?.entity_type || "").toLowerCase() === "property";
           const hasSpacesChange = requestHasSpacesChange(req);
@@ -2345,7 +2345,7 @@ const ApprovalQueue = () => {
                 <input
                   value={comment[req.id] || ""}
                   onChange={(e) => setComment((prev) => ({ ...prev, [req.id]: e.target.value }))}
-                  placeholder="Message back to editor (optional)..."
+                  placeholder="Message back to employee (optional)..."
                   style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px" }}
                   className="flex-1 min-w-0"
                 />
