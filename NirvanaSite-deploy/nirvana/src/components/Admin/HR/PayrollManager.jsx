@@ -107,6 +107,11 @@ export default function PayrollManager() {
     `Entire payroll draft saved for ${activePeople.length} employee(s).`
   );
 
+  const saveEmployee = (person, items) => perform(
+    () => hrAction("save_paystub", { runId: run.id, userId: person.user_id, items }),
+    `${person.first_name || "Employee"} ${person.last_name || ""} payroll entry saved.`.replace(/\s+/g, " ")
+  );
+
   const missingSalaryCount = activePeople.filter((person) => !person.compensation).length;
   const activeAddedCount = activePeople.filter((person) => runStubs.has(person.user_id)).length;
   const allEmployeesAdded = activePeople.length > 0 && activePeople.every((person) => runStubs.has(person.user_id));
@@ -169,7 +174,10 @@ export default function PayrollManager() {
                           const readOnly = run.status !== "draft" || lockedVariablePay;
                           return <div className={styles.lineGrid} key={item.id || `${item.line_type}-${index}`}><select disabled={readOnly} className={styles.select} value={item.line_type} onChange={(event) => setEmployeeItems(person.user_id, employeeItems.map((old, itemIndex) => itemIndex === index ? { ...old, line_type: event.target.value } : old))}>{lineTypes.map(([value, label]) => <option value={value} disabled={value === "variable_pay" && !lockedVariablePay} key={value}>{label}</option>)}</select><input disabled={readOnly} className={styles.input} value={item.description} onChange={(event) => setEmployeeItems(person.user_id, employeeItems.map((old, itemIndex) => itemIndex === index ? { ...old, description: event.target.value } : old))} /><input disabled={readOnly} type="number" min="0" step="0.01" className={styles.input} value={item.amount} onChange={(event) => setEmployeeItems(person.user_id, employeeItems.map((old, itemIndex) => itemIndex === index ? { ...old, amount: event.target.value } : old))} />{run.status === "draft" && !lockedVariablePay && <button className={`${styles.button} ${styles.danger}`} onClick={() => setEmployeeItems(person.user_id, employeeItems.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>}</div>;
                         })}</div>
-                        {run.status === "draft" && <div className={styles.actions}><button className={`${styles.button} ${styles.secondary}`} onClick={() => setEmployeeItems(person.user_id, [...employeeItems, { line_type: "additional_earnings", description: "Additional earnings", amount: 0 }])}>Add line</button></div>}
+                        {run.status === "draft" && <div className={styles.actions}>
+                          <button className={`${styles.button} ${styles.secondary}`} disabled={busy} onClick={() => setEmployeeItems(person.user_id, [...employeeItems, { line_type: "additional_earnings", description: "Additional earnings", amount: 0 }])}>Add line</button>
+                          <button className={styles.button} disabled={busy || !employeeItems.length || Boolean(paystub && !dirty)} onClick={() => saveEmployee(person, employeeItems)}>{paystub ? (dirty ? "Save changes" : "Added") : "Add employee"}</button>
+                        </div>}
                         {totals && <div className={styles.metricRow} style={{ marginTop: 18 }}><div className={styles.metric}><span>Gross</span><strong>{totals.grossPay.toFixed(2)}</strong></div><div className={styles.metric}><span>Taxes</span><strong>{totals.employeeTaxes.toFixed(2)}</strong></div><div className={styles.metric}><span>Deductions</span><strong>{totals.deductions.toFixed(2)}</strong></div><div className={styles.metric}><span>Net</span><strong>{totals.netPay.toFixed(2)}</strong></div></div>}
                         {paystub?.pdf_path && <div className={styles.actions}><button className={`${styles.button} ${styles.secondary}`} onClick={() => downloadPaystub(paystub)}>Download paystub</button></div>}
                       </>}
