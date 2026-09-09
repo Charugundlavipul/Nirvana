@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const AdminApp = dynamic(() => import("../../../src/components/Admin/AdminApp"), {
+const AdminApp = dynamic(() => import("../../src/components/Admin/AdminApp"), {
   ssr: false,
   loading: () => (
     <div

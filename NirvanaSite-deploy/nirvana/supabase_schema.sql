@@ -2190,6 +2190,10 @@ CREATE TABLE IF NOT EXISTS employee_compensation (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
     annual_salary NUMERIC(14, 2) NOT NULL CHECK (annual_salary >= 0),
+    variable_pay NUMERIC(14, 2) NOT NULL DEFAULT 0 CHECK (variable_pay >= 0),
+    variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly'
+        CHECK (variable_pay_frequency IN ('monthly', 'annually')),
+    salary_note TEXT,
     currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency ~ '^[A-Z]{3}$'),
     pay_frequency TEXT NOT NULL CHECK (pay_frequency IN ('weekly', 'biweekly', 'semimonthly', 'monthly')),
     effective_from DATE NOT NULL,
@@ -2198,6 +2202,14 @@ CREATE TABLE IF NOT EXISTS employee_compensation (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CHECK (effective_to IS NULL OR effective_to >= effective_from)
 );
+
+ALTER TABLE employee_compensation
+    ADD COLUMN IF NOT EXISTS variable_pay NUMERIC(14, 2) NOT NULL DEFAULT 0 CHECK (variable_pay >= 0);
+ALTER TABLE employee_compensation
+    ADD COLUMN IF NOT EXISTS variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly'
+        CHECK (variable_pay_frequency IN ('monthly', 'annually'));
+ALTER TABLE employee_compensation
+    ADD COLUMN IF NOT EXISTS salary_note TEXT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS employee_compensation_one_current_idx
 ON employee_compensation(user_id) WHERE effective_to IS NULL;
@@ -2293,6 +2305,9 @@ CREATE TABLE IF NOT EXISTS employee_paystubs (
     job_title_snapshot TEXT,
     annual_salary_snapshot NUMERIC(14, 2),
     pay_frequency_snapshot TEXT,
+    variable_pay_snapshot NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    variable_pay_frequency_snapshot TEXT,
+    salary_note_snapshot TEXT,
     currency TEXT NOT NULL CHECK (currency ~ '^[A-Z]{3}$'),
     gross_pay NUMERIC(14, 2) NOT NULL DEFAULT 0,
     employee_taxes NUMERIC(14, 2) NOT NULL DEFAULT 0,
@@ -2307,6 +2322,13 @@ CREATE TABLE IF NOT EXISTS employee_paystubs (
     UNIQUE(payroll_run_id, user_id)
 );
 
+ALTER TABLE employee_paystubs
+    ADD COLUMN IF NOT EXISTS variable_pay_snapshot NUMERIC(14, 2) NOT NULL DEFAULT 0;
+ALTER TABLE employee_paystubs
+    ADD COLUMN IF NOT EXISTS variable_pay_frequency_snapshot TEXT;
+ALTER TABLE employee_paystubs
+    ADD COLUMN IF NOT EXISTS salary_note_snapshot TEXT;
+
 CREATE UNIQUE INDEX IF NOT EXISTS payroll_runs_active_period_idx
 ON payroll_runs(period_start, period_end, pay_date, currency) WHERE status <> 'void';
 
@@ -2317,7 +2339,7 @@ CREATE TABLE IF NOT EXISTS paystub_line_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     paystub_id UUID NOT NULL REFERENCES employee_paystubs(id) ON DELETE CASCADE,
     line_type TEXT NOT NULL CHECK (line_type IN (
-        'regular_earnings', 'additional_earnings', 'employee_tax',
+        'regular_earnings', 'variable_pay', 'additional_earnings', 'employee_tax',
         'pretax_deduction', 'posttax_deduction', 'reimbursement', 'employer_tax'
     )),
     description TEXT NOT NULL,
@@ -2325,6 +2347,12 @@ CREATE TABLE IF NOT EXISTS paystub_line_items (
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE paystub_line_items DROP CONSTRAINT IF EXISTS paystub_line_items_line_type_check;
+ALTER TABLE paystub_line_items ADD CONSTRAINT paystub_line_items_line_type_check CHECK (line_type IN (
+    'regular_earnings', 'variable_pay', 'additional_earnings', 'employee_tax',
+    'pretax_deduction', 'posttax_deduction', 'reimbursement', 'employer_tax'
+));
 
 CREATE TABLE IF NOT EXISTS hr_audit_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

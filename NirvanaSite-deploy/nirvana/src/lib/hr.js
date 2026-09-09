@@ -1,4 +1,5 @@
 export const PAY_FREQUENCIES = ["weekly", "biweekly", "semimonthly", "monthly"];
+export const VARIABLE_PAY_FREQUENCIES = ["monthly", "annually"];
 export const HR_ROLES = ["owner", "admin", "employee"];
 
 export function normalizeRole(role) {
@@ -56,6 +57,60 @@ export function regularPayForSalary(annualSalary, payFrequency) {
   return fromCents(Math.round(toCents(annualSalary) / divisor));
 }
 
+export function variablePayOccurrences(periodStart, periodEnd, frequency) {
+  const start = new Date(`${periodStart}T00:00:00Z`);
+  const end = new Date(`${periodEnd}T00:00:00Z`);
+  if (!periodStart || !periodEnd || Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) {
+    throw new Error("Valid payroll period dates are required.");
+  }
+  if (end < start) throw new Error("Payroll period end cannot be before its start.");
+
+  let occurrences = 0;
+  if (frequency === "monthly") {
+    let payoutDate = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
+    while (payoutDate <= end) {
+      if (payoutDate >= start) occurrences += 1;
+      payoutDate = new Date(Date.UTC(payoutDate.getUTCFullYear(), payoutDate.getUTCMonth() + 2, 0));
+    }
+    return occurrences;
+  }
+
+  if (frequency === "annually") {
+    for (let year = start.getUTCFullYear(); year <= end.getUTCFullYear(); year += 1) {
+      const payoutDate = new Date(Date.UTC(year, 11, 31));
+      if (payoutDate >= start && payoutDate <= end) occurrences += 1;
+    }
+    return occurrences;
+  }
+
+  throw new Error("Unsupported variable pay frequency.");
+}
+
+export function variablePayLineForPeriod(compensation, periodStart, periodEnd) {
+  const amount = Number(compensation?.variable_pay || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const frequency = compensation?.variable_pay_frequency || "monthly";
+  const occurrences = variablePayOccurrences(periodStart, periodEnd, frequency);
+  if (!occurrences) return null;
+  const occurrenceLabel = frequency === "annually" ? "Yearly variable pay" : "Monthly variable pay";
+  return {
+    line_type: "variable_pay",
+    description: occurrences > 1 ? `${occurrenceLabel} (${occurrences} periods)` : occurrenceLabel,
+    amount: fromCents(toCents(amount) * occurrences),
+  };
+}
+
+export function salaryLineItemsForPeriod(compensation, periodStart, periodEnd) {
+  const items = [{
+    line_type: "regular_earnings",
+    description: "Fixed salary",
+    amount: regularPayForSalary(compensation.annual_salary, compensation.pay_frequency),
+  }];
+  const variablePay = variablePayLineForPeriod(compensation, periodStart, periodEnd);
+  if (variablePay) items.push(variablePay);
+  return items;
+}
+
 export function computePayrollTotals(lineItems = []) {
   const totals = {
     grossPay: 0,
@@ -71,6 +126,7 @@ export function computePayrollTotals(lineItems = []) {
     switch (item.line_type || item.lineType) {
       case "regular_earnings":
       case "additional_earnings":
+      case "variable_pay":
         totals.grossPay += cents;
         break;
       case "employee_tax":

@@ -5,7 +5,8 @@ import {
   computePayrollTotals,
   countBusinessDays,
   leaveBalance,
-  regularPayForSalary,
+  salaryLineItemsForPeriod,
+  variablePayLineForPeriod,
 } from "../../../../src/lib/hr";
 import { createPaystubPdf } from "../../../../src/lib/server/paystubPdf";
 
@@ -344,10 +345,13 @@ export async function POST(request) {
       ownerOnly();
       const targetId = String(body.userId || "");
       const salary = Number(body.annualSalary);
+      const variablePay = body.variablePay === "" || body.variablePay == null ? 0 : Number(body.variablePay);
+      const variablePayFrequency = String(body.variablePayFrequency || "monthly");
+      const salaryNote = cleanText(body.salaryNote, 1000);
       const currency = String(body.currency || "USD").toUpperCase();
       const frequency = String(body.payFrequency || "");
       const effectiveFrom = body.effectiveFrom;
-      if (!targetId || !Number.isFinite(salary) || salary < 0 || !/^[A-Z]{3}$/.test(currency) || !["weekly", "biweekly", "semimonthly", "monthly"].includes(frequency) || !effectiveFrom) {
+      if (!targetId || !Number.isFinite(salary) || salary < 0 || !Number.isFinite(variablePay) || variablePay < 0 || !["monthly", "annually"].includes(variablePayFrequency) || !/^[A-Z]{3}$/.test(currency) || !["weekly", "biweekly", "semimonthly", "monthly"].includes(frequency) || !effectiveFrom) {
         throwStatus("Valid salary settings are required.");
       }
       await assertEmployee(adminClient, targetId);
@@ -360,11 +364,14 @@ export async function POST(request) {
       if (currentCompensation?.effective_from === effectiveFrom) {
         const { error: updateError } = await adminClient.from("employee_compensation").update({
           annual_salary: salary,
+          variable_pay: variablePay,
+          variable_pay_frequency: variablePayFrequency,
+          salary_note: salaryNote,
           currency,
           pay_frequency: frequency,
         }).eq("id", currentCompensation.id);
         if (updateError) throw updateError;
-        await audit(adminClient, user.id, "compensation_updated", "employee_compensation", currentCompensation.id, targetId, { currency, pay_frequency: frequency, effective_from: effectiveFrom });
+        await audit(adminClient, user.id, "compensation_updated", "employee_compensation", currentCompensation.id, targetId, { currency, pay_frequency: frequency, variable_pay_frequency: variablePayFrequency, effective_from: effectiveFrom });
         return noStore({ ok: true });
       }
       const dayBefore = new Date(`${effectiveFrom}T00:00:00Z`);
@@ -375,13 +382,16 @@ export async function POST(request) {
       const { error } = await adminClient.from("employee_compensation").insert({
         user_id: targetId,
         annual_salary: salary,
+        variable_pay: variablePay,
+        variable_pay_frequency: variablePayFrequency,
+        salary_note: salaryNote,
         currency,
         pay_frequency: frequency,
         effective_from: effectiveFrom,
         created_by: user.id,
       });
       if (error) throw error;
-      await audit(adminClient, user.id, "compensation_updated", "employee_compensation", targetId, targetId, { currency, pay_frequency: frequency, effective_from: effectiveFrom });
+      await audit(adminClient, user.id, "compensation_updated", "employee_compensation", targetId, targetId, { currency, pay_frequency: frequency, variable_pay_frequency: variablePayFrequency, effective_from: effectiveFrom });
       return noStore({ ok: true });
     }
 
@@ -468,10 +478,15 @@ export async function POST(request) {
       if (profileError) throw profileError;
       if (compensationError) throw compensationError;
       if (!compensation) throwStatus("Add salary information before creating this paystub.");
-      const items = Array.isArray(body.items) && body.items.length
-        ? body.items
-        : [{ line_type: "regular_earnings", description: "Regular salary", amount: regularPayForSalary(compensation.annual_salary, compensation.pay_frequency) }];
-      const sanitizedItems = items.map((item, index) => ({
+      const salaryItems = salaryLineItemsForPeriod(compensation, run.period_start, run.period_end);
+      const requiredVariablePay = variablePayLineForPeriod(compensation, run.period_start, run.period_end);
+      const items = Array.isArray(body.items) && body.items.length ? [...body.items] : salaryItems;
+      const withoutVariablePay = items.filter((item) => (item.line_type || item.lineType) !== "variable_pay");
+      if (requiredVariablePay) {
+        const regularIndex = withoutVariablePay.findIndex((item) => (item.line_type || item.lineType) === "regular_earnings");
+        withoutVariablePay.splice(regularIndex >= 0 ? regularIndex + 1 : 0, 0, requiredVariablePay);
+      }
+      const sanitizedItems = withoutVariablePay.map((item, index) => ({
         line_type: item.line_type,
         description: cleanText(item.description, 160) || "Payroll item",
         amount: Number(item.amount),
@@ -499,6 +514,9 @@ export async function POST(request) {
         job_title_snapshot: profile?.job_title || null,
         annual_salary_snapshot: compensation.annual_salary,
         pay_frequency_snapshot: compensation.pay_frequency,
+        variable_pay_snapshot: compensation.variable_pay || 0,
+        variable_pay_frequency_snapshot: compensation.variable_pay_frequency || "monthly",
+        salary_note_snapshot: compensation.salary_note || null,
         currency: compensation.currency,
         gross_pay: totals.grossPay,
         employee_taxes: totals.employeeTaxes,

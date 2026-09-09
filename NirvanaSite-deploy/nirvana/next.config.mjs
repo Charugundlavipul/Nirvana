@@ -21,6 +21,16 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  async rewrites() {
+    return [
+      // The admin portal is a client-side SPA. Serve every deep admin URL from
+      // one static shell while BrowserRouter handles the preserved URL.
+      {
+        source: '/admin/:path+',
+        destination: '/admin',
+      },
+    ];
+  },
   async redirects() {
     return [
       // --- Old .co domain → new domain ---

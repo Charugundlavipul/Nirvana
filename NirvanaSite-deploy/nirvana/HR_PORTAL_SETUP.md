@@ -23,8 +23,10 @@ PowerShell example for generating a value:
 
 ```powershell
 $bytes = New-Object byte[] 32
-[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
 [Convert]::ToBase64String($bytes)
+$rng.Dispose()
 ```
 
 Optionally set `PAYSTUB_COMPANY_NAME`; it defaults to `Nirvana Luxury Vacations`.
@@ -44,3 +46,5 @@ The function still requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_S
 Deploy the Next.js application after the schema and function. Sign in as an owner and complete each backfilled profile, salary, leave allowance, and any banking information. Verify an admin account can review website content but cannot open `People`, `Payroll`, another employee's private profile, or reset a password.
 
 Payroll values and taxes are owner-entered records. This version does not calculate statutory taxes, file tax forms, or initiate bank transfers.
+
+Salary records contain annual fixed salary, pay frequency, variable pay, variable-pay frequency, and an employee-visible salary note. Monthly variable pay is added as a separate paystub line for each month-end contained in the payroll period. Yearly variable pay is added only when the payroll period contains December 31.

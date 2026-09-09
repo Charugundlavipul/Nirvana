@@ -19,7 +19,16 @@ export async function createPaystubPdf({ companyName, run, paystub, items, ytd }
   let y = 742;
 
   const draw = (text, x, size = 10, font = regular, color = dark) => {
-    page.drawText(String(text ?? ""), { x, y, size, font, color });
+    const source = String(text ?? "");
+    const safeText = Array.from(source, (character) => {
+      try {
+        font.encodeText(character);
+        return character;
+      } catch {
+        return "?";
+      }
+    }).join("");
+    page.drawText(safeText, { x, y, size, font, color });
   };
   draw(companyName || "Nirvana Luxury Vacations", 44, 19, bold, green);
   draw("PAY STATEMENT", 430, 13, bold);
@@ -32,6 +41,10 @@ export async function createPaystubPdf({ companyName, run, paystub, items, ytd }
   if (paystub.job_title_snapshot) {
     y -= 16;
     draw(paystub.job_title_snapshot, 44, 9);
+  }
+  if (paystub.salary_note_snapshot) {
+    y -= 16;
+    draw(`Salary note: ${String(paystub.salary_note_snapshot).slice(0, 78)}`, 44, 9);
   }
 
   y -= 30;

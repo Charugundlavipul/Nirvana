@@ -7,6 +7,9 @@ import {
   leaveBalance,
   normalizeRole,
   regularPayForSalary,
+  salaryLineItemsForPeriod,
+  variablePayLineForPeriod,
+  variablePayOccurrences,
 } from "../src/lib/hr.js";
 
 test("legacy roles normalize to the new role names", () => {
@@ -35,9 +38,33 @@ test("salary payroll uses decimal-safe pay-period amounts", () => {
   assert.equal(regularPayForSalary(120000, "monthly"), 10000);
 });
 
+test("monthly variable pay is a separate line for each month-end in the period", () => {
+  assert.equal(variablePayOccurrences("2026-08-01", "2026-09-30", "monthly"), 2);
+  assert.deepEqual(variablePayLineForPeriod(
+    { variable_pay: 5000, variable_pay_frequency: "monthly" },
+    "2026-08-01",
+    "2026-09-30"
+  ), { line_type: "variable_pay", description: "Monthly variable pay (2 periods)", amount: 10000 });
+});
+
+test("yearly variable pay is included only in a period containing December 31", () => {
+  const compensation = {
+    annual_salary: 120000,
+    pay_frequency: "monthly",
+    variable_pay: 25000,
+    variable_pay_frequency: "annually",
+  };
+  assert.equal(variablePayLineForPeriod(compensation, "2026-12-01", "2026-12-30"), null);
+  assert.deepEqual(salaryLineItemsForPeriod(compensation, "2026-12-01", "2026-12-31"), [
+    { line_type: "regular_earnings", description: "Fixed salary", amount: 10000 },
+    { line_type: "variable_pay", description: "Yearly variable pay", amount: 25000 },
+  ]);
+});
+
 test("payroll totals keep employer tax outside employee net", () => {
   assert.deepEqual(computePayrollTotals([
     { line_type: "regular_earnings", amount: 3000 },
+    { line_type: "variable_pay", amount: 200 },
     { line_type: "additional_earnings", amount: 125.55 },
     { line_type: "employee_tax", amount: 600.11 },
     { line_type: "pretax_deduction", amount: 100 },
@@ -45,12 +72,12 @@ test("payroll totals keep employer tax outside employee net", () => {
     { line_type: "reimbursement", amount: 80 },
     { line_type: "employer_tax", amount: 240 },
   ]), {
-    grossPay: 3125.55,
+    grossPay: 3325.55,
     employeeTaxes: 600.11,
     deductions: 125.44,
     reimbursements: 80,
     employerTaxes: 240,
-    netPay: 2480,
+    netPay: 2680,
   });
 });
 
@@ -69,8 +96,8 @@ test("generated INR paystub is a PDF and contains no bank source data", async ()
   const pdf = await createPaystubPdf({
     companyName: "Nirvana Luxury Vacations",
     run: { period_start: "2026-09-01", period_end: "2026-09-15", pay_date: "2026-09-18" },
-    paystub: { paystub_number: "PS-TEST", employee_name_snapshot: "Example Employee", currency: "INR", gross_pay: 3000, employee_taxes: 500, deductions: 100, reimbursements: 25, net_pay: 2425 },
-    items: [{ line_type: "regular_earnings", description: "Regular salary", amount: 3000 }],
+    paystub: { paystub_number: "PS-TEST", employee_name_snapshot: "Example Employee", salary_note_snapshot: "Annual bonus ₹25,000", currency: "INR", gross_pay: 3500, employee_taxes: 500, deductions: 100, reimbursements: 25, net_pay: 2925 },
+    items: [{ line_type: "regular_earnings", description: "Fixed salary", amount: 3000 }, { line_type: "variable_pay", description: "Monthly variable pay", amount: 500 }],
     ytd: { grossPay: 9000, employeeTaxes: 1500, netPay: 7275 },
   });
   assert.equal(pdf.subarray(0, 4).toString(), "%PDF");
@@ -83,4 +110,6 @@ test("schema migrates legacy roles and leaves account mutation owner-only", asyn
   assert.match(schema, /CHECK \(role IN \('owner', 'admin', 'employee'\)\)/);
   assert.doesNotMatch(schema, /CREATE POLICY "Superadmins can add admin users"/);
   assert.match(schema, /current_admin_role\(\) = 'owner'/);
+  assert.match(schema, /variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly'/);
+  assert.match(schema, /'regular_earnings', 'variable_pay', 'additional_earnings'/);
 });
