@@ -103,7 +103,7 @@ async function getPeople(adminClient) {
     adminClient.from("employee_compensation").select("*").order("effective_from", { ascending: false }),
     adminClient.from("employee_bank_accounts").select("user_id, bank_name, account_type, account_last4, routing_last4, updated_at"),
     adminClient.from("leave_entitlements").select("*").eq("calendar_year", year),
-    adminClient.from("leave_requests").select("*").order("created_at", { ascending: false }),
+    adminClient.from("leave_requests").select("*").neq("status", "cancelled").order("created_at", { ascending: false }),
   ]);
   for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult]) {
     if (result.error) throw result.error;
@@ -402,6 +402,38 @@ export async function POST(request) {
       if (error) throw error;
       await audit(adminClient, user.id, "payroll_run_created", "payroll_run", data.id, null);
       return noStore({ run: data });
+    }
+
+    if (action === "delete_payroll_run") {
+      ownerOnly();
+      const runId = String(body.runId || "");
+      const { data: run, error: runError } = await adminClient
+        .from("payroll_runs")
+        .select("id, status")
+        .eq("id", runId)
+        .maybeSingle();
+      if (runError) throw runError;
+      if (!run) throwStatus("Payroll run not found.", 404);
+      if (run.status !== "draft") throwStatus("Only draft payroll runs can be deleted.", 409);
+
+      const { error: paystubError } = await adminClient
+        .from("employee_paystubs")
+        .delete()
+        .eq("payroll_run_id", run.id);
+      if (paystubError) throw paystubError;
+
+      const { data: deletedRun, error: deleteError } = await adminClient
+        .from("payroll_runs")
+        .delete()
+        .eq("id", run.id)
+        .eq("status", "draft")
+        .select("id")
+        .maybeSingle();
+      if (deleteError) throw deleteError;
+      if (!deletedRun) throwStatus("This payroll run is no longer a draft and was not deleted.", 409);
+
+      await audit(adminClient, user.id, "payroll_run_deleted", "payroll_run", run.id, null);
+      return noStore({ ok: true });
     }
 
     if (action === "save_paystub") {
