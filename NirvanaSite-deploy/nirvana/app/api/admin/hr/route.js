@@ -135,6 +135,23 @@ async function getPeople(adminClient) {
   }));
 }
 
+function preparePaystubItems(requestedItems, compensation, run) {
+  const salaryItems = salaryLineItemsForPeriod(compensation, run.period_start, run.period_end);
+  const requiredVariablePay = variablePayLineForPeriod(compensation, run.period_start, run.period_end);
+  const items = Array.isArray(requestedItems) && requestedItems.length ? [...requestedItems] : salaryItems;
+  const withoutVariablePay = items.filter((item) => (item.line_type || item.lineType) !== "variable_pay");
+  if (requiredVariablePay) {
+    const regularIndex = withoutVariablePay.findIndex((item) => (item.line_type || item.lineType) === "regular_earnings");
+    withoutVariablePay.splice(regularIndex >= 0 ? regularIndex + 1 : 0, 0, requiredVariablePay);
+  }
+  return withoutVariablePay.map((item, index) => ({
+    line_type: item.line_type || item.lineType,
+    description: cleanText(item.description, 160) || "Payroll item",
+    amount: Number(item.amount),
+    sort_order: index,
+  }));
+}
+
 export async function GET(request) {
   try {
     const { adminClient, user, role } = await requireAdminAccess(request);
@@ -462,6 +479,116 @@ export async function POST(request) {
       return noStore({ ok: true, deletedPdfCount: pdfPaths.length });
     }
 
+    if (action === "save_payroll_run_draft") {
+      ownerOnly();
+      const runId = String(body.runId || "");
+      const submittedEmployees = Array.isArray(body.employees) ? body.employees : [];
+      const submittedById = new Map(submittedEmployees.map((entry) => [String(entry.userId || ""), entry]));
+      const { data: run, error: runError } = await adminClient.from("payroll_runs").select("*").eq("id", runId).maybeSingle();
+      if (runError) throw runError;
+      if (!run || run.status !== "draft") throwStatus("Only draft payroll runs can be saved.");
+
+      const [profilesResult, directoryResult, existingResult] = await Promise.all([
+        adminClient.from("employee_private_profiles").select("user_id, job_title").eq("employment_status", "active"),
+        adminClient.from("employee_directory").select("user_id, first_name, last_name"),
+        adminClient.from("employee_paystubs").select("id, user_id").eq("payroll_run_id", run.id),
+      ]);
+      if (profilesResult.error) throw profilesResult.error;
+      if (directoryResult.error) throw directoryResult.error;
+      if (existingResult.error) throw existingResult.error;
+      const activeProfiles = profilesResult.data || [];
+      const directory = directoryResult.data || [];
+      const existingPaystubs = existingResult.data || [];
+      const activeIds = activeProfiles.map((profile) => profile.user_id);
+      if (!activeIds.length) throwStatus("No active employees are available for this payroll run.");
+      const missingSubmissions = activeIds.filter((employeeId) => !submittedById.has(employeeId));
+      const unexpectedSubmissions = [...submittedById.keys()].filter((employeeId) => !activeIds.includes(employeeId));
+      if (missingSubmissions.length || unexpectedSubmissions.length) {
+        throwStatus("The payroll draft must include every active employee and no inactive employees. Refresh and try again.", 409);
+      }
+
+      const [compensationResult, priorVoidResult] = await Promise.all([
+        adminClient.from("employee_compensation").select("*").in("user_id", activeIds).lte("effective_from", run.pay_date).or(`effective_to.is.null,effective_to.gte.${run.pay_date}`).order("effective_from", { ascending: false }),
+        adminClient.from("employee_paystubs").select("id, user_id, payroll_runs!inner(period_start, period_end, status)").in("user_id", activeIds).eq("payroll_runs.status", "void").eq("payroll_runs.period_start", run.period_start).eq("payroll_runs.period_end", run.period_end),
+      ]);
+      if (compensationResult.error) throw compensationResult.error;
+      if (priorVoidResult.error) throw priorVoidResult.error;
+
+      const directoryById = new Map(directory.map((entry) => [entry.user_id, entry]));
+      const profileById = new Map(activeProfiles.map((entry) => [entry.user_id, entry]));
+      const compensationById = new Map();
+      for (const compensation of compensationResult.data || []) {
+        if (!compensationById.has(compensation.user_id)) compensationById.set(compensation.user_id, compensation);
+      }
+      const priorVoidById = new Map();
+      for (const priorVoid of priorVoidResult.data || []) {
+        if (!priorVoidById.has(priorVoid.user_id)) priorVoidById.set(priorVoid.user_id, priorVoid.id);
+      }
+      const employeesMissingSalary = activeIds.filter((employeeId) => !compensationById.has(employeeId));
+      if (employeesMissingSalary.length) {
+        const names = employeesMissingSalary.map((employeeId) => {
+          const employee = directoryById.get(employeeId);
+          return `${employee?.first_name || ""} ${employee?.last_name || ""}`.trim() || "Unnamed employee";
+        });
+        throwStatus(`Add salary information for: ${names.join(", ")}.`, 409);
+      }
+
+      const preparedById = new Map();
+      const paystubRows = activeIds.map((employeeId) => {
+        const compensation = compensationById.get(employeeId);
+        const employee = directoryById.get(employeeId) || {};
+        const items = preparePaystubItems(submittedById.get(employeeId)?.items, compensation, run);
+        const totals = computePayrollTotals(items);
+        if (totals.netPay < 0) throwStatus(`Net pay cannot be negative for ${employee.first_name || "an employee"}.`);
+        preparedById.set(employeeId, items);
+        return {
+          payroll_run_id: run.id,
+          user_id: employeeId,
+          employee_name_snapshot: `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || "Employee",
+          job_title_snapshot: profileById.get(employeeId)?.job_title || null,
+          annual_salary_snapshot: compensation.annual_salary,
+          pay_frequency_snapshot: compensation.pay_frequency,
+          variable_pay_snapshot: compensation.variable_pay || 0,
+          variable_pay_frequency_snapshot: compensation.variable_pay_frequency || "monthly",
+          salary_note_snapshot: compensation.salary_note || null,
+          currency: compensation.currency,
+          gross_pay: totals.grossPay,
+          employee_taxes: totals.employeeTaxes,
+          deductions: totals.deductions,
+          reimbursements: totals.reimbursements,
+          employer_taxes: totals.employerTaxes,
+          net_pay: totals.netPay,
+          replacement_for: priorVoidById.get(employeeId) || null,
+        };
+      });
+
+      const { data: savedPaystubs, error: saveError } = await adminClient.from("employee_paystubs")
+        .upsert(paystubRows, { onConflict: "payroll_run_id,user_id" }).select();
+      if (saveError) throw saveError;
+      const savedByUserId = new Map((savedPaystubs || []).map((paystub) => [paystub.user_id, paystub]));
+      const savedIds = (savedPaystubs || []).map((paystub) => paystub.id);
+      if (savedIds.length) {
+        const { error: deleteItemsError } = await adminClient.from("paystub_line_items").delete().in("paystub_id", savedIds);
+        if (deleteItemsError) throw deleteItemsError;
+        const lineItems = activeIds.flatMap((employeeId) => {
+          const paystub = savedByUserId.get(employeeId);
+          return (preparedById.get(employeeId) || []).map((item) => ({ ...item, paystub_id: paystub.id }));
+        });
+        if (lineItems.length) {
+          const { error: insertItemsError } = await adminClient.from("paystub_line_items").insert(lineItems);
+          if (insertItemsError) throw insertItemsError;
+        }
+      }
+
+      const stalePaystubIds = existingPaystubs.filter((paystub) => !activeIds.includes(paystub.user_id)).map((paystub) => paystub.id);
+      if (stalePaystubIds.length) {
+        const { error: staleError } = await adminClient.from("employee_paystubs").delete().in("id", stalePaystubIds);
+        if (staleError) throw staleError;
+      }
+      await audit(adminClient, user.id, "payroll_run_draft_saved", "payroll_run", run.id, null, { employee_count: activeIds.length });
+      return noStore({ ok: true, employeeCount: activeIds.length });
+    }
+
     if (action === "save_paystub") {
       ownerOnly();
       const { data: run, error: runError } = await adminClient.from("payroll_runs").select("*").eq("id", body.runId).maybeSingle();
@@ -478,20 +605,7 @@ export async function POST(request) {
       if (profileError) throw profileError;
       if (compensationError) throw compensationError;
       if (!compensation) throwStatus("Add salary information before creating this paystub.");
-      const salaryItems = salaryLineItemsForPeriod(compensation, run.period_start, run.period_end);
-      const requiredVariablePay = variablePayLineForPeriod(compensation, run.period_start, run.period_end);
-      const items = Array.isArray(body.items) && body.items.length ? [...body.items] : salaryItems;
-      const withoutVariablePay = items.filter((item) => (item.line_type || item.lineType) !== "variable_pay");
-      if (requiredVariablePay) {
-        const regularIndex = withoutVariablePay.findIndex((item) => (item.line_type || item.lineType) === "regular_earnings");
-        withoutVariablePay.splice(regularIndex >= 0 ? regularIndex + 1 : 0, 0, requiredVariablePay);
-      }
-      const sanitizedItems = withoutVariablePay.map((item, index) => ({
-        line_type: item.line_type,
-        description: cleanText(item.description, 160) || "Payroll item",
-        amount: Number(item.amount),
-        sort_order: index,
-      }));
+      const sanitizedItems = preparePaystubItems(body.items, compensation, run);
       const totals = computePayrollTotals(sanitizedItems);
       if (totals.netPay < 0) throwStatus("Net pay cannot be negative.");
       let replacementFor = body.replacementFor || null;
@@ -539,9 +653,18 @@ export async function POST(request) {
       const { data: run, error: runError } = await adminClient.from("payroll_runs").select("*").eq("id", body.runId).maybeSingle();
       if (runError) throw runError;
       if (!run || run.status !== "draft") throwStatus("Only draft payroll runs can be finalized.");
-      const { data: paystubs, error: stubsError } = await adminClient.from("employee_paystubs").select("*, paystub_line_items(*)").eq("payroll_run_id", run.id);
-      if (stubsError) throw stubsError;
-      if (!paystubs?.length) throwStatus("Add at least one employee paystub first.");
+      const [stubsResult, activeProfilesResult] = await Promise.all([
+        adminClient.from("employee_paystubs").select("*, paystub_line_items(*)").eq("payroll_run_id", run.id),
+        adminClient.from("employee_private_profiles").select("user_id").eq("employment_status", "active"),
+      ]);
+      if (stubsResult.error) throw stubsResult.error;
+      if (activeProfilesResult.error) throw activeProfilesResult.error;
+      const paystubs = stubsResult.data || [];
+      const paystubUserIds = new Set(paystubs.map((paystub) => paystub.user_id));
+      const missingEmployeeCount = (activeProfilesResult.data || []).filter((profile) => !paystubUserIds.has(profile.user_id)).length;
+      if (!paystubs.length || missingEmployeeCount) {
+        throwStatus(`Save the entire draft before finalizing. ${missingEmployeeCount || "All"} active employee(s) are missing.`, 409);
+      }
       for (let index = 0; index < paystubs.length; index += 1) {
         const stub = paystubs[index];
         const paystubNumber = stub.paystub_number || `PS-${run.pay_date.slice(0, 4)}-${run.id.slice(0, 6).toUpperCase()}-${String(index + 1).padStart(3, "0")}`;

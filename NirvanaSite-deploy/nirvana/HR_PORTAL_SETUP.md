@@ -48,3 +48,5 @@ Deploy the Next.js application after the schema and function. Sign in as an owne
 Payroll values and taxes are owner-entered records. This version does not calculate statutory taxes, file tax forms, or initiate bank transfers.
 
 Salary records contain annual fixed salary, pay frequency, variable pay, variable-pay frequency, and an employee-visible salary note. Monthly variable pay is added as a separate paystub line for each month-end contained in the payroll period. Yearly variable pay is added only when the payroll period contains December 31.
+
+Each payroll run displays the full active employee roster as collapsible cards. Draft cards show whether an employee is ready, already added, has unsaved changes, or is missing salary configuration. **Save entire draft** writes every active employee in one request, and a run cannot be finalized until every active employee has a saved paystub.
