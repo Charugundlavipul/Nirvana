@@ -414,7 +414,20 @@ export async function POST(request) {
         .maybeSingle();
       if (runError) throw runError;
       if (!run) throwStatus("Payroll run not found.", 404);
-      if (run.status !== "draft") throwStatus("Only draft payroll runs can be deleted.", 409);
+
+      const { data: paystubs, error: findPaystubsError } = await adminClient
+        .from("employee_paystubs")
+        .select("id, pdf_path")
+        .eq("payroll_run_id", run.id);
+      if (findPaystubsError) throw findPaystubsError;
+
+      const pdfPaths = (paystubs || []).map((paystub) => paystub.pdf_path).filter(Boolean);
+      for (let index = 0; index < pdfPaths.length; index += 100) {
+        const { error: storageError } = await adminClient.storage
+          .from("paystubs")
+          .remove(pdfPaths.slice(index, index + 100));
+        if (storageError) throw storageError;
+      }
 
       const { error: paystubError } = await adminClient
         .from("employee_paystubs")
@@ -426,14 +439,17 @@ export async function POST(request) {
         .from("payroll_runs")
         .delete()
         .eq("id", run.id)
-        .eq("status", "draft")
         .select("id")
         .maybeSingle();
       if (deleteError) throw deleteError;
-      if (!deletedRun) throwStatus("This payroll run is no longer a draft and was not deleted.", 409);
+      if (!deletedRun) throwStatus("Payroll run was not deleted.", 409);
 
-      await audit(adminClient, user.id, "payroll_run_deleted", "payroll_run", run.id, null);
-      return noStore({ ok: true });
+      await audit(adminClient, user.id, "payroll_run_deleted", "payroll_run", run.id, null, {
+        previous_status: run.status,
+        deleted_paystub_count: (paystubs || []).length,
+        deleted_pdf_count: pdfPaths.length,
+      });
+      return noStore({ ok: true, deletedPdfCount: pdfPaths.length });
     }
 
     if (action === "save_paystub") {

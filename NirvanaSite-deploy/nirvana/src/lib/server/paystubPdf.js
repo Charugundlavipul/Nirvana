@@ -1,7 +1,13 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-const money = (amount, currency) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(amount || 0));
+const money = (amount, currency) => {
+  const currencyCode = String(currency || "USD").toUpperCase();
+  const formattedAmount = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount || 0));
+  return `${currencyCode} ${formattedAmount}`;
+};
 
 export async function createPaystubPdf({ companyName, run, paystub, items, ytd }) {
   const pdf = await PDFDocument.create();

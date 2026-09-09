@@ -64,12 +64,12 @@ test("bank payloads round-trip through authenticated encryption", async () => {
   assert.equal(lastFour(source.accountNumber), "7890");
 });
 
-test("generated paystub is a PDF and contains no bank source data", async () => {
+test("generated INR paystub is a PDF and contains no bank source data", async () => {
   const { createPaystubPdf } = await import("../src/lib/server/paystubPdf.js");
   const pdf = await createPaystubPdf({
     companyName: "Nirvana Luxury Vacations",
     run: { period_start: "2026-09-01", period_end: "2026-09-15", pay_date: "2026-09-18" },
-    paystub: { paystub_number: "PS-TEST", employee_name_snapshot: "Example Employee", currency: "USD", gross_pay: 3000, employee_taxes: 500, deductions: 100, reimbursements: 25, net_pay: 2425 },
+    paystub: { paystub_number: "PS-TEST", employee_name_snapshot: "Example Employee", currency: "INR", gross_pay: 3000, employee_taxes: 500, deductions: 100, reimbursements: 25, net_pay: 2425 },
     items: [{ line_type: "regular_earnings", description: "Regular salary", amount: 3000 }],
     ytd: { grossPay: 9000, employeeTaxes: 1500, netPay: 7275 },
   });
