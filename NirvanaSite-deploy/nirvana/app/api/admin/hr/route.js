@@ -97,32 +97,31 @@ async function getSummary(adminClient, user, role) {
 
 async function getPeople(adminClient) {
   const year = new Date().getUTCFullYear();
-  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult] = await Promise.all([
+  const today = new Date().toISOString().slice(0, 10);
+  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult, authResult] = await Promise.all([
     directoryWithRoles(adminClient),
     adminClient.from("employee_private_profiles").select("*"),
-    adminClient.from("employee_compensation").select("*").order("effective_from", { ascending: false }),
+    adminClient.from("employee_compensation").select("*").lte("effective_from", today).or(`effective_to.is.null,effective_to.gte.${today}`).order("effective_from", { ascending: false }),
     adminClient.from("employee_bank_accounts").select("user_id, bank_name, account_type, account_last4, routing_last4, updated_at"),
     adminClient.from("leave_entitlements").select("*").eq("calendar_year", year),
     adminClient.from("leave_requests").select("*").neq("status", "cancelled").order("created_at", { ascending: false }),
+    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ]);
   for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult]) {
     if (result.error) throw result.error;
   }
-  const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (authError) throw authError;
+  if (authResult.error) throw authResult.error;
   const byId = (rows) => new Map((rows || []).map((row) => [row.user_id, row]));
   const privateById = byId(privateResult.data);
-  const today = new Date().toISOString().slice(0, 10);
   const compById = new Map();
   for (const row of compensationResult.data || []) {
-    const isEffective = row.effective_from <= today && (!row.effective_to || row.effective_to >= today);
-    if (isEffective && !compById.has(row.user_id)) compById.set(row.user_id, row);
+    if (!compById.has(row.user_id)) compById.set(row.user_id, row);
   }
   const bankById = byId(bankResult.data);
   const entitlementById = byId(entitlementResult.data);
   const leaveById = new Map();
   for (const request of leaveResult.data || []) leaveById.set(request.user_id, [...(leaveById.get(request.user_id) || []), request]);
-  const authById = new Map((authData?.users || []).map((row) => [row.id, row]));
+  const authById = new Map((authResult.data?.users || []).map((row) => [row.id, row]));
   return directory.map((employee) => ({
     ...employee,
     email: authById.get(employee.user_id)?.email || "",
@@ -145,17 +144,18 @@ export async function GET(request) {
       if (role !== "owner") throwStatus("Owner access required.", 403);
       const people = await getPeople(adminClient);
       await audit(adminClient, user.id, "people_workspace_viewed", "employee_profiles", null, null, { employee_count: people.length });
-      return noStore({ people });
+      return noStore({ role, people });
     }
     if (view === "payroll") {
       if (role !== "owner") throwStatus("Owner access required.", 403);
-      const [{ data: runs, error: runsError }, { data: paystubs, error: paystubsError }] = await Promise.all([
+      const [runsResult, paystubsResult, people] = await Promise.all([
         adminClient.from("payroll_runs").select("*").order("pay_date", { ascending: false }),
         adminClient.from("employee_paystubs").select("*, paystub_line_items(*)").order("created_at", { ascending: false }),
+        getPeople(adminClient),
       ]);
-      if (runsError) throw runsError;
-      if (paystubsError) throw paystubsError;
-      return noStore({ runs: runs || [], paystubs: paystubs || [], people: await getPeople(adminClient) });
+      if (runsResult.error) throw runsResult.error;
+      if (paystubsResult.error) throw paystubsResult.error;
+      return noStore({ role, runs: runsResult.data || [], paystubs: paystubsResult.data || [], people });
     }
     if (view === "bank") {
       const targetId = searchParams.get("userId") || user.id;

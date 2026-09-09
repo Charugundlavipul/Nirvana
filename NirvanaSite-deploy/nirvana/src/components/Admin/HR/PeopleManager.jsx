@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
 import { createAdminUser, setAdminUserActive, updateAdminUserEmail, updateAdminUserPassword, updateAdminUserRole } from "../../../lib/adminUsersApi";
-import { getHrSummary, getPeople, hrAction, revealBank } from "../../../lib/hrApi";
+import { getPeople, hrAction, revealBank } from "../../../lib/hrApi";
 import styles from "./Hr.module.css";
 
 const blankNew = { firstName: "", lastName: "", email: "", password: "", role: "employee" };
@@ -25,10 +25,12 @@ export default function PeopleManager() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const summary = await getHrSummary(); setRole(summary.role);
-    if (summary.role === "owner") { const result = await getPeople(); setPeople(result.people); setSelectedId((id)=>id || result.people[0]?.user_id || null); }
+    const result = await getPeople();
+    setRole(result.role);
+    setPeople(result.people);
+    setSelectedId((id)=>result.people.some((person)=>person.user_id===id)?id:result.people[0]?.user_id||null);
   };
-  useEffect(()=>{load().catch((error)=>setMessage(error.message));},[]);
+  useEffect(()=>{load().catch((error)=>{setRole('forbidden');setMessage(error.message);});},[]);
   const selected = useMemo(()=>people.find((person)=>person.user_id===selectedId),[people,selectedId]);
   useEffect(()=>{
     if (!selected) return;
@@ -51,7 +53,8 @@ export default function PeopleManager() {
   );
 
   const perform = async (callback, success) => { setBusy(true); setMessage(''); try { await callback(); await load(); setMessage(success); } catch(error){setMessage(error.message);} finally{setBusy(false);} };
-  if (role && role !== 'owner') return <AdminLayout title="People" subtitle="Owner workspace"><div className={styles.alert}>Owner access is required.</div></AdminLayout>;
+  if (role === null) return <AdminLayout title="People" subtitle="Owner-only employee administration"><div className={styles.card}>Loading employees…</div></AdminLayout>;
+  if (role !== 'owner') return <AdminLayout title="People" subtitle="Owner workspace"><div className={styles.alert}>{message || 'Owner access is required.'}</div></AdminLayout>;
   return <AdminLayout title="People" subtitle="Owner-only employee administration">
     {message && <div className={`${styles.alert} ${/(saved|created|updated|changed)/i.test(message)?styles.success:''}`}>{message}</div>}
     <section className={styles.card} style={{marginBottom:20}}><h2>Create employee account</h2><p className={styles.muted}>Creates the sign-in, role, and employee profile together.</p><div className={styles.formGrid}>{[['firstName','First name','text'],['lastName','Last name','text'],['email','Work email','email'],['password','Temporary password','password']].map(([key,label,type])=><div className={styles.field} key={key}><label>{label}</label><input type={type} className={styles.input} value={newUser[key]} onChange={(e)=>setNewUser({...newUser,[key]:e.target.value})}/></div>)}<div className={styles.field}><label>Role</label><select className={styles.select} value={newUser.role} onChange={(e)=>setNewUser({...newUser,role:e.target.value})}><option value="employee">Employee</option><option value="admin">Admin</option><option value="owner">Owner</option></select></div></div><div className={styles.actions}><button disabled={busy} className={styles.button} onClick={()=>perform(async()=>{await createAdminUser(newUser);setNewUser(blankNew);},'Employee account created.')}>Create account</button></div></section>
