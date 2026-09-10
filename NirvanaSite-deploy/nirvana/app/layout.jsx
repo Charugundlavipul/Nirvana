@@ -1,6 +1,7 @@
 import "../src/index.css";
 import Script from "next/script";
 import { Fira_Sans, Fira_Sans_Condensed } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
@@ -111,6 +112,7 @@ export default function RootLayout({ children }) {
           />
         </noscript>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
