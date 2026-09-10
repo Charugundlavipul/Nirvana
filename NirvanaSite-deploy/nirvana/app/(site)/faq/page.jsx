@@ -4,7 +4,7 @@ import { getFaqsBySlug, getManagedPageMetadata, getPropertyCards } from "../../.
 import { buildFaqJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 43200;
+export const revalidate = false;
 
 export async function generateMetadata() {
   return getManagedPageMetadata("/faq", {

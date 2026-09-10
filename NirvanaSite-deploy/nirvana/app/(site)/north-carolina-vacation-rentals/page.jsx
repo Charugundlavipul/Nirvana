@@ -4,7 +4,7 @@ import { getManagedPageMetadata, getPropertyCards, getReviews } from "../../../s
 import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export async function generateMetadata() {
   return getManagedPageMetadata("/north-carolina-vacation-rentals", {

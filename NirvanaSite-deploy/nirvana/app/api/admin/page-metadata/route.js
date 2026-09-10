@@ -312,6 +312,10 @@ export async function PATCH(request) {
   try {
     await requireAdminAccess(request, ["owner", "admin"]);
     const body = await request.json().catch(() => ({}));
+    if (body.scope === "site") {
+      revalidatePath("/", "layout");
+      return noStoreJson({ revalidated: true, scope: "site" });
+    }
     const pageKey = normalizePageKey(body.pageKey);
     if (!pageKey) {
       const error = new Error("A valid page path is required.");

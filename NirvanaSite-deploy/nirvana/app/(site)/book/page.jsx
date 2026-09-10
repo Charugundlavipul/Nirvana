@@ -4,7 +4,7 @@ import { getManagedPageMetadata, getPropertyCards } from "../../../src/lib/serve
 import { buildBreadcrumbJsonLd, buildWebPageJsonLd } from "../../../src/lib/seo";
 import { absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export async function generateMetadata() {
   return getManagedPageMetadata("/book", {

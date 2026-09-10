@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { apiErrorResponse, noStoreJson } from "../../../../../src/lib/server/apiResponses";
 import { requireAdminAccess } from "../../../../../src/lib/server/supabaseAdmin";
 import { scheduleKnowledgeRefreshForAdminChange } from "../../../../../src/lib/server/knowledgeBase";
@@ -19,6 +20,7 @@ export async function POST(request) {
       userId: user.id,
     });
 
+    revalidatePath("/", "layout");
     return noStoreJson(result);
   } catch (error) {
     return apiErrorResponse(error);

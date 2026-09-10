@@ -4,7 +4,7 @@ import StructuredData from "../../../../src/components/StructuredData";
 import { getFaqsBySlug, getManagedPageMetadata, getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildFaqJsonLd, buildMetadata } from "../../../../src/lib/seo";
 
-export const revalidate = 43200;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();

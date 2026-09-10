@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../supabaseClient";
 import { sanitizeRichText } from "../../../lib/richText";
+import { revalidatePageMetadata } from "../../../lib/adminApi";
 import RichTextContent from "../../common/RichTextContent";
 import styles from "../Properties/PropertyEditor.module.css";
 
@@ -83,6 +84,7 @@ const LegalPagesManager = () => {
                     { onConflict: "key" }
                 );
             if (error) throw error;
+            await revalidatePageMetadata(activeKey === "privacy_policy" ? "/privacy" : "/terms");
             alert("Saved successfully!");
         } catch (err) {
             console.error("Error saving:", err);

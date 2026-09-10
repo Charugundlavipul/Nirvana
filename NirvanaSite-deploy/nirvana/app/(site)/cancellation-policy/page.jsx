@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 import { getManagedPageMetadata } from "../../../src/lib/serverContentApi";
 
-export const revalidate = 86400;
+export const revalidate = false;
 
 export async function generateMetadata() {
   return getManagedPageMetadata("/cancellation-policy", {

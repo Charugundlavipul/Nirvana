@@ -277,3 +277,11 @@ export async function revalidatePageMetadata(pageKey) {
     body: JSON.stringify({ pageKey }),
   });
 }
+
+export async function revalidateSiteContent() {
+  return adminRequest("/api/admin/page-metadata", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope: "site" }),
+  });
+}

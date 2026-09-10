@@ -3,7 +3,7 @@ import Booking from "../../../../src/components/Booking/Booking";
 import { getManagedPageMetadata, getPropertyBySlug, getPropertyCards, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildMetadata, descriptionFromRichText } from "../../../../src/lib/seo";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();

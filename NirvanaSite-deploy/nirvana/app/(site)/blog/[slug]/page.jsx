@@ -4,7 +4,7 @@ import { getBlogBySlug, getBlogSlugs, getManagedPageMetadata } from "../../../..
 import { buildMetadata, buildArticleJsonLd } from "../../../../src/lib/seo";
 import { absoluteUrl, SITE_NAME } from "../../../../src/lib/siteConfig";
 
-export const revalidate = 21600;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = await getBlogSlugs();

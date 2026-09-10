@@ -3,7 +3,7 @@ import ActivitiesPage from "../../../../src/components/NearbyActivities/Activiti
 import { getActivitiesBySlug, getManagedPageMetadata, getPropertyBySlug, getPropertySlugs } from "../../../../src/lib/serverContentApi";
 import { buildMetadata } from "../../../../src/lib/seo";
 
-export const revalidate = 21600;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();

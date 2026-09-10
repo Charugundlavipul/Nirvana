@@ -9,7 +9,7 @@ import {
 } from "../../src/lib/seo";
 import { SITE_ALTERNATE_NAMES, SITE_NAME, absoluteUrl } from "../../src/lib/siteConfig";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 const homeMetadataDefaults = {
   title: "Nirvana Luxe Official Site - Luxury Vacation Rentals",

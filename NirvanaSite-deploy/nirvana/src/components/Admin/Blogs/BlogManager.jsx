@@ -6,7 +6,8 @@ import {
     isContentReviewerRole,
     fetchMyPendingDrafts,
     parseApprovalObject,
-    resubmitApprovalRequest
+    resubmitApprovalRequest,
+    revalidateSiteContent
 } from '../../../lib/adminApi';
 import { FaEdit, FaPlus, FaTrash, FaCheck, FaTimes, FaImage, FaChevronLeft } from 'react-icons/fa';
 import AdminLayout from '../AdminLayout';
@@ -231,7 +232,10 @@ const BlogManager = () => {
                 .eq('id', id);
 
             if (error) alert("Error: " + error.message);
-            else fetchBlogs();
+            else {
+                await revalidateSiteContent();
+                fetchBlogs();
+            }
         } else {
             const publishedBlog = blogs.find((blog) => blog.id === id && !blog.is_draft_request) || {};
             const { row_id, is_draft_request, draft_request_id, draft_action, draft_status, draft_comment, base_snapshot, ...cleanBlog } = publishedBlog;
@@ -267,6 +271,7 @@ const BlogManager = () => {
                         console.error("Blog image cleanup failed:", cleanupError);
                         alert(cleanupError.message);
                     }
+                    await revalidateSiteContent();
                     fetchBlogs();
                 }
             } else {
@@ -592,6 +597,7 @@ const BlogManager = () => {
                 }
 
                 if (result.error) throw result.error;
+                await revalidateSiteContent();
                 alert(id ? 'Blog updated successfully!' : 'Blog created successfully!');
             } else {
                 const beforeSnapshot = base_snapshot || (id ? blogs.find((blog) => blog.id === id && !blog.is_draft_request) || null : null);

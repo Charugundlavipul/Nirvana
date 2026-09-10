@@ -53,7 +53,7 @@ export const getManagedPageMetadata = cache(async (pageKey, fallback = {}) => {
 
 export const getHospitableProperties = cache(async () => {
   try {
-    return await fetchHospitableProperties({ next: { revalidate: 3600 } });
+    return await fetchHospitableProperties({ cache: "force-cache" });
   } catch (error) {
     console.error("Unable to load Hospitable properties for structured data:", error);
     return [];

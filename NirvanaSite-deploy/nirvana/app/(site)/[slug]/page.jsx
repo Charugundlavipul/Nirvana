@@ -6,7 +6,7 @@ import { parseHospitableWidgetCode } from "../../../src/lib/hospitableWidget";
 import { buildMetadata, buildPropertyJsonLd, buildBreadcrumbJsonLd, buildWebPageJsonLd, descriptionFromRichText } from "../../../src/lib/seo";
 import { SITE_NAME, absoluteUrl } from "../../../src/lib/siteConfig";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();
