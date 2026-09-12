@@ -79,6 +79,55 @@ async function getSummary(adminClient, user, role) {
   }
   const ownDirectory = directory.find((entry) => entry.user_id === user.id) || null;
   const requests = requestsResult.data || [];
+
+  let allLeaveRequests = [];
+  let employeeBalances = [];
+  if (role === "owner") {
+    const [allEntitlementsRes, allRequestsRes] = await Promise.all([
+      adminClient.from("leave_entitlements").select("*").eq("calendar_year", year),
+      adminClient.from("leave_requests").select("*").order("created_at", { ascending: false }),
+    ]);
+    if (allEntitlementsRes.error) throw allEntitlementsRes.error;
+    if (allRequestsRes.error) throw allRequestsRes.error;
+
+    const directoryMap = new Map((directory || []).map((entry) => [entry.user_id, entry]));
+    allLeaveRequests = (allRequestsRes.data || []).map((req) => {
+      const emp = directoryMap.get(req.user_id);
+      return {
+        ...req,
+        employee_name: emp ? `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || "Employee" : "Unknown",
+        employee_role: emp?.role || "employee",
+      };
+    });
+
+    const requestsByUser = new Map();
+    for (const req of allRequestsRes.data || []) {
+      const reqYear = new Date(`${req.start_date}T00:00:00Z`).getUTCFullYear();
+      if (reqYear === year) {
+        if (!requestsByUser.has(req.user_id)) requestsByUser.set(req.user_id, []);
+        requestsByUser.get(req.user_id).push(req);
+      }
+    }
+    const entitlementsByUser = new Map((allEntitlementsRes.data || []).map((ent) => [ent.user_id, ent]));
+
+    employeeBalances = (directory || []).map((emp) => {
+      const ent = entitlementsByUser.get(emp.user_id);
+      const userReqs = requestsByUser.get(emp.user_id) || [];
+      const allowance = ent?.allowance_days ?? 0;
+      const balance = leaveBalance(allowance, userReqs);
+      return {
+        user_id: emp.user_id,
+        name: `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || "Employee",
+        role: emp.role,
+        allowance: balance.allowance,
+        approved: balance.approved,
+        pending: balance.pending,
+        available: balance.available,
+      };
+    });
+    employeeBalances.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   return {
     role,
     email: user.email,
@@ -91,6 +140,8 @@ async function getSummary(adminClient, user, role) {
       entitlement: entitlementResult.data || null,
       balance: leaveBalance(entitlementResult.data?.allowance_days || 0, requests),
       requests,
+      allRequests: allLeaveRequests,
+      employeeBalances,
     },
     paystubs: paystubsResult.data || [],
     notifications: notificationsResult.data || [],

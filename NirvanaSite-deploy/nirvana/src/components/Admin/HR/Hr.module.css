@@ -64,5 +64,28 @@
 .payrollEmployeeBody { padding: 16px; }
 .notification { border-left: 3px solid #426743; padding: 10px 12px; background: #f7faf7; border-radius: 0 10px 10px 0; }
 .notificationRead { opacity: .62; border-left-color: #cbd5e1; }
+.leaveTabs { display: flex; gap: 10px; margin-bottom: 22px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; flex-wrap: wrap; }
+.leaveTab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #475569; font-weight: 700; font-size: 13px; cursor: pointer; transition: all .15s ease; }
+.leaveTab:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+.leaveTabActive { background: #426743 !important; color: #fff !important; border-color: #426743 !important; box-shadow: 0 4px 12px rgba(66, 103, 67, .2); }
+.tabBadge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: #f59e0b; color: #fff; }
+.leaveTabActive .tabBadge { background: #fff; color: #426743; }
+.filterRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.filterGroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filterChip { padding: 6px 14px; border-radius: 9999px; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s ease; }
+.filterChip:hover { background: #e2e8f0; color: #1e293b; }
+.filterChipActive { background: #426743; color: #fff; border-color: #426743; }
+.searchInput { padding: 8px 14px; border-radius: 10px; border: 1px solid #dbe2e8; background: #f8fafc; font-size: 13px; outline: none; width: min(280px, 100%); }
+.searchInput:focus { border-color: #426743; background: #fff; }
+.balanceTableWrapper { overflow-x: auto; margin-top: 12px; }
+.balanceTable { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+.balanceTable th { padding: 12px 14px; background: #f4f7f3; color: #334155; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8e3; white-space: nowrap; }
+.balanceTable td { padding: 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; vertical-align: middle; }
+.balanceTable tr:hover td { background: #fbfdfb; }
+.balanceBar { width: 90px; height: 6px; border-radius: 9999px; background: #e2e8f0; overflow: hidden; margin-top: 5px; }
+.balanceBarFill { height: 100%; border-radius: 9999px; background: #426743; }
+.modalOverlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); backdrop-filter: blur(3px); z-index: 99; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modalContent { background: #fff; border-radius: 18px; padding: 24px; width: min(460px, 100%); box-shadow: 0 20px 45px rgba(0,0,0,.18); border: 1px solid #e2e8f0; }
+
 @media (max-width: 900px) { .half, .third { grid-column: 1 / -1; } .split { grid-template-columns: 1fr; } .directory { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .formGrid, .metricRow, .directory { grid-template-columns: 1fr; } .lineGrid { grid-template-columns: 1fr; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; } .row { align-items: flex-start; flex-direction: column; } .payrollEmployee summary, .payrollRosterHeader { align-items: flex-start; } .payrollEmployee summary { flex-wrap: wrap; } .payrollEmployeeName { min-width: calc(100% - 30px); } }
