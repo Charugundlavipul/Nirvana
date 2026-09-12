@@ -17,7 +17,15 @@ export function isContentReviewerRole(role) {
   return ["owner", "admin"].includes(normalizeRole(role));
 }
 
-export function countBusinessDays(startDate, endDate, dayPortion = "full") {
+export function formatRole(role) {
+  const norm = normalizeRole(role);
+  if (norm === "owner") return "Superadmin";
+  if (norm === "admin") return "Admin";
+  if (norm === "employee") return "Employee";
+  return role || "";
+}
+
+export function countLeaveDays(startDate, endDate, dayPortion = "full") {
   const start = new Date(`${startDate}T00:00:00Z`);
   const end = new Date(`${endDate}T00:00:00Z`);
   if (!startDate || !endDate || Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) {
@@ -31,14 +39,12 @@ export function countBusinessDays(startDate, endDate, dayPortion = "full") {
     throw new Error("Half-day leave is only available for a single date.");
   }
 
-  let count = 0;
-  for (const cursor = new Date(start); cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-    const day = cursor.getUTCDay();
-    if (day !== 0 && day !== 6) count += 1;
-  }
-  if (count === 0) throw new Error("The selected range contains no business days.");
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const count = Math.round((end.getTime() - start.getTime()) / msPerDay) + 1;
   return dayPortion === "half" ? 0.5 : count;
 }
+
+export const countBusinessDays = countLeaveDays;
 
 export function toCents(value) {
   const amount = Number(value || 0);

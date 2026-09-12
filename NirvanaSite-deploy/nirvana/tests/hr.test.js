@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import {
   computePayrollTotals,
   countBusinessDays,
+  countLeaveDays,
   leaveBalance,
   normalizeRole,
   regularPayForSalary,
@@ -18,11 +19,12 @@ test("legacy roles normalize to the new role names", () => {
   assert.equal(normalizeRole("owner"), "owner");
 });
 
-test("leave counts weekdays inclusively", () => {
-  assert.equal(countBusinessDays("2026-09-11", "2026-09-14"), 2);
-  assert.equal(countBusinessDays("2026-09-14", "2026-09-14", "half"), 0.5);
-  assert.throws(() => countBusinessDays("2026-12-31", "2027-01-01"), /calendar years/);
-  assert.throws(() => countBusinessDays("2026-09-12", "2026-09-13"), /no business days/);
+test("leave counts all calendar days inclusively for any day of the week", () => {
+  assert.equal(countLeaveDays("2026-09-11", "2026-09-14"), 4);
+  assert.equal(countLeaveDays("2026-09-12", "2026-09-13"), 2);
+  assert.equal(countLeaveDays("2026-09-14", "2026-09-14", "half"), 0.5);
+  assert.throws(() => countLeaveDays("2026-12-31", "2027-01-01"), /calendar years/);
+  assert.throws(() => countLeaveDays("2026-09-15", "2026-09-14"), /before start date/);
 });
 
 test("pending and approved leave reserve the allowance", () => {

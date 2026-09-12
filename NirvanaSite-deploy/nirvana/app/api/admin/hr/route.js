@@ -4,6 +4,7 @@ import { decryptBankPayload, encryptBankPayload, lastFour } from "../../../../sr
 import {
   computePayrollTotals,
   countBusinessDays,
+  countLeaveDays,
   leaveBalance,
   salaryLineItemsForPeriod,
   variablePayLineForPeriod,
@@ -81,7 +82,7 @@ async function getSummary(adminClient, user, role) {
   return {
     role,
     email: user.email,
-    directory,
+    directory: role === "owner" ? directory : [],
     profile: { ...(ownDirectory || {}), ...(profileResult.data || {}) },
     compensation: compensationResult.data || [],
     bank: bankResult.data || null,
@@ -264,7 +265,7 @@ export async function POST(request) {
     }
 
     if (action === "submit_leave") {
-      const requestedDays = countBusinessDays(body.startDate, body.endDate, body.dayPortion || "full");
+      const requestedDays = countLeaveDays(body.startDate, body.endDate, body.dayPortion || "full");
       const year = new Date(`${body.startDate}T00:00:00Z`).getUTCFullYear();
       const [{ data: entitlement, error: entitlementError }, { data: requests, error: requestsError }, { data: profile, error: profileError }, { data: overlaps, error: overlapError }] = await Promise.all([
         adminClient.from("leave_entitlements").select("allowance_days").eq("user_id", user.id).eq("calendar_year", year).maybeSingle(),

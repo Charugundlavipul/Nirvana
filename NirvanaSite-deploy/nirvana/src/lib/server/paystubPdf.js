@@ -82,6 +82,6 @@ export async function createPaystubPdf({ companyName, run, paystub, items, ytd }
   draw(`Taxes: ${money(ytd.employeeTaxes, paystub.currency)}`, 210, 9);
   draw(`Net: ${money(ytd.netPay, paystub.currency)}`, 370, 9);
   y -= 48;
-  draw("This statement records owner-entered payroll data and is not proof of a bank transfer.", 44, 8, regular, rgb(0.35, 0.35, 0.35));
+  draw("This statement records superadmin-entered payroll data and is not proof of a bank transfer.", 44, 8, regular, rgb(0.35, 0.35, 0.35));
   return Buffer.from(await pdf.save());
 }

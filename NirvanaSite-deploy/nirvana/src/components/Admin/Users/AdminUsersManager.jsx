@@ -172,7 +172,7 @@ const AdminUsersManager = () => {
         <div style={panel}>
           <h3 style={{ margin: 0 }}>Access Restricted</h3>
           <p style={{ marginTop: "8px", color: "#555" }}>
-            Only owners can manage employee accounts.
+            Only superadmins can manage employee accounts.
           </p>
         </div>
       </AdminLayout>
@@ -203,7 +203,7 @@ const AdminUsersManager = () => {
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
           >
             {ROLE_OPTIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{r === "owner" ? "Superadmin" : r === "admin" ? "Admin" : "Employee"}</option>
             ))}
           </select>
           <button
@@ -254,7 +254,7 @@ const AdminUsersManager = () => {
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
                   >
                     {ROLE_OPTIONS.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>{r === "owner" ? "Superadmin" : r === "admin" ? "Admin" : "Employee"}</option>
                     ))}
                   </select>
                 </div>

@@ -118,11 +118,11 @@ export default function PayrollManager() {
   const canSaveDraft = run?.status === "draft" && activePeople.length > 0 && missingSalaryCount === 0
     && activePeople.every((person) => (itemsByEmployee[person.user_id] || []).length > 0);
 
-  if (role === null) return <AdminLayout title="Payroll" subtitle="Owner-entered payroll records and private paystubs"><div className={styles.card}>Loading payroll…</div></AdminLayout>;
-  if (role !== "owner") return <AdminLayout title="Payroll" subtitle="Owner workspace"><div className={styles.alert}>{message || "Owner access is required."}</div></AdminLayout>;
+  if (role === null) return <AdminLayout title="Payroll" subtitle="Superadmin-entered payroll records and private paystubs"><div className={styles.card}>Loading payroll…</div></AdminLayout>;
+  if (role !== "owner") return <AdminLayout title="Payroll" subtitle="Superadmin workspace"><div className={styles.alert}>{message || "Superadmin access is required."}</div></AdminLayout>;
 
   return (
-    <AdminLayout title="Payroll" subtitle="Owner-entered payroll records and private paystubs">
+    <AdminLayout title="Payroll" subtitle="Superadmin-entered payroll records and private paystubs">
       {message && <div className={`${styles.alert} ${/(created|saved|finalized|paid|voided|deleted)/i.test(message) ? styles.success : ""}`}>{message}</div>}
       <div className={styles.grid}>
         <section className={`${styles.card} ${styles.full}`}>

@@ -2,8 +2,8 @@
 
 The HR portal is available under the existing `/admin` login:
 
-- Everyone: `My Profile`, `Leave`, staff directory, notifications, and personal paystubs.
-- Owners: `People` and `Payroll`.
+- Everyone: `My Profile`, `Leave`, notifications, and personal paystubs.
+- Owners: Staff directory (in `My Profile`), `People`, and `Payroll`.
 - Admins retain website-content approval access but have no employee account-management or password-reset access.
 
 ## 1. Apply the database schema

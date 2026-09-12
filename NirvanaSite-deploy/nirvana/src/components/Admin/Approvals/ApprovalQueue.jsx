@@ -1822,7 +1822,7 @@ const EditorRequestCard = ({ req, onRevise, propertyDraftBundle = null, onPrevie
 
       {!isRevision && (
         <div style={{ marginTop: "10px", fontSize: "12px", color: "#334155" }}>
-          <strong>Owner/Superadmin Message:</strong>{" "}
+          <strong>Superadmin Message:</strong>{" "}
           {ownerResponse ? ownerResponse : req.status === "pending" ? "Pending review." : "No message provided."}
         </div>
       )}
@@ -2133,7 +2133,7 @@ const ApprovalQueue = () => {
     const processed = requests.filter((req) => req.status !== "pending" && req.status !== "revision_requested");
 
     return (
-      <AdminLayout title="My Approval Requests" subtitle="Track your submitted changes and owner/admin replies">
+      <AdminLayout title="My Approval Requests" subtitle="Track your submitted changes and superadmin/admin replies">
         {loading ? <div style={cardStyle}>Loading requests...</div> : null}
         {!loading && requests.length === 0 ? <div style={cardStyle}>No requests submitted yet.</div> : null}
 
