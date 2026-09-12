@@ -6,6 +6,13 @@ import styles from "./Hr.module.css";
 
 const emptyBank = { bankName: "", accountType: "checking", routingNumber: "", accountNumber: "" };
 
+const formatPayDate = (value, options) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", ...options }).format(date);
+};
+
 export default function ProfileManager() {
   const [data, setData] = useState(null);
   const [profile, setProfile] = useState({});
@@ -25,6 +32,9 @@ export default function ProfileManager() {
     const today = new Date().toISOString().slice(0, 10);
     return data?.compensation?.find((row) => row.effective_from <= today && (!row.effective_to || row.effective_to >= today)) || null;
   }, [data]);
+  const paystubs = useMemo(() => [...(data?.paystubs || [])].sort((a, b) => (
+    String(b.payroll_runs?.pay_date || "").localeCompare(String(a.payroll_runs?.pay_date || ""))
+  )), [data]);
 
   const saveProfile = async (event) => {
     event.preventDefault(); setBusy(true); setMessage("");
@@ -65,7 +75,36 @@ export default function ProfileManager() {
             <div className={`${styles.field} ${styles.fieldWide}`}><label>Account number</label><input className={styles.input} inputMode="numeric" value={bank.accountNumber} onChange={(e)=>setBank({...bank,accountNumber:e.target.value})}/></div>
           </div><div className={styles.actions}><button className={styles.button} disabled={busy}>Save bank information</button></div>
         </form>
-        <section className={`${styles.card} ${styles.half}`}><h2>Paystubs</h2><p className={styles.muted}>Your finalized payroll statements.</p><div className={styles.list}>{data.paystubs?.filter((stub)=>stub.pdf_path).map((stub)=><div className={styles.row} key={stub.id}><div className={styles.rowMain}><strong>{stub.paystub_number}</strong><span>{stub.payroll_runs?.period_start} – {stub.payroll_runs?.period_end} · Net {new Intl.NumberFormat('en-US',{style:'currency',currency:stub.currency}).format(stub.net_pay)}</span></div><button className={styles.button} onClick={()=>downloadPaystub(stub)}>Download PDF</button></div>)}{!data.paystubs?.some((stub)=>stub.pdf_path) && <div className={styles.empty}>No finalized paystubs yet.</div>}</div></section>
+        <section className={`${styles.card} ${styles.half}`}>
+          <div className={styles.paystubHeading}>
+            <div><h2>Pay statements</h2><p className={styles.muted}>Your complete monthly payslip history.</p></div>
+            {paystubs.length > 0 && <span className={styles.paystubCount}>{paystubs.length} available</span>}
+          </div>
+          <div className={styles.paystubList}>
+            {paystubs.map((stub) => {
+              const run = stub.payroll_runs || {};
+              return (
+                <article className={styles.paystubCard} key={stub.id}>
+                  <div className={styles.paystubMonth} aria-hidden="true">
+                    <strong>{formatPayDate(run.pay_date, { month: "short" })}</strong>
+                    <span>{formatPayDate(run.pay_date, { year: "numeric" })}</span>
+                  </div>
+                  <div className={styles.paystubDetails}>
+                    <strong>{stub.paystub_number}</strong>
+                    <span>{formatPayDate(run.period_start, { day: "2-digit", month: "short" })} - {formatPayDate(run.period_end, { day: "2-digit", month: "short", year: "numeric" })}</span>
+                    <small>Paid {formatPayDate(run.pay_date, { day: "2-digit", month: "short", year: "numeric" })}</small>
+                  </div>
+                  <div className={styles.paystubAmount}>
+                    <span>Net pay</span>
+                    <strong>{new Intl.NumberFormat("en-IN", { style: "currency", currency: stub.currency }).format(stub.net_pay)}</strong>
+                  </div>
+                  <button type="button" className={styles.button} onClick={() => downloadPaystub(stub)}>Download PDF</button>
+                </article>
+              );
+            })}
+            {!paystubs.length && <div className={styles.empty}>No generated pay statements yet. New monthly payslips will appear here after payroll is finalized.</div>}
+          </div>
+        </section>
         {isOwnerRole(data.role) && Boolean(data.directory?.length) && (
           <section className={`${styles.card} ${styles.full}`}><h2>Staff directory</h2><p className={styles.muted}>Only names and portal roles are shared.</p><div className={styles.directory}>{data.directory.map((person)=><div className={styles.person} key={person.user_id}><strong>{person.first_name || 'Profile'} {person.last_name || 'incomplete'}</strong><span>{formatRole(person.role)}</span></div>)}</div></section>
         )}

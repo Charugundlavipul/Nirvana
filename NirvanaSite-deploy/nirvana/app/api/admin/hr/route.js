@@ -71,7 +71,12 @@ async function getSummary(adminClient, user, role) {
       adminClient.from("employee_bank_accounts").select("bank_name, account_type, account_last4, routing_last4, updated_at").eq("user_id", user.id).maybeSingle(),
       adminClient.from("leave_entitlements").select("*").eq("user_id", user.id).eq("calendar_year", year).maybeSingle(),
       adminClient.from("leave_requests").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      adminClient.from("employee_paystubs").select("*, payroll_runs(period_start, period_end, pay_date, status)").eq("user_id", user.id).order("created_at", { ascending: false }),
+      adminClient.from("employee_paystubs")
+        .select("*, payroll_runs!inner(period_start, period_end, pay_date, status)")
+        .eq("user_id", user.id)
+        .not("pdf_path", "is", null)
+        .in("payroll_runs.status", ["finalized", "paid"])
+        .order("created_at", { ascending: false }),
       adminClient.from("employee_notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
     ]);
   for (const result of [profileResult, compensationResult, bankResult, entitlementResult, requestsResult, paystubsResult, notificationsResult]) {
@@ -731,7 +736,6 @@ export async function POST(request) {
           netPay: prior.reduce((sum, row) => sum + Number(row.net_pay), 0) + Number(stub.net_pay),
         };
         const pdf = await createPaystubPdf({
-          companyName: process.env.PAYSTUB_COMPANY_NAME || "Nirvana Luxury Vacations",
           run,
           paystub: { ...stub, paystub_number: paystubNumber },
           items: stub.paystub_line_items || [],
@@ -746,7 +750,14 @@ export async function POST(request) {
       const timestamp = new Date().toISOString();
       const { error: finalizeError } = await adminClient.from("payroll_runs").update({ status: "finalized", finalized_by: user.id, finalized_at: timestamp }).eq("id", run.id);
       if (finalizeError) throw finalizeError;
-      const notifications = paystubs.map((stub) => ({ user_id: stub.user_id, kind: "paystub_ready", title: "New paystub available", message: `Your paystub for ${run.period_start} through ${run.period_end} is ready.`, action_url: "/admin/profile" }));
+      const notifications = paystubs.map((stub) => ({
+        user_id: stub.user_id,
+        payroll_run_id: run.id,
+        kind: "paystub_ready",
+        title: "New paystub available",
+        message: `Your paystub for ${run.period_start} through ${run.period_end} is ready.`,
+        action_url: "/admin/profile",
+      }));
       await adminClient.from("employee_notifications").insert(notifications);
       await audit(adminClient, user.id, "payroll_run_finalized", "payroll_run", run.id, null, { employee_count: paystubs.length });
       return noStore({ ok: true });

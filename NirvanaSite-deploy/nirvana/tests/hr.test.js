@@ -95,8 +95,8 @@ test("bank payloads round-trip through authenticated encryption", async () => {
 
 test("generated INR paystub is a PDF and contains no bank source data", async () => {
   const { createPaystubPdf } = await import("../src/lib/server/paystubPdf.js");
+  const { PDFDocument } = await import("pdf-lib");
   const pdf = await createPaystubPdf({
-    companyName: "Nirvana Luxury Vacations",
     run: { period_start: "2026-09-01", period_end: "2026-09-15", pay_date: "2026-09-18" },
     paystub: { paystub_number: "PS-TEST", employee_name_snapshot: "Example Employee", salary_note_snapshot: "Annual bonus ₹25,000", currency: "INR", gross_pay: 3500, employee_taxes: 500, deductions: 100, reimbursements: 25, net_pay: 2925 },
     items: [{ line_type: "regular_earnings", description: "Fixed salary", amount: 3000 }, { line_type: "variable_pay", description: "Monthly variable pay", amount: 500 }],
@@ -104,6 +104,11 @@ test("generated INR paystub is a PDF and contains no bank source data", async ()
   });
   assert.equal(pdf.subarray(0, 4).toString(), "%PDF");
   assert.equal(pdf.includes(Buffer.from("1234567890")), false);
+  const parsed = await PDFDocument.load(pdf);
+  assert.equal(parsed.getAuthor(), "CGtrix Animation Studios Pvt. Ltd.");
+  assert.equal(parsed.getCreator(), "CGtrix HR Portal");
+  assert.equal(parsed.getPageCount(), 1);
+  assert.ok(pdf.length > 20000, "the official CGtrix logo should be embedded");
 });
 
 test("schema migrates legacy roles and leaves account mutation owner-only", async () => {
@@ -114,4 +119,15 @@ test("schema migrates legacy roles and leaves account mutation owner-only", asyn
   assert.match(schema, /current_admin_role\(\) = 'owner'/);
   assert.match(schema, /variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly'/);
   assert.match(schema, /'regular_earnings', 'variable_pay', 'additional_earnings'/);
+  assert.match(schema, /employee_paystubs_payroll_run_id_fkey[\s\S]*REFERENCES payroll_runs\(id\) ON DELETE CASCADE/);
+  assert.match(schema, /employee_notifications_payroll_run_id_fkey[\s\S]*REFERENCES payroll_runs\(id\) ON DELETE CASCADE/);
+});
+
+test("employee history only exposes generated active paystubs and run deletion removes stored files", async () => {
+  const route = await readFile(new URL("../app/api/admin/hr/route.js", import.meta.url), "utf8");
+  assert.match(route, /payroll_runs!inner\(period_start, period_end, pay_date, status\)/);
+  assert.match(route, /\.not\("pdf_path", "is", null\)/);
+  assert.match(route, /\.in\("payroll_runs\.status", \["finalized", "paid"\]\)/);
+  assert.match(route, /storage[\s\S]*\.from\("paystubs"\)[\s\S]*\.remove\(pdfPaths\.slice/);
+  assert.match(route, /from\("employee_paystubs"\)[\s\S]*\.delete\(\)[\s\S]*\.eq\("payroll_run_id", run\.id\)/);
 });

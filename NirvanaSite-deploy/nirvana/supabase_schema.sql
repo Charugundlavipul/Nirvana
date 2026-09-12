@@ -2267,6 +2267,7 @@ ON leave_requests(user_id, status, start_date DESC);
 CREATE TABLE IF NOT EXISTS employee_notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
+    payroll_run_id UUID,
     kind TEXT NOT NULL CHECK (kind IN ('leave_decision', 'paystub_ready', 'profile_notice')),
     title TEXT NOT NULL,
     message TEXT NOT NULL,
@@ -2298,7 +2299,7 @@ CREATE TABLE IF NOT EXISTS payroll_runs (
 
 CREATE TABLE IF NOT EXISTS employee_paystubs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    payroll_run_id UUID NOT NULL REFERENCES payroll_runs(id) ON DELETE RESTRICT,
+    payroll_run_id UUID NOT NULL REFERENCES payroll_runs(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
     paystub_number TEXT UNIQUE,
     employee_name_snapshot TEXT NOT NULL,
@@ -2328,6 +2329,24 @@ ALTER TABLE employee_paystubs
     ADD COLUMN IF NOT EXISTS variable_pay_frequency_snapshot TEXT;
 ALTER TABLE employee_paystubs
     ADD COLUMN IF NOT EXISTS salary_note_snapshot TEXT;
+
+ALTER TABLE employee_notifications
+    ADD COLUMN IF NOT EXISTS payroll_run_id UUID;
+ALTER TABLE employee_notifications
+    DROP CONSTRAINT IF EXISTS employee_notifications_payroll_run_id_fkey;
+ALTER TABLE employee_notifications
+    ADD CONSTRAINT employee_notifications_payroll_run_id_fkey
+    FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS employee_notifications_payroll_run_idx
+    ON employee_notifications(payroll_run_id) WHERE payroll_run_id IS NOT NULL;
+
+-- A payroll run owns its paystubs. Cascading here guarantees profile records and
+-- line items disappear even if a run is deleted outside the application API.
+ALTER TABLE employee_paystubs
+    DROP CONSTRAINT IF EXISTS employee_paystubs_payroll_run_id_fkey;
+ALTER TABLE employee_paystubs
+    ADD CONSTRAINT employee_paystubs_payroll_run_id_fkey
+    FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id) ON DELETE CASCADE;
 
 CREATE UNIQUE INDEX IF NOT EXISTS payroll_runs_active_period_idx
 ON payroll_runs(period_start, period_end, pay_date, currency) WHERE status <> 'void';
