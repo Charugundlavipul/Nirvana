@@ -20,6 +20,7 @@ export default function PeopleManager() {
   const [role, setRole] = useState(null);
   const [people, setPeople] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [newUser, setNewUser] = useState(blankNew);
   const [edit, setEdit] = useState({});
   const [salary, setSalary] = useState(blankSalary);
@@ -64,9 +65,104 @@ export default function PeopleManager() {
   if (role !== 'owner') return <AdminLayout title="People" subtitle="Superadmin workspace"><div className={styles.alert}>{message || 'Superadmin access is required.'}</div></AdminLayout>;
   return <AdminLayout title="People" subtitle="Superadmin-only employee administration">
     {message && <div className={`${styles.alert} ${/(saved|created|updated|changed)/i.test(message)?styles.success:''}`}>{message}</div>}
-    <section className={styles.card} style={{marginBottom:20}}><h2>Create employee account</h2><p className={styles.muted}>Creates the sign-in, role, and employee profile together.</p><div className={styles.formGrid}>{[['firstName','First name','text'],['lastName','Last name','text'],['email','Work email','email'],['password','Temporary password','password']].map(([key,label,type])=><div className={styles.field} key={key}><label>{label}</label><input type={type} className={styles.input} value={newUser[key]} onChange={(e)=>setNewUser({...newUser,[key]:e.target.value})}/></div>)}<div className={styles.field}><label>Role</label><select className={styles.select} value={newUser.role} onChange={(e)=>setNewUser({...newUser,role:e.target.value})}><option value="employee">Employee</option><option value="admin">Admin</option><option value="owner">Superadmin</option></select></div></div><div className={styles.actions}><button disabled={busy} className={styles.button} onClick={()=>perform(async()=>{await createAdminUser(newUser);setNewUser(blankNew);},'Employee account created.')}>Create account</button></div></section>
+
+    {showCreate ? (
+      <section className={styles.card} style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h2>Create employee account</h2>
+            <p className={styles.muted}>Creates the sign-in, role, and employee profile together.</p>
+          </div>
+          <button
+            type="button"
+            className={`${styles.button} ${styles.secondary}`}
+            style={{ padding: "6px 14px", fontSize: "13px" }}
+            onClick={() => { setShowCreate(false); setNewUser(blankNew); }}
+          >
+            ✕ Close
+          </button>
+        </div>
+        <div className={styles.formGrid}>
+          {[['firstName','First name','text'],['lastName','Last name','text'],['email','Work email','email'],['password','Temporary password','password']].map(([key,label,type]) => (
+            <div className={styles.field} key={key}>
+              <label>{label}</label>
+              <input type={type} className={styles.input} value={newUser[key]} onChange={(e) => setNewUser({...newUser,[key]:e.target.value})} />
+            </div>
+          ))}
+          <div className={styles.field}>
+            <label>Role</label>
+            <select className={styles.select} value={newUser.role} onChange={(e) => setNewUser({...newUser,role:e.target.value})}>
+              <option value="employee">Employee</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Superadmin</option>
+            </select>
+          </div>
+        </div>
+        <div className={styles.actions}>
+          <button
+            disabled={busy}
+            className={styles.button}
+            onClick={() =>
+              perform(async () => {
+                await createAdminUser(newUser);
+                setNewUser(blankNew);
+                setShowCreate(false);
+              }, "Employee account created.")
+            }
+          >
+            Create account
+          </button>
+          <button
+            type="button"
+            className={`${styles.button} ${styles.secondary}`}
+            onClick={() => { setShowCreate(false); setNewUser(blankNew); }}
+          >
+            Cancel
+          </button>
+        </div>
+      </section>
+    ) : (
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+        <button
+          type="button"
+          className={styles.button}
+          onClick={() => setShowCreate(true)}
+        >
+          + Create New Employee
+        </button>
+      </div>
+    )}
+
     <div className={styles.split}>
-      <aside className={styles.card}><h3>Team</h3><div className={styles.peopleList}>{people.map((person)=><button className={`${styles.personButton} ${person.user_id===selectedId?styles.personButtonActive:''}`} key={person.user_id} onClick={()=>setSelectedId(person.user_id)}><strong>{person.first_name||'Profile'} {person.last_name||'incomplete'}</strong><div className={styles.muted} style={{margin:0}}>{formatRole(person.role)} · {person.private_profile?.employment_status||'active'}</div></button>)}</div></aside>
+      <aside className={styles.card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>Team ({people.length})</h3>
+          {!showCreate && (
+            <button
+              type="button"
+              className={styles.button}
+              style={{ padding: "5px 10px", fontSize: "12px" }}
+              onClick={() => setShowCreate(true)}
+            >
+              + New
+            </button>
+          )}
+        </div>
+        <div className={styles.peopleList}>
+          {people.map((person) => (
+            <button
+              className={`${styles.personButton} ${person.user_id === selectedId ? styles.personButtonActive : ''}`}
+              key={person.user_id}
+              onClick={() => setSelectedId(person.user_id)}
+            >
+              <strong>{person.first_name || 'Profile'} {person.last_name || 'incomplete'}</strong>
+              <div className={styles.muted} style={{ margin: 0 }}>
+                {formatRole(person.role)} · {person.private_profile?.employment_status || 'active'}
+              </div>
+            </button>
+          ))}
+        </div>
+      </aside>
       <div className={styles.grid}>{selected ? <>
         <section className={`${styles.card} ${styles.full}`}><h2>{selected.first_name||'Employee'} {selected.last_name||''}</h2><p className={styles.muted}>{selected.email} · Last sign-in {selected.last_sign_in_at ? new Date(selected.last_sign_in_at).toLocaleString() : 'never'}</p><div className={styles.formGrid}>{[['firstName','First name'],['lastName','Last name'],['email','Email'],['phone','Phone'],['jobTitle','Job title'],['hireDate','Hire date'],['addressLine1','Address line 1'],['addressLine2','Address line 2'],['city','City'],['region','State / region'],['postalCode','Postal code'],['country','Country']].map(([key,label])=><div className={`${styles.field} ${key.startsWith('address')?styles.fieldWide:''}`} key={key}><label>{label}</label><input type={key==='hireDate'?'date':key==='email'?'email':'text'} className={styles.input} value={edit[key]||''} onChange={(e)=>setEdit({...edit,[key]:e.target.value})}/></div>)}<div className={styles.field}><label>Role</label><select className={styles.select} value={edit.role||'employee'} onChange={(e)=>setEdit({...edit,role:e.target.value})}><option value="employee">Employee</option><option value="admin">Admin</option><option value="owner">Superadmin</option></select></div><div className={styles.field}><label>Status</label><select className={styles.select} value={edit.employmentStatus||'active'} onChange={(e)=>setEdit({...edit,employmentStatus:e.target.value})}><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><div className={styles.actions}><button disabled={busy} className={styles.button} onClick={()=>perform(async()=>{await hrAction('update_profile',{userId:selected.user_id,...edit});if(edit.email!==selected.email)await updateAdminUserEmail({userId:selected.user_id,email:edit.email});if(edit.role!==selected.role)await updateAdminUserRole({userId:selected.user_id,role:edit.role});
 if(edit.employmentStatus!==(selected.private_profile?.employment_status||'active'))await setAdminUserActive({userId:selected.user_id,active:edit.employmentStatus==='active'});},'Employee profile saved.')}>Save employee</button><button disabled={busy} className={`${styles.button} ${selected.private_profile?.employment_status==='active'?styles.danger:styles.secondary}`} onClick={()=>perform(()=>setAdminUserActive({userId:selected.user_id,active:selected.private_profile?.employment_status!=='active'}),selected.private_profile?.employment_status==='active'?'Employee deactivated.':'Employee reactivated.')}>{selected.private_profile?.employment_status==='active'?'Deactivate account':'Reactivate account'}</button></div></section>
