@@ -107,11 +107,17 @@ const PropertyListingCard = ({ property }) => {
         )}
 
         {property.rating && (
-          <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm">
+          <div className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm">
             <FaStar className="text-amber-500" size={12} />
             <span className="text-sm font-semibold text-slate-900">{property.rating}</span>
           </div>
         )}
+
+        {/* Floating Flat 30% OFF Banner */}
+        <div className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-md shadow-rose-950/25 border border-white/30 backdrop-blur-md">
+          <span className="text-xs">🏷️</span>
+          <span>FLAT 30% OFF</span>
+        </div>
       </div>
 
       <div className="px-2 pb-2 pt-4">

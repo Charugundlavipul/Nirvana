@@ -560,10 +560,16 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
 
         {/* Badge */}
         {badge && (
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm">
+          <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm">
             {badge}
           </div>
         )}
+
+        {/* Floating Flat 30% OFF Banner */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-md shadow-rose-950/25 border border-white/30 backdrop-blur-md">
+          <span className="text-xs">🏷️</span>
+          <span>FLAT 30% OFF</span>
+        </div>
 
         {/* Always visible for touch; hover reveal keeps desktop cards visually quiet. */}
         {images.length > 1 && (
