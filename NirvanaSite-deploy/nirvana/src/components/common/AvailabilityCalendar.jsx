@@ -554,9 +554,6 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                                 {nightsCount} Night{nightsCount !== 1 ? 's' : ''}
                               </span>
                             )}
-                            <span className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white font-extrabold px-2.5 py-0.5 rounded-full tracking-wider text-[10px] uppercase shadow-xs">
-                              Flat 30% OFF Applied
-                            </span>
                           </div>
                           <button
                             type="button"
@@ -615,9 +612,6 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
                             <span className="text-sm">🏷️</span> TOTAL NIGHTLY RATE ({nightsCount} {nightsCount === 1 ? 'NIGHT' : 'NIGHTS'})
-                          </span>
-                          <span className="inline-flex items-center bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs tracking-wider">
-                            Flat 30% OFF
                           </span>
                         </div>
                         <div className="flex items-baseline gap-2.5">
