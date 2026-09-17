@@ -598,14 +598,6 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                               <span className="text-xs text-slate-400 italic">← now pick your check-out date</span>
                             )}
                           </div>
-                          {quote && currentNightlyRate > 0 && (
-                            <div className="flex items-center gap-2 bg-white/90 border border-rose-200/80 px-3 py-1 rounded-xl shadow-xs">
-                              <span className="text-xs text-slate-400 line-through font-medium">{formatMoney(originalNightlyRate)}</span>
-                              <span className="text-sm font-black text-slate-900">{formatMoney(currentNightlyRate)}</span>
-                              <span className="text-[11px] text-slate-500 font-medium">/ night</span>
-                              <span className="bg-gradient-to-r from-red-600 to-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">30% OFF</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
@@ -617,12 +609,12 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                 <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200/60 p-6 md:p-8 sticky top-24">
                     <h3 className="text-xl text-slate-800 font-sans font-semibold tracking-tight mb-4">Price Breakdown</h3>
                     
-                    {/* Nightly Rate & 30% OFF Highlight Banner */}
-                    {quote && currentNightlyRate > 0 ? (
+                    {/* Total Nightly Rate of All Nights Highlight Banner */}
+                    {quote && subTotalDollars > 0 ? (
                       <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-orange-50/70 border border-rose-200/80 shadow-xs animate-in fade-in duration-300">
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
-                            <span className="text-sm">🏷️</span> Nightly Rate
+                            <span className="text-sm">🏷️</span> TOTAL NIGHTLY RATE ({nightsCount} {nightsCount === 1 ? 'NIGHT' : 'NIGHTS'})
                           </span>
                           <span className="inline-flex items-center bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs tracking-wider">
                             Flat 30% OFF
@@ -630,12 +622,12 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                         </div>
                         <div className="flex items-baseline gap-2.5">
                           <span className="text-sm font-bold text-slate-400 line-through">
-                            {formatMoney(originalNightlyRate)}
+                            {formatMoney(originalRentSubtotal)}
                           </span>
                           <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                            {formatMoney(currentNightlyRate)}
+                            {formatMoney(subTotalDollars)}
                           </span>
-                          <span className="text-xs font-semibold text-slate-500">/ night</span>
+                          <span className="text-xs font-semibold text-slate-500">total ({nightsCount} {nightsCount === 1 ? 'night' : 'nights'})</span>
                         </div>
                         <p className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
                           <span>✓</span> Flat 30% direct booking discount applied
