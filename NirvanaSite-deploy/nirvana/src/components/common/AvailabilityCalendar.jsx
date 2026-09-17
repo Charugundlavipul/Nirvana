@@ -449,6 +449,26 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
   const originalNightlyRate = currentNightlyRate > 0 ? (currentNightlyRate / 0.7) : 0;
   const originalRentSubtotal = subTotalDollars > 0 ? (subTotalDollars / 0.7) : 0;
 
+  const getTaxDollars = () => {
+    if (!quote?.financials?.taxes || !quote.financials.taxes.length) return 0;
+    return quote.financials.taxes.reduce((acc, t) => acc + (t.amount || 0), 0) / 100;
+  };
+
+  const getTotalDollars = () => {
+    if (!quote?.financials?.totals?.total) return 0;
+    const t = quote.financials.totals.total;
+    if (typeof t.amount === "number") return t.amount / 100;
+    if (typeof t.formatted === "string") {
+      const parsed = parseFloat(t.formatted.replace(/[^0-9.]/g, ""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
+  const taxDollars = getTaxDollars();
+  const totalDollars = getTotalDollars();
+  const totalExcludingTax = totalDollars > 0 ? Math.max(0, totalDollars - taxDollars) : subTotalDollars;
+
   const formatMoney = (val) => {
     if (!val || isNaN(val)) return "$0.00";
     return "$" + Number(val).toLocaleString("en-US", {
@@ -747,22 +767,16 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                                     <span className="font-medium text-slate-800">{fee.formatted}</span>
                                 </div>
                             ))}
-                            
-                            {quote.financials.taxes && quote.financials.taxes.length > 0 && (
-                                <div className="flex justify-between items-center text-sm text-slate-600">
-                                    <span>Taxes</span>
-                                    <span className="font-medium text-slate-800">
-                                    ${(quote.financials.taxes.reduce((acc, t) => acc + t.amount, 0) / 100).toFixed(2)}
-                                    </span>
-                                </div>
-                            )}
 
                             <div className="h-[1px] bg-slate-100 w-full my-4"></div>
 
                             <div className="flex justify-between items-end mb-6">
                                 <div>
                                     <span className="block text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Total Due</span>
-                                    <span className="text-3xl font-bold text-slate-900 leading-none">{quote.financials.totals.total.formatted}</span>
+                                    <span className="text-3xl font-bold text-slate-900 leading-none">{formatMoney(totalExcludingTax)}</span>
+                                    <span className="block text-[11px] text-slate-400 font-normal mt-1.5">
+                                        *Taxes will be applied at checkout
+                                    </span>
                                 </div>
                             </div>
 
