@@ -37,3 +37,19 @@ export async function downloadPayrollZip(run, filename) {
   URL.revokeObjectURL(url);
 }
 
+export async function downloadPayrollCsv(run, filename) {
+  const runId = typeof run === "object" ? run.id : run;
+  const defaultName = typeof run === "object"
+    ? `Payroll_Disbursement_${run.period_start}_to_${run.period_end}.csv`
+    : `payroll_${runId}.csv`;
+  const response = await adminRequest(`/api/admin/hr/payroll/${runId}/csv`, { raw: true });
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename || defaultName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+

@@ -210,5 +210,21 @@ test("payroll manager displays monthly fixed and monthly variable for employees"
   assert.match(managerFile, /regularPayForSalary\(comp\.annual_salary,\s*"monthly"\)/);
 });
 
+test("payroll csv export route and UI export employee name, monthly salary, and bank details for every run", async () => {
+  const csvRoute = await readFile(new URL("../app/api/admin/hr/payroll/[id]/csv/route.js", import.meta.url), "utf8");
+  assert.match(csvRoute, /Name of Employee/);
+  assert.match(csvRoute, /Monthly Salary \(Total\)/);
+  assert.match(csvRoute, /Bank Details/);
+  assert.match(csvRoute, /decryptBankPayload/);
+  assert.match(csvRoute, /text\/csv/);
+
+  const managerFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
+  assert.match(managerFile, /downloadPayrollCsv/);
+  assert.match(managerFile, /handleDownloadCsv/);
+  assert.match(managerFile, /Export CSV \(Bank Details\)/);
+  assert.match(managerFile, /Export \.csv/);
+});
+
+
 
 
