@@ -1,10 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
 import { downloadPayrollZip, downloadPaystub, getPayroll, hrAction } from "../../../lib/hrApi";
-import { computePayrollTotals, salaryLineItemsForPeriod } from "../../../lib/hr";
+import { computePayrollTotals, fromCents, regularPayForSalary, salaryLineItemsForPeriod, toCents } from "../../../lib/hr";
 import styles from "./Hr.module.css";
 
 const today = new Date().toISOString().slice(0, 10);
+const formatSalaryAmount = (amount, currency = "INR") => {
+  const num = Number(amount || 0);
+  const locale = currency === "INR" ? "en-IN" : "en-US";
+  const formatted = num.toLocaleString(locale, {
+    minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+  return `${currency} ${formatted}`;
+};
 const lineTypes = [
   ["regular_earnings", "Regular earnings"],
   ["variable_pay", "Variable pay"],
@@ -188,14 +197,34 @@ export default function PayrollManager() {
                 const status = !isActive(person) && !paystub ? "Inactive" : !hasSalary && !paystub ? "Missing salary" : dirty ? "Changes not saved" : paystub ? (run.status === "draft" ? "Added" : "Included") : run.status === "draft" ? "Ready to add" : "Not included";
                 let totals = null;
                 try { totals = employeeItems.length ? computePayrollTotals(employeeItems) : null; } catch { totals = null; }
+
+                const comp = person.compensation;
+                const monthlyFixed = comp ? regularPayForSalary(comp.annual_salary, "monthly") : 0;
+                const rawVar = comp ? Number(comp.variable_pay || 0) : 0;
+                const monthlyVariable = comp?.variable_pay_frequency === "annually"
+                  ? fromCents(Math.round(toCents(rawVar) / 12))
+                  : fromCents(toCents(rawVar));
+
                 return (
                   <details className={styles.payrollEmployee} key={person.user_id}>
                     <summary>
-                      <div className={styles.payrollEmployeeName}><strong>{person.first_name || "Profile"} {person.last_name || "incomplete"}</strong><span>{hasSalary ? `${person.compensation.currency} ${person.compensation.annual_salary} annual fixed salary · ${person.compensation.pay_frequency}` : "Salary not configured"}</span></div>
+                      <div className={styles.payrollEmployeeName}>
+                        <strong>{person.first_name || "Profile"} {person.last_name || "incomplete"}</strong>
+                        <span title={hasSalary ? `Annual fixed: ${formatSalaryAmount(comp.annual_salary, comp.currency)} · ${comp.pay_frequency} · Variable frequency: ${comp.variable_pay_frequency || "monthly"}` : undefined}>
+                          {hasSalary
+                            ? `Monthly fixed: ${formatSalaryAmount(monthlyFixed, comp.currency)} · Monthly variable: ${formatSalaryAmount(monthlyVariable, comp.currency)}`
+                            : "Salary not configured"}
+                        </span>
+                      </div>
                       <span className={`${styles.badge} ${["Missing salary", "Not included"].includes(status) ? styles.badgeDanger : ["Ready to add", "Changes not saved"].includes(status) ? styles.badgePending : ""}`}>{status}</span>
                     </summary>
                     <div className={styles.payrollEmployeeBody}>
                       {!hasSalary && !paystub ? <div className={styles.empty}>Add this employee&apos;s salary in People before saving the payroll draft.</div> : <>
+                        {hasSalary && (
+                          <p className={styles.muted} style={{ margin: "0 0 10px 0", fontSize: 13 }}>
+                            Base salary: <strong>{formatSalaryAmount(monthlyFixed, comp.currency)} / mo fixed</strong> · <strong>{formatSalaryAmount(monthlyVariable, comp.currency)} / mo variable</strong> <span style={{ opacity: 0.8 }}>(Annual fixed: {formatSalaryAmount(comp.annual_salary, comp.currency)} · {comp.pay_frequency})</span>
+                          </p>
+                        )}
                         {person.compensation?.salary_note && <p className={styles.muted}>Salary note: {person.compensation.salary_note}</p>}
                         <div>{employeeItems.map((item, index) => {
                           const lockedVariablePay = item.line_type === "variable_pay";

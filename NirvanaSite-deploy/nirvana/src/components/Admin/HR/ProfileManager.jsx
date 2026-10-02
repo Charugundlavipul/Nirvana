@@ -1,8 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
 import { downloadPaystub, getHrSummary, hrAction, revealBank } from "../../../lib/hrApi";
-import { formatRole, isOwnerRole } from "../../../lib/hr";
+import { formatRole, isOwnerRole, regularPayForSalary } from "../../../lib/hr";
 import styles from "./Hr.module.css";
+
+const formatSalaryAmount = (amount, currency = "INR") => {
+  const num = Number(amount || 0);
+  const locale = currency === "INR" ? "en-IN" : "en-US";
+  const formatted = num.toLocaleString(locale, {
+    minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+  return `${currency} ${formatted}`;
+};
 
 const emptyBank = {
   accountHolderName: "",
@@ -143,7 +153,7 @@ export default function ProfileManager() {
         <section className={`${styles.card} ${styles.half}`}>
           <h2>Employment & salary</h2><p className={styles.muted}>Salary settings can only be changed by a superadmin.</p>
           <div className={styles.row}><div className={styles.rowMain}><strong>{data.profile?.job_title || "Job title not set"}</strong><span>{data.profile?.employment_status || "active"} · Hired {data.profile?.hire_date || "not set"}</span></div></div>
-          {currentCompensation ? <><div className={styles.metricRow} style={{ marginTop: 14 }}><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Annual fixed salary</span><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:currentCompensation.currency}).format(currentCompensation.annual_salary)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Fixed pay frequency</span><strong style={{fontSize:18,textTransform:'capitalize'}}>{currentCompensation.pay_frequency}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Variable pay</span><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:currentCompensation.currency}).format(currentCompensation.variable_pay||0)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Variable pay frequency</span><strong style={{fontSize:18,textTransform:'capitalize'}}>{currentCompensation.variable_pay_frequency==='annually'?'Yearly':'Monthly'}</strong></div></div>{currentCompensation.salary_note&&<div className={styles.row} style={{marginTop:14}}><div className={styles.rowMain}><strong>Salary note</strong><span>{currentCompensation.salary_note}</span></div></div>}</> : <div className={styles.empty}>Salary information has not been added.</div>}
+          {currentCompensation ? <><div className={styles.metricRow} style={{ marginTop: 14 }}><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Monthly fixed</span><strong>{formatSalaryAmount(regularPayForSalary(currentCompensation.annual_salary, 'monthly'), currentCompensation.currency)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Monthly variable</span><strong>{formatSalaryAmount(currentCompensation.variable_pay_frequency === 'annually' ? Math.round((Number(currentCompensation.variable_pay || 0) / 12) * 100) / 100 : Number(currentCompensation.variable_pay || 0), currentCompensation.currency)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Annual fixed salary</span><strong>{formatSalaryAmount(currentCompensation.annual_salary, currentCompensation.currency)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Fixed pay frequency</span><strong style={{fontSize:18,textTransform:'capitalize'}}>{currentCompensation.pay_frequency}</strong></div></div>{currentCompensation.salary_note&&<div className={styles.row} style={{marginTop:14}}><div className={styles.rowMain}><strong>Salary note</strong><span>{currentCompensation.salary_note}</span></div></div>}</> : <div className={styles.empty}>Salary information has not been added.</div>}
         </section>
         <form className={`${styles.card} ${styles.half}`} onSubmit={saveBank}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>

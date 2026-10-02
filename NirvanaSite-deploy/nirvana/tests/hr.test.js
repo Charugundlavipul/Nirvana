@@ -199,5 +199,16 @@ test("payroll zip generator creates valid ZIP archives containing paystub PDFs",
   assert.match(zipRoute, /application\/zip/);
 });
 
+test("payroll manager displays monthly fixed and monthly variable for employees", async () => {
+  const { regularPayForSalary } = await import("../src/lib/hr.js");
+  const monthlyFixed = regularPayForSalary(420000, "monthly");
+  assert.equal(monthlyFixed, 35000);
+
+  const managerFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
+  assert.match(managerFile, /Monthly fixed:/);
+  assert.match(managerFile, /Monthly variable:/);
+  assert.match(managerFile, /regularPayForSalary\(comp\.annual_salary,\s*"monthly"\)/);
+});
+
 
 
