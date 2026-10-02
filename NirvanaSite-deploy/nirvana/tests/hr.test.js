@@ -233,7 +233,11 @@ test("payroll history renders published runs as expandable accordions with per-p
   assert.match(managerFile, /downloadPaystub\(stub\)/);
 });
 
-
-
+test("payroll manager displays total payroll amount for runs in workspace header and history", async () => {
+  const managerFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
+  assert.match(managerFile, /Total payroll:/);
+  assert.match(managerFile, /currentRunTotal/);
+  assert.match(managerFile, /runTotal > 0 && ` · Total payroll: \$\{formatSalaryAmount\(runTotal, historyRun\.currency\)\}`/);
+});
 
 

@@ -61,6 +61,35 @@ export default function PayrollManager() {
   ), [data.paystubs, runId]);
   const activePeople = useMemo(() => data.people.filter(isActive), [data.people]);
   const runPeople = useMemo(() => data.people.filter((person) => isActive(person) || runStubs.has(person.user_id)), [data.people, runStubs]);
+  const currentRunTotal = useMemo(() => {
+    if (!run) return 0;
+    const savedStubs = data.paystubs.filter((p) => p.payroll_run_id === run.id);
+    const savedSum = savedStubs.reduce((sum, s) => sum + Number(s.net_pay != null && Number(s.net_pay) > 0 ? s.net_pay : (s.gross_pay || 0)), 0);
+    if (savedSum > 0) return savedSum;
+
+    let draftSum = 0;
+    for (const person of runPeople) {
+      const items = itemsByEmployee[person.user_id] || [];
+      if (items.length > 0) {
+        try {
+          const totals = computePayrollTotals(items);
+          draftSum += totals.netPay > 0 ? totals.netPay : totals.grossPay;
+        } catch {
+          // ignore
+        }
+      } else if (person.compensation) {
+        try {
+          const fixed = regularPayForSalary(person.compensation.annual_salary, "monthly");
+          const rawVar = Number(person.compensation.variable_pay || 0);
+          const varAmt = person.compensation.variable_pay_frequency === "annually" ? Math.round(rawVar / 12) : rawVar;
+          draftSum += (fixed + varAmt);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    return draftSum;
+  }, [run, data.paystubs, runPeople, itemsByEmployee]);
 
   useEffect(() => {
     const nextItems = {};
@@ -186,7 +215,13 @@ export default function PayrollManager() {
 
           {run && <>
             <div className={styles.payrollRosterHeader}>
-              <div><strong>{runPeople.length} employee(s)</strong><span>{run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}</span></div>
+              <div>
+                <strong>
+                  {runPeople.length} employee(s)
+                  {currentRunTotal > 0 && ` · Total payroll: ${formatSalaryAmount(currentRunTotal, run.currency)}`}
+                </strong>
+                <span>{run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 {["finalized", "paid"].includes(run.status) && (
                   <>
@@ -313,6 +348,23 @@ export default function PayrollManager() {
               const totalTaxes = runStubsList.reduce((sum, s) => sum + Number(s.employee_taxes || 0), 0);
               const totalDeductions = runStubsList.reduce((sum, s) => sum + Number(s.deductions || 0), 0);
               const totalNet = runStubsList.reduce((sum, s) => sum + Number(s.net_pay || 0), 0);
+              let runTotal = (historyRun.id === run?.id && currentRunTotal > 0)
+                ? currentRunTotal
+                : runStubsList.reduce((sum, s) => sum + Number(s.net_pay != null && Number(s.net_pay) > 0 ? s.net_pay : (s.gross_pay || 0)), 0);
+
+              if (runTotal === 0 && historyRun.status === "draft") {
+                runTotal = activePeople.reduce((sum, p) => {
+                  if (!p.compensation) return sum;
+                  try {
+                    const fixed = regularPayForSalary(p.compensation.annual_salary, "monthly");
+                    const rawVar = Number(p.compensation.variable_pay || 0);
+                    const varAmt = p.compensation.variable_pay_frequency === "annually" ? Math.round(rawVar / 12) : rawVar;
+                    return sum + fixed + varAmt;
+                  } catch {
+                    return sum;
+                  }
+                }, 0);
+              }
 
               if (isPublished) {
                 return (
@@ -321,7 +373,8 @@ export default function PayrollManager() {
                       <div className={styles.payrollEmployeeName}>
                         <strong>Pay date {historyRun.pay_date}</strong>
                         <span>
-                          {historyRun.period_start} – {historyRun.period_end} · {runStubsList.length} employee(s) · Net total: {formatSalaryAmount(totalNet, historyRun.currency)}
+                          {historyRun.period_start} – {historyRun.period_end} · {runStubsList.length} employee(s)
+                          {runTotal > 0 && ` · Total payroll: ${formatSalaryAmount(runTotal, historyRun.currency)}`}
                         </span>
                       </div>
                       <div
@@ -365,7 +418,7 @@ export default function PayrollManager() {
                           <div><span style={{ color: "#64748b" }}>Gross:</span> <strong>{formatSalaryAmount(totalGross, historyRun.currency)}</strong></div>
                           <div><span style={{ color: "#64748b" }}>Taxes:</span> <strong>{formatSalaryAmount(totalTaxes, historyRun.currency)}</strong></div>
                           <div><span style={{ color: "#64748b" }}>Deductions:</span> <strong>{formatSalaryAmount(totalDeductions, historyRun.currency)}</strong></div>
-                          <div><span style={{ color: "#64748b" }}>Net Total:</span> <strong style={{ color: "#166534" }}>{formatSalaryAmount(totalNet, historyRun.currency)}</strong></div>
+                          <div><span style={{ color: "#64748b" }}>Total Payroll:</span> <strong style={{ color: "#166534" }}>{formatSalaryAmount(totalNet, historyRun.currency)}</strong></div>
                         </div>
                         <button
                           type="button"
@@ -444,7 +497,10 @@ export default function PayrollManager() {
                 <div className={styles.row} key={historyRun.id} style={{ marginBottom: 10 }}>
                   <div className={styles.rowMain}>
                     <strong>Pay date {historyRun.pay_date}</strong>
-                    <span>{historyRun.period_start} – {historyRun.period_end} · {runStubsList.length} employee(s)</span>
+                    <span>
+                      {historyRun.period_start} – {historyRun.period_end} · {runStubsList.length || activePeople.length} employee(s)
+                      {runTotal > 0 && ` · Total payroll: ${formatSalaryAmount(runTotal, historyRun.currency)}`}
+                    </span>
                   </div>
                   <div className={styles.actions} style={{ margin: 0, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                     <button
