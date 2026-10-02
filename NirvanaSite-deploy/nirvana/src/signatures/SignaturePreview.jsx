@@ -531,6 +531,178 @@ const reservationsHTML = `
             </table>
 `;
 
+const salesHTML = `
+            <table cellpadding="0" cellspacing="0" border="0" width="600px"
+                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
+                <tbody>
+                    <tr>
+                        <td colspan="6" style="padding-bottom: 20px; text-align: left;">
+                            <p
+                                style="margin: 0px; font-size: 14px; font-family: Arial, sans-serif; color: rgb(0, 0, 0);">
+                                Thanks,
+                            </p>
+                            <p
+                                style="margin: 5px 0px 0px; font-size: 20px; font-family: 'Brush Script MT', cursive; color: rgb(0, 0, 0);">
+                                Sales Team</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table cellpadding="0" cellspacing="0" border="0"
+                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial;">
+                                <tbody>
+                                    <tr>
+                                        <td style="vertical-align: middle; padding-right: 12px;"><span
+                                                style="display: inline-flex; align-items: center; gap: 8px;"><img
+                                                    src="https://www.dropbox.com/scl/fi/o9qg9id0hwj3gc2nsjdm1/vkr-ventures.jpeg?rlkey=ew496ub9lrrnj7zm4l1vemqxi&amp;st=nhlayhe6&amp;dl=0&amp;raw=1"
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /><img
+                                                    src="/assets/nirvana_signature_logo.jpg"
+                                                    role="presentation" width="80" style="max-width: 80px; display: inline-block;" /></span></td>
+                                        <td style="vertical-align: middle;">
+                                            <h2
+                                                style="margin: 0px; font-size: 18px; font-family: Arial; color: rgb(0, 0, 0); font-weight: 600; line-height: 28px;">
+                                                <span>Sales</span><span>&nbsp;</span><span>Team</span>
+                                            </h2>
+                                            <div
+                                                style="margin: 0px; font-weight: 500; color: rgb(0, 0, 0); font-size: 14px; line-height: 22px;">
+                                                <span>VKR Ventures LLC</span>
+                                            </div>
+                                        </td>
+                                        <td width="30" aria-label="Vertical Spacer">
+                                            <div style="width: 30px;"></div>
+                                        </td>
+                                        <td width="1" aria-label="Divider"
+                                            style="width: 1px; height: auto; border-bottom: none; border-left: 1px solid rgb(247, 201, 99);">
+                                        </td>
+                                        <td width="30" aria-label="Vertical Spacer">
+                                            <div style="width: 30px;"></div>
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            <table cellpadding="0" cellspacing="0" border="0"
+                                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; line-height: 1;">
+                                                <tbody>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0"
+                                                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td style="vertical-align: bottom;"><span
+                                                                                style="display: inline-block; background-color: rgb(247, 201, 99);"><img
+                                                                                    src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/phone-icon-dark-2x.png"
+                                                                                    alt="mobilePhone" width="18"
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="tel:704-780-1368"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>704-780-1368</span></a>
+                                                        </td>
+                                                    </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0"
+                                                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td style="vertical-align: bottom;"><span
+                                                                                style="display: inline-block; background-color: rgb(247, 201, 99);"><img
+                                                                                    src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/email-icon-dark-2x.png"
+                                                                                    alt="emailAddress" width="18"
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="mailto:sales@vkr-ventures.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>sales@vkr-ventures.com</span></a>
+                                                        </td>
+                                                    </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0"
+                                                                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td style="vertical-align: bottom;"><span
+                                                                                style="display: inline-block; background-color: rgb(247, 201, 99);"><img
+                                                                                    src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png"
+                                                                                    alt="website" width="18"
+                                                                                    style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="//www.vkr-ventures.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.vkr-ventures.com</span></a>
+                                                        </td>
+                                                    </tr>
+                                                    <tr style="vertical-align: middle; height: 28px;">
+                                                        <td width="26" style="vertical-align: middle;">
+                                                            <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Arial; width: 26px;"><tbody><tr><td style="vertical-align: bottom;"><span style="display: inline-block; background-color: rgb(247, 201, 99);"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/link-icon-dark-2x.png" alt="nirvanaluxe" width="18" style="display: block; background-image: linear-gradient(rgb(247, 201, 99), rgb(247, 201, 99));" /></span></td></tr></tbody></table>
+                                                        </td>
+                                                        <td style="padding: 0px; color: rgb(0, 0, 0);"><a
+                                                                href="https://www.nirvanaluxevacations.com"
+                                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 14px;"><span>www.nirvanaluxevacations.com</span></a>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="padding-top: 10px; padding-bottom: 6px; text-align: left;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tbody>
+                                    <tr>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-dark-2x.png" alt="IG" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 28px;"><a
+                                                href="https://www.instagram.com/nirvanaluxevacations/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>@nirvanaluxevacations</span></a>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-right: 8px;">
+                                            <span style="display: inline-block; background-color: rgb(247, 201, 99); width: 18px; height: 18px; line-height: 18px; text-align: center; vertical-align: middle;"><img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-dark-2x.png" alt="FB" width="18" height="18" style="display: block; vertical-align: middle;" /></span>
+                                        </td>
+                                        <td style="vertical-align: middle;"><a
+                                                href="https://www.facebook.com/NirvanaLuxe/"
+                                                style="text-decoration: none; color: rgb(0, 0, 0); font-size: 13px; font-family: Arial;"><span>NirvanaLuxe</span></a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="font-size: 12px; padding-top: 1rem; text-align: left;">
+                            <div class="legal-content">
+                                <p style="font-size: inherit; margin: 0px;">IMPORTANT: The contents of this email and
+                                    any
+                                    attachments are confidential. They are intended for the named recipient(s) only. If
+                                    you have
+                                    received this email by mistake, please notify the sender immediately and do not
+                                    disclose the
+                                    contents to anyone or make copies thereof.</p>
+
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+`;
+
 const SignaturePreview = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [showToast, setShowToast] = useState(false);
@@ -599,6 +771,16 @@ const SignaturePreview = () => {
                 <div className="actions">
                     <button className="btn-primary" onClick={() => copyRichText('signature-reservations')}>Copy for Email (Rich Text)</button>
                     <button className="btn-secondary" onClick={() => copyHTML('signature-reservations')}>Copy HTML Code</button>
+                </div>
+            </div>
+
+            <div className="signature-container-box" style={{ marginTop: "40px" }}>
+                <div className="preview-label">Sales Team Signature Preview</div>
+                <div id="signature-sales" className="signature-container" dangerouslySetInnerHTML={{ __html: salesHTML }}></div>
+
+                <div className="actions">
+                    <button className="btn-primary" onClick={() => copyRichText('signature-sales')}>Copy for Email (Rich Text)</button>
+                    <button className="btn-secondary" onClick={() => copyHTML('signature-sales')}>Copy HTML Code</button>
                 </div>
             </div>
 
