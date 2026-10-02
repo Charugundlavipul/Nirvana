@@ -188,26 +188,30 @@ export default function PayrollManager() {
             <div className={styles.payrollRosterHeader}>
               <div><strong>{runPeople.length} employee(s)</strong><span>{run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}</span></div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  className={`${styles.button} ${styles.secondary}`}
-                  style={{ padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
-                  disabled={busy || downloadingZip}
-                  onClick={() => handleDownloadZip(run)}
-                  title="Download all employee paystubs in a .zip archive"
-                >
-                  {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.button} ${styles.secondary}`}
-                  style={{ padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
-                  disabled={busy || downloadingCsv}
-                  onClick={() => handleDownloadCsv(run)}
-                  title="Export employee names, total monthly salaries, and bank details to .csv"
-                >
-                  {downloadingCsv ? "Preparing CSV…" : "Export CSV (Bank Details)"}
-                </button>
+                {["finalized", "paid"].includes(run.status) && (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.button} ${styles.secondary}`}
+                      style={{ padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
+                      disabled={busy || downloadingZip}
+                      onClick={() => handleDownloadZip(run)}
+                      title="Download all employee paystubs in a .zip archive"
+                    >
+                      {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.button} ${styles.secondary}`}
+                      style={{ padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
+                      disabled={busy || downloadingCsv}
+                      onClick={() => handleDownloadCsv(run)}
+                      title="Export employee names, total monthly salaries, and bank details to .csv"
+                    >
+                      {downloadingCsv ? "Preparing CSV…" : "Export CSV (Bank Details)"}
+                    </button>
+                  </>
+                )}
                 <span className={styles.badge}>{run.status}</span>
               </div>
             </div>
@@ -273,23 +277,26 @@ export default function PayrollManager() {
             <div className={styles.actions}>
               {run.status === "draft" && <button className={styles.button} disabled={busy || !canSaveDraft} onClick={saveEntireDraft}>Save entire draft</button>}
               {run.status === "draft" && <button className={styles.button} disabled={busy || !allEmployeesAdded || dirtyEmployees.size > 0} onClick={() => perform(() => hrAction("finalize_payroll_run", { runId: run.id }), "Payroll finalized and paystubs generated.")}>Finalize run</button>}
-              {run.status === "finalized" && <button className={styles.button} disabled={busy} onClick={() => perform(() => hrAction("set_payroll_status", { runId: run.id, status: "paid" }), "Payroll marked paid.")}>Mark paid</button>}
-              <button
-                type="button"
-                className={`${styles.button} ${styles.secondary}`}
-                disabled={busy || downloadingZip}
-                onClick={() => handleDownloadZip(run)}
-              >
-                {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
-              </button>
-              <button
-                type="button"
-                className={`${styles.button} ${styles.secondary}`}
-                disabled={busy || downloadingCsv}
-                onClick={() => handleDownloadCsv(run)}
-              >
-                {downloadingCsv ? "Preparing CSV…" : "Export CSV (Bank Details)"}
-              </button>
+              {["finalized", "paid"].includes(run.status) && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.button} ${styles.secondary}`}
+                    disabled={busy || downloadingZip}
+                    onClick={() => handleDownloadZip(run)}
+                  >
+                    {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.button} ${styles.secondary}`}
+                    disabled={busy || downloadingCsv}
+                    onClick={() => handleDownloadCsv(run)}
+                  >
+                    {downloadingCsv ? "Preparing CSV…" : "Export CSV (Bank Details)"}
+                  </button>
+                </>
+              )}
               {["finalized", "paid"].includes(run.status) && <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => perform(() => hrAction("set_payroll_status", { runId: run.id, status: "void" }), "Payroll voided.")}>Void run</button>}
               <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(run)}>{run.status === "draft" ? "Delete draft" : "Delete run"}</button>
             </div>
@@ -306,26 +313,30 @@ export default function PayrollManager() {
                   <span>{historyRun.period_start} – {historyRun.period_end} · {data.paystubs.filter((paystub) => paystub.payroll_run_id === historyRun.id).length} employee(s)</span>
                 </div>
                 <div className={styles.actions} style={{ margin: 0, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                  <button
-                    type="button"
-                    className={`${styles.button} ${styles.secondary}`}
-                    style={{ padding: "6px 12px", fontSize: 12 }}
-                    disabled={busy || downloadingZip}
-                    onClick={() => handleDownloadZip(historyRun)}
-                    title="Download all paystubs (.zip)"
-                  >
-                    Download .zip
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.button} ${styles.secondary}`}
-                    style={{ padding: "6px 12px", fontSize: 12 }}
-                    disabled={busy || downloadingCsv}
-                    onClick={() => handleDownloadCsv(historyRun)}
-                    title="Export employee names, total monthly salaries, and bank details (.csv)"
-                  >
-                    Export .csv
-                  </button>
+                  {["finalized", "paid"].includes(historyRun.status) && (
+                    <>
+                      <button
+                        type="button"
+                        className={`${styles.button} ${styles.secondary}`}
+                        style={{ padding: "6px 12px", fontSize: 12 }}
+                        disabled={busy || downloadingZip}
+                        onClick={() => handleDownloadZip(historyRun)}
+                        title="Download all paystubs (.zip)"
+                      >
+                        Download .zip
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.button} ${styles.secondary}`}
+                        style={{ padding: "6px 12px", fontSize: 12 }}
+                        disabled={busy || downloadingCsv}
+                        onClick={() => handleDownloadCsv(historyRun)}
+                        title="Export employee names, total monthly salaries, and bank details (.csv)"
+                      >
+                        Export .csv
+                      </button>
+                    </>
+                  )}
                   <span className={`${styles.badge} ${historyRun.status === "void" ? styles.badgeDanger : ""}`}>{historyRun.status}</span>
                   <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(historyRun)}>{historyRun.status === "draft" ? "Delete draft" : "Delete run"}</button>
                 </div>

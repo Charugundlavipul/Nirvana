@@ -26,7 +26,14 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Payroll run not found." }, { status: 404 });
     }
 
-    const isDraft = run.status === "draft";
+    if (run.status === "draft") {
+      return NextResponse.json(
+        { error: "Payroll run must be finalized before downloading all paystubs." },
+        { status: 400 }
+      );
+    }
+
+    const isDraft = false;
 
     // Fetch existing paystubs for this run
     const { data: existingPaystubs, error: stubsError } = await adminClient
