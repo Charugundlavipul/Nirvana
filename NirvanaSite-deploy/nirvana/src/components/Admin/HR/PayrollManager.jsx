@@ -440,51 +440,56 @@ export default function PayrollManager() {
                       </div>
 
                       {runStubsList.length ? (
-                        <div>
-                          <div className={styles.paystubHeading} style={{ marginBottom: 12 }}>
-                            <div>
-                              <h3 style={{ margin: 0, fontSize: 16 }}>Pay statements</h3>
-                              <p className={styles.muted} style={{ margin: "2px 0 0", fontSize: 13 }}>
-                                Complete monthly payslip statements for this run.
-                              </p>
-                            </div>
-                            <span className={styles.paystubCount}>{runStubsList.length} available</span>
-                          </div>
-
-                          <div className={styles.paystubList} style={{ maxHeight: "none", gap: 10 }}>
-                            {runStubsList.map((stub) => (
-                              <article className={styles.paystubCard} key={stub.id}>
-                                <div className={styles.paystubMonth} aria-hidden="true">
-                                  <strong>{formatPayDate(historyRun.pay_date, { month: "short" })}</strong>
-                                  <span>{formatPayDate(historyRun.pay_date, { year: "numeric" })}</span>
-                                </div>
-                                <div className={styles.paystubDetails}>
-                                  <strong>
-                                    {stub.employee_name_snapshot || "Employee"} · <span style={{ color: "#64748b", fontWeight: 400 }}>{stub.paystub_number || "—"}</span>
-                                  </strong>
-                                  <span>
-                                    {formatPayDate(historyRun.period_start, { day: "2-digit", month: "short" })} - {formatPayDate(historyRun.period_end, { day: "2-digit", month: "short", year: "numeric" })}
-                                  </span>
-                                  <small>Paid {formatPayDate(historyRun.pay_date, { day: "2-digit", month: "short", year: "numeric" })}</small>
-                                </div>
-                                <div className={styles.paystubAmount}>
-                                  <span>Net pay</span>
-                                  <strong>{new Intl.NumberFormat("en-IN", { style: "currency", currency: stub.currency || historyRun.currency }).format(stub.net_pay)}</strong>
-                                </div>
-                                {stub.pdf_path ? (
-                                  <button
-                                    type="button"
-                                    className={styles.button}
-                                    onClick={() => downloadPaystub(stub)}
-                                  >
-                                    Download PDF
-                                  </button>
-                                ) : (
-                                  <span style={{ fontSize: 11, color: "#94a3b8" }}>No PDF</span>
-                                )}
-                              </article>
-                            ))}
-                          </div>
+                        <div className={styles.balanceTableWrapper}>
+                          <table className={styles.balanceTable}>
+                            <thead>
+                              <tr>
+                                <th>Employee</th>
+                                <th>Paystub #</th>
+                                <th>Gross</th>
+                                <th>Taxes & Deductions</th>
+                                <th>Net Pay</th>
+                                <th style={{ textAlign: "right" }}>Paystub</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {runStubsList.map((stub) => (
+                                <tr key={stub.id}>
+                                  <td>
+                                    <strong>{stub.employee_name_snapshot || "Employee"}</strong>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontSize: 12, color: "#64748b" }}>{stub.paystub_number || "—"}</span>
+                                  </td>
+                                  <td>{formatSalaryAmount(stub.gross_pay, historyRun.currency)}</td>
+                                  <td>
+                                    <span style={{ color: "#dc2626", fontSize: 12 }}>
+                                      -{formatSalaryAmount(Number(stub.employee_taxes || 0) + Number(stub.deductions || 0), historyRun.currency)}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <strong style={{ color: "#166534", fontSize: 14 }}>
+                                      {formatSalaryAmount(stub.net_pay, historyRun.currency)}
+                                    </strong>
+                                  </td>
+                                  <td style={{ textAlign: "right" }}>
+                                    {stub.pdf_path ? (
+                                      <button
+                                        type="button"
+                                        className={`${styles.button} ${styles.secondary}`}
+                                        style={{ padding: "4px 10px", fontSize: 11 }}
+                                        onClick={() => downloadPaystub(stub)}
+                                      >
+                                        Download PDF
+                                      </button>
+                                    ) : (
+                                      <span style={{ fontSize: 11, color: "#94a3b8" }}>No PDF</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       ) : (
                         <div className={styles.empty}>No employee paystubs found for this run.</div>

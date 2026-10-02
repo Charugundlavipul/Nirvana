@@ -225,10 +225,10 @@ test("payroll csv export route and UI export employee name, monthly salary, and 
   assert.match(managerFile, /Export \.csv/);
 });
 
-test("payroll history renders published runs as expandable accordions with per-person pay statements cards", async () => {
+test("payroll history renders published runs as expandable accordions with per-person paystubs table", async () => {
   const managerFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
   assert.match(managerFile, /details className=\{styles\.payrollEmployee\} key=\{historyRun\.id\}/);
-  assert.match(managerFile, /article className=\{styles\.paystubCard\}/);
+  assert.match(managerFile, /table className=\{styles\.balanceTable\}/);
   assert.match(managerFile, /stub\.employee_name_snapshot/);
   assert.match(managerFile, /downloadPaystub\(stub\)/);
 });
