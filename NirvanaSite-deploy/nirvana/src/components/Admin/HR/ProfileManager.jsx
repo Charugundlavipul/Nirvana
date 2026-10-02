@@ -4,7 +4,16 @@ import { downloadPaystub, getHrSummary, hrAction, revealBank } from "../../../li
 import { formatRole, isOwnerRole } from "../../../lib/hr";
 import styles from "./Hr.module.css";
 
-const emptyBank = { bankName: "", accountType: "checking", routingNumber: "", accountNumber: "" };
+const emptyBank = {
+  accountHolderName: "",
+  bankName: "",
+  accountType: "savings",
+  ifscCode: "",
+  accountNumber: "",
+  confirmAccountNumber: "",
+  branchName: "",
+  upiId: "",
+};
 
 const formatPayDate = (value, options) => {
   const date = new Date(`${value}T00:00:00Z`);
@@ -25,7 +34,27 @@ export default function ProfileManager() {
     const result = await getHrSummary();
     setData(result);
     const p = result.profile || {};
-    setProfile({ firstName: p.first_name || "", lastName: p.last_name || "", phone: p.phone || "", addressLine1: p.address_line_1 || "", addressLine2: p.address_line_2 || "", city: p.city || "", region: p.region || "", postalCode: p.postal_code || "", country: p.country || "" });
+    setProfile({
+      firstName: p.first_name || "",
+      lastName: p.last_name || "",
+      phone: p.phone || "",
+      addressLine1: p.address_line_1 || "",
+      addressLine2: p.address_line_2 || "",
+      city: p.city || "",
+      region: p.region || "",
+      postalCode: p.postal_code || "",
+      country: p.country || "",
+    });
+    if (result.bank) {
+      setBank((old) => ({
+        ...old,
+        accountHolderName: result.bank.account_holder_name || old.accountHolderName || "",
+        bankName: result.bank.bank_name || old.bankName || "",
+        accountType: result.bank.account_type || old.accountType || "savings",
+        branchName: result.bank.branch_name || old.branchName || "",
+        upiId: result.bank.upi_id || old.upiId || "",
+      }));
+    }
   };
   useEffect(() => { load().catch((error) => setMessage(error.message)); }, []);
   const currentCompensation = useMemo(() => {
@@ -41,10 +70,61 @@ export default function ProfileManager() {
     try { await hrAction("update_profile", profile); await load(); setMessage("Profile saved."); }
     catch (error) { setMessage(error.message); } finally { setBusy(false); }
   };
+
+  const handleRevealOrEditBank = async () => {
+    setBusy(true);
+    setMessage("");
+    try {
+      if (revealed) {
+        setRevealed(null);
+      } else {
+        const res = await revealBank();
+        const b = res.bank || {};
+        setRevealed(b);
+        setBank({
+          accountHolderName: b.account_holder_name || b.accountHolderName || data?.bank?.account_holder_name || "",
+          bankName: b.bank_name || b.bankName || data?.bank?.bank_name || "",
+          accountType: b.account_type || b.accountType || data?.bank?.account_type || "savings",
+          branchName: b.branch_name || b.branchName || data?.bank?.branch_name || "",
+          upiId: b.upi_id || b.upiId || data?.bank?.upi_id || "",
+          ifscCode: b.ifscCode || b.routingNumber || "",
+          accountNumber: b.accountNumber || "",
+          confirmAccountNumber: b.accountNumber || "",
+        });
+      }
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveBank = async (event) => {
-    event.preventDefault(); setBusy(true); setMessage("");
-    try { await hrAction("update_bank", bank); setBank(emptyBank); setRevealed(null); await load(); setMessage("Bank information securely replaced."); }
-    catch (error) { setMessage(error.message); } finally { setBusy(false); }
+    event.preventDefault();
+    if (bank.confirmAccountNumber && bank.accountNumber !== bank.confirmAccountNumber) {
+      setMessage("Account number and confirmation do not match.");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      await hrAction("update_bank", {
+        accountHolderName: bank.accountHolderName,
+        bankName: bank.bankName,
+        accountType: bank.accountType,
+        ifscCode: bank.ifscCode,
+        accountNumber: bank.accountNumber,
+        branchName: bank.branchName,
+        upiId: bank.upiId,
+      });
+      setRevealed(null);
+      await load();
+      setMessage("Bank information securely saved.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!data) return <AdminLayout title="My Profile" subtitle="Your private employee record"><div className={styles.card}>{message || "Loading profile…"}</div></AdminLayout>;
@@ -66,14 +146,149 @@ export default function ProfileManager() {
           {currentCompensation ? <><div className={styles.metricRow} style={{ marginTop: 14 }}><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Annual fixed salary</span><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:currentCompensation.currency}).format(currentCompensation.annual_salary)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Fixed pay frequency</span><strong style={{fontSize:18,textTransform:'capitalize'}}>{currentCompensation.pay_frequency}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Variable pay</span><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:currentCompensation.currency}).format(currentCompensation.variable_pay||0)}</strong></div><div className={styles.metric} style={{ gridColumn: 'span 2' }}><span>Variable pay frequency</span><strong style={{fontSize:18,textTransform:'capitalize'}}>{currentCompensation.variable_pay_frequency==='annually'?'Yearly':'Monthly'}</strong></div></div>{currentCompensation.salary_note&&<div className={styles.row} style={{marginTop:14}}><div className={styles.rowMain}><strong>Salary note</strong><span>{currentCompensation.salary_note}</span></div></div>}</> : <div className={styles.empty}>Salary information has not been added.</div>}
         </section>
         <form className={`${styles.card} ${styles.half}`} onSubmit={saveBank}>
-          <h2>Bank information</h2><p className={styles.muted}>Encrypted at rest. Saving replaces the complete account.</p>
-          {data.bank && <div className={styles.row}><div className={styles.rowMain}><strong>{data.bank.bank_name || 'Bank account'}</strong><span>{data.bank.account_type} · routing ••••{data.bank.routing_last4} · account ••••{data.bank.account_last4}</span>{revealed && <span style={{display:'block',marginTop:6}}>Routing {revealed.routingNumber} · Account {revealed.accountNumber}</span>}</div><button type="button" className={`${styles.button} ${styles.secondary}`} onClick={async () => setRevealed((await revealBank()).bank)}>Reveal</button></div>}
-          <div className={styles.formGrid} style={{marginTop:14}}>
-            <div className={`${styles.field} ${styles.fieldWide}`}><label>Bank name</label><input className={styles.input} value={bank.bankName} onChange={(e)=>setBank({...bank,bankName:e.target.value})}/></div>
-            <div className={styles.field}><label>Account type</label><select className={styles.select} value={bank.accountType} onChange={(e)=>setBank({...bank,accountType:e.target.value})}><option value="checking">Checking</option><option value="savings">Savings</option></select></div>
-            <div className={styles.field}><label>Routing number</label><input className={styles.input} inputMode="numeric" value={bank.routingNumber} onChange={(e)=>setBank({...bank,routingNumber:e.target.value})}/></div>
-            <div className={`${styles.field} ${styles.fieldWide}`}><label>Account number</label><input className={styles.input} inputMode="numeric" value={bank.accountNumber} onChange={(e)=>setBank({...bank,accountNumber:e.target.value})}/></div>
-          </div><div className={styles.actions}><button className={styles.button} disabled={busy}>Save bank information</button></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
+            <div>
+              <h2>Bank details (Indian Banking)</h2>
+              <p className={styles.muted} style={{ margin: "4px 0 0" }}>
+                Encrypted at rest. Payouts and payslips use these details.
+              </p>
+            </div>
+            {data.bank && (
+              <button
+                type="button"
+                className={`${styles.button} ${styles.secondary}`}
+                style={{ fontSize: 12, padding: "6px 12px", whiteSpace: "nowrap" }}
+                disabled={busy}
+                onClick={handleRevealOrEditBank}
+              >
+                {revealed ? "Hide details" : "Reveal / Edit details"}
+              </button>
+            )}
+          </div>
+
+          {data.bank && (
+            <div className={styles.row} style={{ marginBottom: 16, background: "#f8fafc" }}>
+              <div className={styles.rowMain}>
+                <strong>
+                  {data.bank.bank_name || "Bank account"}
+                  {data.bank.branch_name ? ` · ${data.bank.branch_name}` : ""}
+                </strong>
+                <span>
+                  {data.bank.account_holder_name ? `${data.bank.account_holder_name} · ` : ""}
+                  <span style={{ textTransform: "capitalize" }}>{data.bank.account_type || "savings"} account</span>
+                  {` · IFSC ••••${data.bank.routing_last4} · A/C ••••${data.bank.account_last4}`}
+                  {data.bank.upi_id ? ` · UPI: ${data.bank.upi_id}` : ""}
+                </span>
+                {revealed && (
+                  <div style={{ marginTop: 8, padding: "8px 10px", background: "#ecfdf5", borderRadius: 8, color: "#065f46", fontSize: 12, fontWeight: 600 }}>
+                    <div>IFSC: <strong>{revealed.ifscCode || revealed.routingNumber}</strong> · A/C: <strong>{revealed.accountNumber}</strong></div>
+                    {revealed.account_holder_name && <div>A/C Holder: {revealed.account_holder_name}</div>}
+                    {revealed.branch_name && <div>Branch: {revealed.branch_name}</div>}
+                    {revealed.upi_id && <div>UPI: {revealed.upi_id}</div>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className={styles.formGrid}>
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <label>Account holder name *</label>
+              <input
+                className={styles.input}
+                placeholder="Beneficiary name as registered with bank"
+                value={bank.accountHolderName}
+                onChange={(e) => setBank({ ...bank, accountHolderName: e.target.value })}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Bank name *</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. State Bank of India, HDFC Bank"
+                value={bank.bankName}
+                onChange={(e) => setBank({ ...bank, bankName: e.target.value })}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Account type *</label>
+              <select
+                className={styles.select}
+                value={bank.accountType}
+                onChange={(e) => setBank({ ...bank, accountType: e.target.value })}
+              >
+                <option value="savings">Savings Account</option>
+                <option value="salary">Salary Account</option>
+                <option value="current">Current Account</option>
+                <option value="checking">Checking (US / Global)</option>
+              </select>
+            </div>
+            <div className={styles.field}>
+              <label>IFSC code *</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. SBIN0001234 or HDFC0000261"
+                maxLength={11}
+                value={bank.ifscCode}
+                onChange={(e) => setBank({ ...bank, ifscCode: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Branch name / City</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. Indiranagar Branch, Bengaluru"
+                value={bank.branchName}
+                onChange={(e) => setBank({ ...bank, branchName: e.target.value })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Account number *</label>
+              <input
+                className={styles.input}
+                inputMode="numeric"
+                placeholder="9 to 18 digits"
+                maxLength={30}
+                value={bank.accountNumber}
+                onChange={(e) => setBank({ ...bank, accountNumber: e.target.value.replace(/\D/g, "") })}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Confirm account number *</label>
+              <input
+                className={styles.input}
+                inputMode="numeric"
+                placeholder="Re-enter account number"
+                maxLength={30}
+                value={bank.confirmAccountNumber}
+                onChange={(e) => setBank({ ...bank, confirmAccountNumber: e.target.value.replace(/\D/g, "") })}
+                required={!data.bank || Boolean(bank.accountNumber)}
+              />
+            </div>
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <label>UPI ID / VPA (Optional)</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. yourname@okhdfcbank"
+                value={bank.upiId}
+                onChange={(e) => setBank({ ...bank, upiId: e.target.value.trim() })}
+              />
+            </div>
+          </div>
+          <div className={styles.actions}>
+            <button className={styles.button} disabled={busy}>
+              Save bank information
+            </button>
+            {data.bank && (
+              <span className={styles.muted} style={{ margin: 0, fontSize: 12 }}>
+                Saving replaces existing bank account details.
+              </span>
+            )}
+          </div>
         </form>
         <section className={`${styles.card} ${styles.half}`}>
           <div className={styles.paystubHeading}>

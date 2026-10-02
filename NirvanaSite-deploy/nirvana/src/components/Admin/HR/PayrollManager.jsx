@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
-import { downloadPaystub, getPayroll, hrAction } from "../../../lib/hrApi";
+import { downloadPayrollZip, downloadPaystub, getPayroll, hrAction } from "../../../lib/hrApi";
 import { computePayrollTotals, salaryLineItemsForPeriod } from "../../../lib/hr";
 import styles from "./Hr.module.css";
 
@@ -27,6 +27,7 @@ export default function PayrollManager() {
   const [form, setForm] = useState({ periodStart: today, periodEnd: today, payDate: today, currency: "USD", notes: "" });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
 
   const load = async () => {
     const result = await getPayroll();
@@ -99,6 +100,20 @@ export default function PayrollManager() {
     }
   };
 
+  const handleDownloadZip = async (targetRun) => {
+    if (!targetRun?.id) return;
+    setDownloadingZip(true);
+    setMessage("");
+    try {
+      await downloadPayrollZip(targetRun);
+      setMessage("Payroll ZIP archive downloaded successfully.");
+    } catch (err) {
+      setMessage(err.message || "Failed to download payroll ZIP.");
+    } finally {
+      setDownloadingZip(false);
+    }
+  };
+
   const saveEntireDraft = () => perform(
     () => hrAction("save_payroll_run_draft", {
       runId: run.id,
@@ -148,7 +163,20 @@ export default function PayrollManager() {
           {run && <>
             <div className={styles.payrollRosterHeader}>
               <div><strong>{runPeople.length} employee(s)</strong><span>{run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}</span></div>
-              <span className={styles.badge}>{run.status}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {["finalized", "paid"].includes(run.status) && (
+                  <button
+                    type="button"
+                    className={`${styles.button} ${styles.secondary}`}
+                    style={{ padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
+                    disabled={busy || downloadingZip}
+                    onClick={() => handleDownloadZip(run)}
+                  >
+                    {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
+                  </button>
+                )}
+                <span className={styles.badge}>{run.status}</span>
+              </div>
             </div>
 
             <div className={styles.payrollRoster}>
@@ -193,6 +221,16 @@ export default function PayrollManager() {
               {run.status === "draft" && <button className={styles.button} disabled={busy || !canSaveDraft} onClick={saveEntireDraft}>Save entire draft</button>}
               {run.status === "draft" && <button className={styles.button} disabled={busy || !allEmployeesAdded || dirtyEmployees.size > 0} onClick={() => perform(() => hrAction("finalize_payroll_run", { runId: run.id }), "Payroll finalized and paystubs generated.")}>Finalize run</button>}
               {run.status === "finalized" && <button className={styles.button} disabled={busy} onClick={() => perform(() => hrAction("set_payroll_status", { runId: run.id, status: "paid" }), "Payroll marked paid.")}>Mark paid</button>}
+              {["finalized", "paid"].includes(run.status) && (
+                <button
+                  type="button"
+                  className={`${styles.button} ${styles.secondary}`}
+                  disabled={busy || downloadingZip}
+                  onClick={() => handleDownloadZip(run)}
+                >
+                  {downloadingZip ? "Preparing ZIP…" : "Download all paystubs (.zip)"}
+                </button>
+              )}
               {["finalized", "paid"].includes(run.status) && <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => perform(() => hrAction("set_payroll_status", { runId: run.id, status: "void" }), "Payroll voided.")}>Void run</button>}
               <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(run)}>{run.status === "draft" ? "Delete draft" : "Delete run"}</button>
             </div>
@@ -202,7 +240,29 @@ export default function PayrollManager() {
         <section className={`${styles.card} ${styles.full}`}>
           <h2>Payroll history</h2>
           <div className={styles.list}>
-            {data.runs.map((historyRun) => <div className={styles.row} key={historyRun.id}><div className={styles.rowMain}><strong>Pay date {historyRun.pay_date}</strong><span>{historyRun.period_start} – {historyRun.period_end} · {data.paystubs.filter((paystub) => paystub.payroll_run_id === historyRun.id).length} employee(s)</span></div><div className={styles.actions} style={{ margin: 0 }}><span className={`${styles.badge} ${historyRun.status === "void" ? styles.badgeDanger : ""}`}>{historyRun.status}</span><button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(historyRun)}>{historyRun.status === "draft" ? "Delete draft" : "Delete run"}</button></div></div>)}
+            {data.runs.map((historyRun) => (
+              <div className={styles.row} key={historyRun.id}>
+                <div className={styles.rowMain}>
+                  <strong>Pay date {historyRun.pay_date}</strong>
+                  <span>{historyRun.period_start} – {historyRun.period_end} · {data.paystubs.filter((paystub) => paystub.payroll_run_id === historyRun.id).length} employee(s)</span>
+                </div>
+                <div className={styles.actions} style={{ margin: 0 }}>
+                  {["finalized", "paid"].includes(historyRun.status) && (
+                    <button
+                      type="button"
+                      className={`${styles.button} ${styles.secondary}`}
+                      style={{ padding: "6px 12px", fontSize: 12 }}
+                      disabled={busy || downloadingZip}
+                      onClick={() => handleDownloadZip(historyRun)}
+                    >
+                      Download .zip
+                    </button>
+                  )}
+                  <span className={`${styles.badge} ${historyRun.status === "void" ? styles.badgeDanger : ""}`}>{historyRun.status}</span>
+                  <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(historyRun)}>{historyRun.status === "draft" ? "Delete draft" : "Delete run"}</button>
+                </div>
+              </div>
+            ))}
             {!data.runs.length && <div className={styles.empty}>No payroll runs yet.</div>}
           </div>
         </section>

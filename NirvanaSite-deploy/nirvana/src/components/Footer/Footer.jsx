@@ -82,6 +82,7 @@ const Footer = () => {
                         <ul className="space-y-2 text-sm text-slate-300">
                             <li><Link href="/" className="transition hover:text-accent">Home</Link></li>
                             <li><Link href="/properties" className="transition hover:text-accent">All Properties</Link></li>
+                            <li><Link href="/property-management" className="transition hover:text-accent font-semibold text-accent">Property Management</Link></li>
                             <li><Link href="/tennessee-vacation-rentals" className="transition hover:text-accent">Tennessee Cabins</Link></li>
                             <li><Link href="/north-carolina-vacation-rentals" className="transition hover:text-accent">NC Lake Homes</Link></li>
                             <li><Link href="/blog" className="transition hover:text-accent">Journal</Link></li>

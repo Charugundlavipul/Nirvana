@@ -47,10 +47,9 @@ function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Properties', path: '/properties' },
-    { name: 'Investors', path: '/hosts', highlight: true },
+    { name: 'Property Management', path: '/property-management', highlight: true },
+    { name: 'Investors', path: '/hosts' },
     { name: 'FAQ', path: '/faq' },
-    { name: 'Reviews', path: '/review' },
-    { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
   ];
 

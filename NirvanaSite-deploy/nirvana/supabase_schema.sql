@@ -2162,7 +2162,7 @@ AS $$
 $$;
 
 CREATE TABLE IF NOT EXISTS employee_directory (
-    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE RESTRICT,
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     first_name TEXT NOT NULL DEFAULT '',
     last_name TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -2188,7 +2188,7 @@ CREATE TABLE IF NOT EXISTS employee_private_profiles (
 
 CREATE TABLE IF NOT EXISTS employee_compensation (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
     annual_salary NUMERIC(14, 2) NOT NULL CHECK (annual_salary >= 0),
     variable_pay NUMERIC(14, 2) NOT NULL DEFAULT 0 CHECK (variable_pay >= 0),
     variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly'
@@ -2219,9 +2219,12 @@ ON employee_compensation(user_id, effective_from DESC);
 CREATE TABLE IF NOT EXISTS employee_bank_accounts (
     user_id UUID PRIMARY KEY REFERENCES employee_directory(user_id) ON DELETE CASCADE,
     bank_name TEXT,
-    account_type TEXT CHECK (account_type IN ('checking', 'savings')),
+    account_holder_name TEXT,
+    account_type TEXT CHECK (account_type IN ('savings', 'current', 'salary', 'checking')),
+    branch_name TEXT,
+    upi_id TEXT,
     account_last4 TEXT CHECK (account_last4 IS NULL OR account_last4 ~ '^[0-9]{4}$'),
-    routing_last4 TEXT CHECK (routing_last4 IS NULL OR routing_last4 ~ '^[0-9]{4}$'),
+    routing_last4 TEXT CHECK (routing_last4 IS NULL OR routing_last4 ~ '^[A-Za-z0-9]{4}$'),
     encrypted_payload TEXT NOT NULL,
     encryption_iv TEXT NOT NULL,
     encryption_tag TEXT NOT NULL,
@@ -2229,9 +2232,29 @@ CREATE TABLE IF NOT EXISTS employee_bank_accounts (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE employee_bank_accounts
+    ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
+ALTER TABLE employee_bank_accounts
+    ADD COLUMN IF NOT EXISTS branch_name TEXT;
+ALTER TABLE employee_bank_accounts
+    ADD COLUMN IF NOT EXISTS upi_id TEXT;
+
+DO $$
+BEGIN
+    ALTER TABLE employee_bank_accounts DROP CONSTRAINT IF EXISTS employee_bank_accounts_account_type_check;
+    ALTER TABLE employee_bank_accounts ADD CONSTRAINT employee_bank_accounts_account_type_check
+        CHECK (account_type IS NULL OR account_type IN ('savings', 'current', 'salary', 'checking'));
+
+    ALTER TABLE employee_bank_accounts DROP CONSTRAINT IF EXISTS employee_bank_accounts_routing_last4_check;
+    ALTER TABLE employee_bank_accounts ADD CONSTRAINT employee_bank_accounts_routing_last4_check
+        CHECK (routing_last4 IS NULL OR routing_last4 ~ '^[A-Za-z0-9]{4}$');
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE TABLE IF NOT EXISTS leave_entitlements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
     calendar_year INTEGER NOT NULL CHECK (calendar_year BETWEEN 2000 AND 2200),
     allowance_days NUMERIC(6, 2) NOT NULL DEFAULT 0 CHECK (allowance_days >= 0),
     override_reason TEXT,
@@ -2243,7 +2266,7 @@ CREATE TABLE IF NOT EXISTS leave_entitlements (
 
 CREATE TABLE IF NOT EXISTS leave_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     day_portion TEXT NOT NULL DEFAULT 'full' CHECK (day_portion IN ('full', 'half')),
@@ -2300,7 +2323,7 @@ CREATE TABLE IF NOT EXISTS payroll_runs (
 CREATE TABLE IF NOT EXISTS employee_paystubs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     payroll_run_id UUID NOT NULL REFERENCES payroll_runs(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
     paystub_number TEXT UNIQUE,
     employee_name_snapshot TEXT NOT NULL,
     job_title_snapshot TEXT,
@@ -2347,6 +2370,26 @@ ALTER TABLE employee_paystubs
 ALTER TABLE employee_paystubs
     ADD CONSTRAINT employee_paystubs_payroll_run_id_fkey
     FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id) ON DELETE CASCADE;
+
+ALTER TABLE employee_directory DROP CONSTRAINT IF EXISTS employee_directory_user_id_fkey;
+ALTER TABLE employee_directory ADD CONSTRAINT employee_directory_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE employee_compensation DROP CONSTRAINT IF EXISTS employee_compensation_user_id_fkey;
+ALTER TABLE employee_compensation ADD CONSTRAINT employee_compensation_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES employee_directory(user_id) ON DELETE CASCADE;
+
+ALTER TABLE leave_entitlements DROP CONSTRAINT IF EXISTS leave_entitlements_user_id_fkey;
+ALTER TABLE leave_entitlements ADD CONSTRAINT leave_entitlements_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES employee_directory(user_id) ON DELETE CASCADE;
+
+ALTER TABLE leave_requests DROP CONSTRAINT IF EXISTS leave_requests_user_id_fkey;
+ALTER TABLE leave_requests ADD CONSTRAINT leave_requests_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES employee_directory(user_id) ON DELETE CASCADE;
+
+ALTER TABLE employee_paystubs DROP CONSTRAINT IF EXISTS employee_paystubs_user_id_fkey;
+ALTER TABLE employee_paystubs ADD CONSTRAINT employee_paystubs_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES employee_directory(user_id) ON DELETE CASCADE;
 
 CREATE UNIQUE INDEX IF NOT EXISTS payroll_runs_active_period_idx
 ON payroll_runs(period_start, period_end, pay_date, currency) WHERE status <> 'void';

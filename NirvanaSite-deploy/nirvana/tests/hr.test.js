@@ -131,3 +131,73 @@ test("employee history only exposes generated active paystubs and run deletion r
   assert.match(route, /storage[\s\S]*\.from\("paystubs"\)[\s\S]*\.remove\(pdfPaths\.slice/);
   assert.match(route, /from\("employee_paystubs"\)[\s\S]*\.delete\(\)[\s\S]*\.eq\("payroll_run_id", run\.id\)/);
 });
+
+test("Indian bank payloads with IFSC and alphanumeric details round-trip cleanly", async () => {
+  process.env.HR_DATA_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
+  const { decryptBankPayload, encryptBankPayload, lastFour } = await import("../src/lib/server/hrCrypto.js");
+  const indianBank = {
+    accountNumber: "5010023456789",
+    routingNumber: "HDFC0000261",
+    ifscCode: "HDFC0000261",
+    accountHolderName: "Charugundla Vipul",
+    bankName: "HDFC Bank",
+    branchName: "Indiranagar Branch, Bengaluru",
+    upiId: "vipul@okhdfcbank",
+  };
+  const encrypted = encryptBankPayload(indianBank);
+  assert.equal(encrypted.encrypted_payload.includes(indianBank.accountNumber), false);
+  assert.deepEqual(decryptBankPayload(encrypted), indianBank);
+  assert.equal(lastFour(indianBank.accountNumber), "6789");
+  assert.equal(lastFour(indianBank.ifscCode), "0261");
+});
+
+test("schema and API support Indian banking details and IFSC routing", async () => {
+  const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
+  assert.match(schema, /account_holder_name TEXT/);
+  assert.match(schema, /branch_name TEXT/);
+  assert.match(schema, /upi_id TEXT/);
+  assert.match(schema, /routing_last4 ~ '\^\[A-Za-z0-9\]\{4\}\$'/);
+  assert.match(schema, /account_type IN \('savings', 'current', 'salary', 'checking'\)/);
+
+  const route = await readFile(new URL("../app/api/admin/hr/route.js", import.meta.url), "utf8");
+  assert.match(route, /isIfsc/);
+  assert.match(route, /accountHolderName/);
+  assert.match(route, /branchName/);
+  assert.match(route, /upiId/);
+});
+
+test("employee deletion removes user completely and schema cascades deletions", async () => {
+  const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
+  assert.match(schema, /employee_directory_user_id_fkey[\s\S]*ON DELETE CASCADE/);
+  assert.match(schema, /employee_compensation_user_id_fkey[\s\S]*ON DELETE CASCADE/);
+  assert.match(schema, /leave_entitlements_user_id_fkey[\s\S]*ON DELETE CASCADE/);
+  assert.match(schema, /leave_requests_user_id_fkey[\s\S]*ON DELETE CASCADE/);
+
+  const route = await readFile(new URL("../app/api/admin/hr/route.js", import.meta.url), "utf8");
+  assert.match(route, /action === "delete_employee"/);
+  assert.match(route, /from\("employee_directory"\)\.delete\(\)\.eq\("user_id", targetId\)/);
+  assert.match(route, /auth\.admin\.deleteUser\(targetId\)/);
+});
+
+test("payroll zip generator creates valid ZIP archives containing paystub PDFs", async () => {
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+  zip.file("PS-001_Alice.pdf", Buffer.from("%PDF-1.4 test paystub 1"));
+  zip.file("PS-002_Bob.pdf", Buffer.from("%PDF-1.4 test paystub 2"));
+  const buffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  assert.ok(Buffer.isBuffer(buffer));
+  assert.equal(buffer.subarray(0, 4).toString("hex"), "504b0304"); // PK.. standard zip signature
+
+  const readBack = await JSZip.loadAsync(buffer);
+  assert.ok(readBack.file("PS-001_Alice.pdf"));
+  assert.ok(readBack.file("PS-002_Bob.pdf"));
+
+  const zipRoute = await readFile(new URL("../app/api/admin/hr/payroll/[id]/zip/route.js", import.meta.url), "utf8");
+  assert.match(zipRoute, /role !== "owner"/);
+  assert.match(zipRoute, /run\.status === "draft"/);
+  assert.match(zipRoute, /adminClient\.storage\.from\("paystubs"\)\.download/);
+  assert.match(zipRoute, /application\/zip/);
+});
+
+
+

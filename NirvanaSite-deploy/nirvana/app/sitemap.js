@@ -17,6 +17,7 @@ export default async function sitemap() {
     "/contact",
     "/hosts",
     "/properties",
+    "/property-management",
     "/tennessee-vacation-rentals",
     "/north-carolina-vacation-rentals",
     "/book",

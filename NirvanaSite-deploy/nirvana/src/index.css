@@ -100,6 +100,12 @@ body {
   @apply bg-white text-gray-900 antialiased font-sans;
 }
 
+@media (max-width: 639px) {
+  body:has(.property-management-page) .nlchat-fab {
+    bottom: 5.75rem;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }

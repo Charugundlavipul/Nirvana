@@ -187,11 +187,11 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    if (action === "delete" || action === "set_active") {
+    if (action === "set_active") {
       const userId = String(body?.userId || "").trim();
       if (!userId) return error("userId is required");
       if (userId === actorId) return error("You cannot deactivate your own account", 400);
-      const active = action === "set_active" ? Boolean(body?.active) : false;
+      const active = Boolean(body?.active);
 
       const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(userId, {
         ban_duration: active ? "none" : "876000h",
@@ -204,6 +204,28 @@ Deno.serve(async (req) => {
       if (profileUpdateError) return error(profileUpdateError.message, 500);
 
       return json({ ok: true, active });
+    }
+
+    if (action === "delete") {
+      const userId = String(body?.userId || "").trim();
+      if (!userId) return error("userId is required");
+      if (userId === actorId) return error("You cannot delete your own account", 400);
+
+      // Clean up employee tables
+      await adminClient.from("employee_paystubs").delete().eq("user_id", userId);
+      await adminClient.from("leave_requests").delete().eq("user_id", userId);
+      await adminClient.from("leave_entitlements").delete().eq("user_id", userId);
+      await adminClient.from("employee_compensation").delete().eq("user_id", userId);
+      await adminClient.from("employee_bank_accounts").delete().eq("user_id", userId);
+      await adminClient.from("employee_notifications").delete().eq("user_id", userId);
+      await adminClient.from("employee_private_profiles").delete().eq("user_id", userId);
+      await adminClient.from("employee_directory").delete().eq("user_id", userId);
+      await adminClient.from("admin_users").delete().eq("user_id", userId);
+
+      const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
+      if (authDeleteError) return error(authDeleteError.message, 400);
+
+      return json({ ok: true, deletedUserId: userId });
     }
 
     return error("Unknown action", 400);

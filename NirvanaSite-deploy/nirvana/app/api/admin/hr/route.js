@@ -68,7 +68,7 @@ async function getSummary(adminClient, user, role) {
       directoryWithRoles(adminClient),
       adminClient.from("employee_private_profiles").select("*").eq("user_id", user.id).maybeSingle(),
       adminClient.from("employee_compensation").select("*").eq("user_id", user.id).order("effective_from", { ascending: false }),
-      adminClient.from("employee_bank_accounts").select("bank_name, account_type, account_last4, routing_last4, updated_at").eq("user_id", user.id).maybeSingle(),
+      adminClient.from("employee_bank_accounts").select("bank_name, account_holder_name, account_type, branch_name, upi_id, account_last4, routing_last4, updated_at").eq("user_id", user.id).maybeSingle(),
       adminClient.from("leave_entitlements").select("*").eq("user_id", user.id).eq("calendar_year", year).maybeSingle(),
       adminClient.from("leave_requests").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       adminClient.from("employee_paystubs")
@@ -160,7 +160,7 @@ async function getPeople(adminClient) {
     directoryWithRoles(adminClient),
     adminClient.from("employee_private_profiles").select("*"),
     adminClient.from("employee_compensation").select("*").lte("effective_from", today).or(`effective_to.is.null,effective_to.gte.${today}`).order("effective_from", { ascending: false }),
-    adminClient.from("employee_bank_accounts").select("user_id, bank_name, account_type, account_last4, routing_last4, updated_at"),
+    adminClient.from("employee_bank_accounts").select("user_id, bank_name, account_holder_name, account_type, branch_name, upi_id, account_last4, routing_last4, updated_at"),
     adminClient.from("leave_entitlements").select("*").eq("calendar_year", year),
     adminClient.from("leave_requests").select("*").neq("status", "cancelled").order("created_at", { ascending: false }),
     adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
@@ -219,7 +219,7 @@ export async function GET(request) {
       if (role !== "owner") throwStatus("Owner access required.", 403);
       const people = await getPeople(adminClient);
       await audit(adminClient, user.id, "people_workspace_viewed", "employee_profiles", null, null, { employee_count: people.length });
-      return noStore({ role, people });
+      return noStore({ role, people, currentUserId: user.id });
     }
     if (view === "payroll") {
       if (role !== "owner") throwStatus("Owner access required.", 403);
@@ -239,11 +239,17 @@ export async function GET(request) {
       if (error) throw error;
       if (!data) return noStore({ bank: null });
       await audit(adminClient, user.id, "bank_revealed", "bank_account", targetId, targetId);
+      const decrypted = decryptBankPayload(data);
       return noStore({
         bank: {
           bank_name: data.bank_name,
+          account_holder_name: data.account_holder_name || decrypted.accountHolderName || "",
           account_type: data.account_type,
-          ...decryptBankPayload(data),
+          branch_name: data.branch_name || decrypted.branchName || "",
+          upi_id: data.upi_id || decrypted.upiId || "",
+          ...decrypted,
+          ifscCode: decrypted.ifscCode || decrypted.routingNumber || "",
+          routingNumber: decrypted.routingNumber || decrypted.ifscCode || "",
         },
       });
     }
@@ -300,24 +306,109 @@ export async function POST(request) {
       const targetId = body.userId || user.id;
       if (targetId !== user.id && role !== "owner") throwStatus("Forbidden.", 403);
       await assertEmployee(adminClient, targetId);
+
+      const accountHolderName = cleanText(body.accountHolderName, 150);
+      const bankName = cleanText(body.bankName, 150);
+      const branchName = cleanText(body.branchName, 150);
+      const upiId = cleanText(body.upiId, 100);
+
       const accountNumber = String(body.accountNumber || "").replace(/\s+/g, "");
-      const routingNumber = String(body.routingNumber || "").replace(/\s+/g, "");
-      if (!/^\d{4,34}$/.test(accountNumber) || !/^\d{4,20}$/.test(routingNumber)) {
-        throwStatus("Account and routing numbers must contain valid digits.");
+      const ifscRaw = String(body.ifscCode || body.routingNumber || "").replace(/\s+/g, "").toUpperCase();
+
+      if (!/^\d{8,34}$/.test(accountNumber)) {
+        throwStatus("Account number must contain between 8 and 34 digits.");
       }
-      if (!["checking", "savings"].includes(body.accountType)) throwStatus("Choose a valid account type.");
-      const encrypted = encryptBankPayload({ accountNumber, routingNumber });
+
+      const isIfsc = /^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscRaw);
+      const isGeneralRouting = /^[A-Z0-9]{4,20}$/.test(ifscRaw);
+
+      if (!isIfsc && !isGeneralRouting) {
+        throwStatus("IFSC code must be 11 characters (e.g., SBIN0001234 or HDFC0000123).");
+      }
+
+      const validAccountTypes = ["savings", "current", "salary", "checking"];
+      const accountType = String(body.accountType || "savings").toLowerCase();
+      if (!validAccountTypes.includes(accountType)) {
+        throwStatus("Choose a valid account type (Savings, Current, or Salary).");
+      }
+
+      const encrypted = encryptBankPayload({
+        accountNumber,
+        routingNumber: ifscRaw,
+        ifscCode: ifscRaw,
+        accountHolderName,
+        bankName,
+        branchName,
+        upiId,
+      });
+
       const { error } = await adminClient.from("employee_bank_accounts").upsert({
         user_id: targetId,
-        bank_name: cleanText(body.bankName, 150),
-        account_type: body.accountType,
+        bank_name: bankName,
+        account_holder_name: accountHolderName,
+        account_type: accountType,
+        branch_name: branchName,
+        upi_id: upiId,
         account_last4: lastFour(accountNumber),
-        routing_last4: lastFour(routingNumber),
+        routing_last4: lastFour(ifscRaw),
         ...encrypted,
+        updated_at: new Date().toISOString(),
       });
       if (error) throw error;
       await audit(adminClient, user.id, "bank_updated", "bank_account", targetId, targetId);
       return noStore({ ok: true });
+    }
+
+    if (action === "delete_employee") {
+      ownerOnly();
+      const targetId = String(body.userId || "").trim();
+      if (!targetId) throwStatus("userId is required.");
+      if (targetId === user.id) throwStatus("You cannot delete your own account.", 400);
+
+      // 1. Remove paystub pdf files from storage if any
+      const { data: userPaystubs } = await adminClient
+        .from("employee_paystubs")
+        .select("id, pdf_path")
+        .eq("user_id", targetId);
+      const pdfPaths = (userPaystubs || []).map((s) => s.pdf_path).filter(Boolean);
+      if (pdfPaths.length) {
+        await adminClient.storage.from("paystubs").remove(pdfPaths);
+      }
+
+      // 2. Delete line items for user paystubs
+      const paystubIds = (userPaystubs || []).map((s) => s.id);
+      if (paystubIds.length) {
+        await adminClient.from("paystub_line_items").delete().in("paystub_id", paystubIds);
+      }
+
+      // 3. Delete employee paystubs
+      await adminClient.from("employee_paystubs").delete().eq("user_id", targetId);
+
+      // 4. Delete leave requests & leave entitlements
+      await adminClient.from("leave_requests").delete().eq("user_id", targetId);
+      await adminClient.from("leave_entitlements").delete().eq("user_id", targetId);
+
+      // 5. Delete compensation, bank accounts, notifications, private profile
+      await adminClient.from("employee_compensation").delete().eq("user_id", targetId);
+      await adminClient.from("employee_bank_accounts").delete().eq("user_id", targetId);
+      await adminClient.from("employee_notifications").delete().eq("user_id", targetId);
+      await adminClient.from("employee_private_profiles").delete().eq("user_id", targetId);
+
+      // 6. Delete from employee_directory and admin_users
+      await adminClient.from("employee_directory").delete().eq("user_id", targetId);
+      await adminClient.from("admin_users").delete().eq("user_id", targetId);
+
+      // 7. Delete from auth.users
+      try {
+        await adminClient.auth.admin.deleteUser(targetId);
+      } catch (authErr) {
+        console.warn("Auth user deletion error or already removed:", authErr?.message);
+      }
+
+      // 8. Audit event
+      await audit(adminClient, user.id, "employee_deleted", "employee_directory", targetId, targetId);
+
+      return noStore({ ok: true, deletedUserId: targetId });
     }
 
     if (action === "submit_leave") {
