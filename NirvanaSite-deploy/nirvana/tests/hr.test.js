@@ -225,10 +225,10 @@ test("payroll csv export route and UI export employee name, monthly salary, and 
   assert.match(managerFile, /Export \.csv/);
 });
 
-test("payroll history renders published runs as expandable accordions with per-person paystubs table", async () => {
+test("payroll history renders published runs as expandable accordions with per-person pay statements cards", async () => {
   const managerFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
   assert.match(managerFile, /details className=\{styles\.payrollEmployee\} key=\{historyRun\.id\}/);
-  assert.match(managerFile, /table className=\{styles\.balanceTable\}/);
+  assert.match(managerFile, /article className=\{styles\.paystubCard\}/);
   assert.match(managerFile, /stub\.employee_name_snapshot/);
   assert.match(managerFile, /downloadPaystub\(stub\)/);
 });
@@ -239,5 +239,14 @@ test("payroll manager displays total payroll amount for runs in workspace header
   assert.match(managerFile, /currentRunTotal/);
   assert.match(managerFile, /runTotal > 0 && ` · Total payroll: \$\{formatSalaryAmount\(runTotal, historyRun\.currency\)\}`/);
 });
+
+test("people manager displays pay statements cards for selected employee", async () => {
+  const peopleFile = await readFile(new URL("../src/components/Admin/HR/PeopleManager.jsx", import.meta.url), "utf8");
+  assert.match(peopleFile, /Pay statements/);
+  assert.match(peopleFile, /article className=\{styles\.paystubCard\}/);
+  assert.match(peopleFile, /downloadPaystub\(stub\)/);
+  assert.match(peopleFile, /selected\.paystubs/);
+});
+
 
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../AdminLayout";
 import { createAdminUser, setAdminUserActive, updateAdminUserEmail, updateAdminUserPassword, updateAdminUserRole } from "../../../lib/adminUsersApi";
-import { getPeople, hrAction, revealBank } from "../../../lib/hrApi";
+import { downloadPaystub, getPeople, hrAction, revealBank } from "../../../lib/hrApi";
 import { formatRole, regularPayForSalary } from "../../../lib/hr";
 import styles from "./Hr.module.css";
 
@@ -13,6 +13,13 @@ const formatSalaryAmount = (amount, currency = "INR") => {
     maximumFractionDigits: 2,
   });
   return `${currency} ${formatted}`;
+};
+
+const formatPayDate = (value, options) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", ...options }).format(date);
 };
 
 const blankNew = { firstName: "", lastName: "", email: "", password: "", role: "employee" };
@@ -223,6 +230,43 @@ if(edit.employmentStatus!==(selected.private_profile?.employment_status||'active
           ) : (
             <div className={styles.empty}>No bank information supplied.</div>
           )}
+        </section>
+        <section className={`${styles.card} ${styles.full}`}>
+          <div className={styles.paystubHeading}>
+            <div>
+              <h3 style={{ margin: 0 }}>Pay statements</h3>
+              <p className={styles.muted} style={{ margin: "2px 0 0" }}>Complete monthly payslip history for {selected.first_name || 'this employee'}.</p>
+            </div>
+            {(selected.paystubs || []).length > 0 && (
+              <span className={styles.paystubCount}>{(selected.paystubs || []).length} available</span>
+            )}
+          </div>
+          <div className={styles.paystubList} style={{ maxHeight: "none", marginTop: 12, gap: 10 }}>
+            {(selected.paystubs || []).map((stub) => {
+              const run = stub.payroll_runs || {};
+              return (
+                <article className={styles.paystubCard} key={stub.id}>
+                  <div className={styles.paystubMonth} aria-hidden="true">
+                    <strong>{formatPayDate(run.pay_date, { month: "short" })}</strong>
+                    <span>{formatPayDate(run.pay_date, { year: "numeric" })}</span>
+                  </div>
+                  <div className={styles.paystubDetails}>
+                    <strong>{stub.paystub_number}</strong>
+                    <span>{formatPayDate(run.period_start, { day: "2-digit", month: "short" })} - {formatPayDate(run.period_end, { day: "2-digit", month: "short", year: "numeric" })}</span>
+                    <small>Paid {formatPayDate(run.pay_date, { day: "2-digit", month: "short", year: "numeric" })}</small>
+                  </div>
+                  <div className={styles.paystubAmount}>
+                    <span>Net pay</span>
+                    <strong>{new Intl.NumberFormat("en-IN", { style: "currency", currency: stub.currency || "INR" }).format(stub.net_pay)}</strong>
+                  </div>
+                  <button type="button" className={styles.button} onClick={() => downloadPaystub(stub)}>Download PDF</button>
+                </article>
+              );
+            })}
+            {!(selected.paystubs || []).length && (
+              <div className={styles.empty}>No generated pay statements yet for this employee.</div>
+            )}
+          </div>
         </section>
         <section className={`${styles.card} ${styles.full}`}><h3>Leave review</h3><div className={styles.list}>{reviewableLeaveRequests.map((request)=><div className={styles.row} key={request.id}><div className={styles.rowMain}><strong>{request.start_date} – {request.end_date}</strong><span>{request.requested_days} day(s) · {request.reason||'No reason supplied'}{request.decision_note?` · ${request.decision_note}`:''}</span></div><div className={styles.actions} style={{margin:0}}><span className={`${styles.badge} ${request.status==='pending'?styles.badgePending:['rejected','cancelled','reversed'].includes(request.status)?styles.badgeDanger:styles.badgeSuccess}`}><span className={styles.badgeDot} />{request.status}</span>{request.status==='pending'&&<><button className={styles.button} onClick={()=>perform(()=>hrAction('review_leave',{requestId:request.id,decision:'approved'}),'Leave approved.')}>Approve</button><button className={`${styles.button} ${styles.danger}`} onClick={()=>perform(()=>hrAction('review_leave',{requestId:request.id,decision:'rejected'}),'Leave rejected.')}>Reject</button></>}{request.status==='approved'&&<button className={`${styles.button} ${styles.danger}`} onClick={()=>perform(()=>hrAction('review_leave',{requestId:request.id,decision:'reversed'}),'Leave approval reversed.')}>Reverse</button>}</div></div>)}{!reviewableLeaveRequests.length&&<div className={styles.empty}>No leave requests.</div>}</div></section>
         <section className={`${styles.card} ${styles.full}`}><h3>Superadmin password reset</h3><p className={styles.muted}>Admins cannot reset employee passwords. Superadmins can issue a replacement when necessary.</p><div className={styles.formGrid}><div className={styles.field}><label>New temporary password</label><input type="password" className={styles.input} id="owner-reset-password"/></div></div><div className={styles.actions}><button className={`${styles.button} ${styles.danger}`} onClick={()=>{const input=document.getElementById('owner-reset-password');perform(()=>updateAdminUserPassword({userId:selected.user_id,password:input.value}),'Password changed.').then(()=>{input.value='';});}}>Reset password</button></div></section>

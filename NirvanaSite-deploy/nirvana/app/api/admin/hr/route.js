@@ -156,7 +156,7 @@ async function getSummary(adminClient, user, role) {
 async function getPeople(adminClient) {
   const year = new Date().getUTCFullYear();
   const today = new Date().toISOString().slice(0, 10);
-  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult, authResult] = await Promise.all([
+  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult, authResult, paystubsResult] = await Promise.all([
     directoryWithRoles(adminClient),
     adminClient.from("employee_private_profiles").select("*"),
     adminClient.from("employee_compensation").select("*").lte("effective_from", today).or(`effective_to.is.null,effective_to.gte.${today}`).order("effective_from", { ascending: false }),
@@ -164,8 +164,14 @@ async function getPeople(adminClient) {
     adminClient.from("leave_entitlements").select("*").eq("calendar_year", year),
     adminClient.from("leave_requests").select("*").neq("status", "cancelled").order("created_at", { ascending: false }),
     adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    adminClient
+      .from("employee_paystubs")
+      .select("*, payroll_runs!inner(period_start, period_end, pay_date, status)")
+      .not("pdf_path", "is", null)
+      .in("payroll_runs.status", ["finalized", "paid"])
+      .order("created_at", { ascending: false }),
   ]);
-  for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult]) {
+  for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult, paystubsResult]) {
     if (result.error) throw result.error;
   }
   if (authResult.error) throw authResult.error;
@@ -179,6 +185,11 @@ async function getPeople(adminClient) {
   const entitlementById = byId(entitlementResult.data);
   const leaveById = new Map();
   for (const request of leaveResult.data || []) leaveById.set(request.user_id, [...(leaveById.get(request.user_id) || []), request]);
+  const paystubsById = new Map();
+  for (const stub of paystubsResult.data || []) {
+    if (!paystubsById.has(stub.user_id)) paystubsById.set(stub.user_id, []);
+    paystubsById.get(stub.user_id).push(stub);
+  }
   const authById = new Map((authResult.data?.users || []).map((row) => [row.id, row]));
   return directory.map((employee) => ({
     ...employee,
@@ -189,6 +200,7 @@ async function getPeople(adminClient) {
     bank: bankById.get(employee.user_id) || null,
     entitlement: entitlementById.get(employee.user_id) || null,
     leave_requests: leaveById.get(employee.user_id) || [],
+    paystubs: paystubsById.get(employee.user_id) || [],
   }));
 }
 
