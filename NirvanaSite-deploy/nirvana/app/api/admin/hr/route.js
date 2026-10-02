@@ -156,7 +156,7 @@ async function getSummary(adminClient, user, role) {
 async function getPeople(adminClient) {
   const year = new Date().getUTCFullYear();
   const today = new Date().toISOString().slice(0, 10);
-  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult, authResult, paystubsResult] = await Promise.all([
+  const [directory, privateResult, compensationResult, bankResult, entitlementResult, leaveResult, authResult, paystubsResult, salaryAuditResult] = await Promise.all([
     directoryWithRoles(adminClient),
     adminClient.from("employee_private_profiles").select("*"),
     adminClient.from("employee_compensation").select("*").lte("effective_from", today).or(`effective_to.is.null,effective_to.gte.${today}`).order("effective_from", { ascending: false }),
@@ -170,8 +170,12 @@ async function getPeople(adminClient) {
       .not("pdf_path", "is", null)
       .in("payroll_runs.status", ["finalized", "paid"])
       .order("created_at", { ascending: false }),
+    adminClient
+      .from("salary_audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
-  for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult, paystubsResult]) {
+  for (const result of [privateResult, compensationResult, bankResult, entitlementResult, leaveResult, paystubsResult, salaryAuditResult]) {
     if (result.error) throw result.error;
   }
   if (authResult.error) throw authResult.error;
@@ -190,6 +194,11 @@ async function getPeople(adminClient) {
     if (!paystubsById.has(stub.user_id)) paystubsById.set(stub.user_id, []);
     paystubsById.get(stub.user_id).push(stub);
   }
+  const salaryAuditById = new Map();
+  for (const log of salaryAuditResult.data || []) {
+    if (!salaryAuditById.has(log.user_id)) salaryAuditById.set(log.user_id, []);
+    salaryAuditById.get(log.user_id).push(log);
+  }
   const authById = new Map((authResult.data?.users || []).map((row) => [row.id, row]));
   return directory.map((employee) => ({
     ...employee,
@@ -201,6 +210,7 @@ async function getPeople(adminClient) {
     entitlement: entitlementById.get(employee.user_id) || null,
     leave_requests: leaveById.get(employee.user_id) || [],
     paystubs: paystubsById.get(employee.user_id) || [],
+    salary_audit_logs: salaryAuditById.get(employee.user_id) || [],
   }));
 }
 
@@ -533,11 +543,42 @@ export async function POST(request) {
       }
       await assertEmployee(adminClient, targetId);
       const { data: currentCompensation, error: currentError } = await adminClient
-        .from("employee_compensation").select("id, effective_from").eq("user_id", targetId).is("effective_to", null).maybeSingle();
+        .from("employee_compensation").select("*").eq("user_id", targetId).is("effective_to", null).maybeSingle();
       if (currentError) throw currentError;
       if (currentCompensation && currentCompensation.effective_from > effectiveFrom) {
         throwStatus("A new salary term cannot start before the current salary term.");
       }
+
+      const { data: actorDir } = await adminClient
+        .from("employee_directory")
+        .select("first_name, last_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const changedByName = actorDir
+        ? `${actorDir.first_name || ""} ${actorDir.last_name || ""}`.trim() || user.email || "Admin"
+        : user.email || "Admin";
+
+      const auditLogData = {
+        user_id: targetId,
+        changed_by: user.id,
+        changed_by_name: changedByName,
+        changed_by_email: user.email || null,
+        annual_salary: salary,
+        previous_annual_salary: currentCompensation ? Number(currentCompensation.annual_salary) : null,
+        variable_pay: variablePay,
+        previous_variable_pay: currentCompensation ? Number(currentCompensation.variable_pay || 0) : null,
+        variable_pay_frequency: variablePayFrequency,
+        previous_variable_pay_frequency: currentCompensation?.variable_pay_frequency || null,
+        currency,
+        previous_currency: currentCompensation?.currency || null,
+        pay_frequency: frequency,
+        previous_pay_frequency: currentCompensation?.pay_frequency || null,
+        effective_from: effectiveFrom,
+        previous_effective_from: currentCompensation?.effective_from || null,
+        salary_note: salaryNote,
+        change_type: currentCompensation ? "updated" : "initial_created",
+      };
+
       if (currentCompensation?.effective_from === effectiveFrom) {
         const { error: updateError } = await adminClient.from("employee_compensation").update({
           annual_salary: salary,
@@ -548,7 +589,15 @@ export async function POST(request) {
           pay_frequency: frequency,
         }).eq("id", currentCompensation.id);
         if (updateError) throw updateError;
-        await audit(adminClient, user.id, "compensation_updated", "employee_compensation", currentCompensation.id, targetId, { currency, pay_frequency: frequency, variable_pay_frequency: variablePayFrequency, effective_from: effectiveFrom });
+        await adminClient.from("salary_audit_logs").insert(auditLogData);
+        await audit(adminClient, user.id, "compensation_updated", "employee_compensation", currentCompensation.id, targetId, {
+          annual_salary: salary,
+          previous_annual_salary: currentCompensation ? Number(currentCompensation.annual_salary) : null,
+          currency,
+          pay_frequency: frequency,
+          variable_pay_frequency: variablePayFrequency,
+          effective_from: effectiveFrom,
+        });
         return noStore({ ok: true });
       }
       const dayBefore = new Date(`${effectiveFrom}T00:00:00Z`);
@@ -568,7 +617,15 @@ export async function POST(request) {
         created_by: user.id,
       });
       if (error) throw error;
-      await audit(adminClient, user.id, "compensation_updated", "employee_compensation", targetId, targetId, { currency, pay_frequency: frequency, variable_pay_frequency: variablePayFrequency, effective_from: effectiveFrom });
+      await adminClient.from("salary_audit_logs").insert(auditLogData);
+      await audit(adminClient, user.id, "compensation_updated", "employee_compensation", targetId, targetId, {
+        annual_salary: salary,
+        previous_annual_salary: currentCompensation ? Number(currentCompensation.annual_salary) : null,
+        currency,
+        pay_frequency: frequency,
+        variable_pay_frequency: variablePayFrequency,
+        effective_from: effectiveFrom,
+      });
       return noStore({ ok: true });
     }
 

@@ -2429,6 +2429,61 @@ CREATE TABLE IF NOT EXISTS hr_audit_events (
 
 CREATE INDEX IF NOT EXISTS hr_audit_events_created_idx ON hr_audit_events(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS salary_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES employee_directory(user_id) ON DELETE CASCADE,
+    changed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    changed_by_name TEXT,
+    changed_by_email TEXT,
+    annual_salary NUMERIC(14, 2) NOT NULL,
+    previous_annual_salary NUMERIC(14, 2),
+    variable_pay NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    previous_variable_pay NUMERIC(14, 2),
+    variable_pay_frequency TEXT NOT NULL DEFAULT 'monthly',
+    previous_variable_pay_frequency TEXT,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    previous_currency TEXT,
+    pay_frequency TEXT NOT NULL,
+    previous_pay_frequency TEXT,
+    effective_from DATE NOT NULL,
+    previous_effective_from DATE,
+    salary_note TEXT,
+    change_type TEXT NOT NULL DEFAULT 'updated',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS salary_audit_logs_user_idx ON salary_audit_logs(user_id, created_at DESC);
+
+INSERT INTO salary_audit_logs (
+    user_id,
+    changed_by,
+    annual_salary,
+    variable_pay,
+    variable_pay_frequency,
+    currency,
+    pay_frequency,
+    effective_from,
+    salary_note,
+    change_type,
+    created_at
+)
+SELECT
+    ec.user_id,
+    ec.created_by,
+    ec.annual_salary,
+    ec.variable_pay,
+    ec.variable_pay_frequency,
+    ec.currency,
+    ec.pay_frequency,
+    ec.effective_from,
+    ec.salary_note,
+    'initial_created',
+    ec.created_at
+FROM employee_compensation ec
+WHERE NOT EXISTS (
+    SELECT 1 FROM salary_audit_logs sal WHERE sal.user_id = ec.user_id
+);
+
 CREATE OR REPLACE FUNCTION public.ensure_employee_profile()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -2489,6 +2544,7 @@ ALTER TABLE payroll_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employee_paystubs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE paystub_line_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hr_audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE salary_audit_logs ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
@@ -2535,12 +2591,16 @@ BEGIN
     DROP POLICY IF EXISTS hr_audit_events_owner_read ON hr_audit_events;
     CREATE POLICY hr_audit_events_owner_read ON hr_audit_events FOR SELECT
         USING (public.current_user_is_owner());
+
+    DROP POLICY IF EXISTS salary_audit_logs_owner_read ON salary_audit_logs;
+    CREATE POLICY salary_audit_logs_owner_read ON salary_audit_logs FOR SELECT
+        USING (public.current_user_is_owner());
 END;
 $$;
 
 GRANT SELECT ON employee_directory, employee_private_profiles, employee_compensation,
     leave_entitlements, leave_requests, employee_notifications, payroll_runs,
-    employee_paystubs, paystub_line_items, hr_audit_events TO authenticated;
+    employee_paystubs, paystub_line_items, hr_audit_events, salary_audit_logs TO authenticated;
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('paystubs', 'paystubs', FALSE, 5242880, ARRAY['application/pdf'])

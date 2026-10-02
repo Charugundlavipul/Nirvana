@@ -189,6 +189,117 @@ if(edit.employmentStatus!==(selected.private_profile?.employment_status||'active
         <section className={`${styles.card} ${styles.half}`}><h3>{new Date().getFullYear()} leave allowance</h3><div className={styles.formGrid}><div className={styles.field}><label>Paid days</label><input type="number" min="0" step="0.5" className={styles.input} value={allowance.allowanceDays} onChange={(e)=>setAllowance({...allowance,allowanceDays:e.target.value})}/></div><div className={styles.field}><label>Override reason, if reducing below committed</label><input className={styles.input} value={allowance.overrideReason} onChange={(e)=>setAllowance({...allowance,overrideReason:e.target.value})}/></div></div><div className={styles.actions}><button className={styles.button} disabled={busy} onClick={()=>perform(()=>hrAction('set_entitlement',{userId:selected.user_id,year:new Date().getFullYear(),...allowance}),'Leave allowance saved.')}>Save allowance</button></div></section>
         <section className={`${styles.card} ${styles.full}`}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Salary update audit trail</h3>
+              <p className={styles.muted} style={{ margin: '2px 0 0' }}>
+                Immutable historical record of every salary and compensation change for {selected.first_name || 'this employee'} (Admin only).
+              </p>
+            </div>
+            {(selected.salary_audit_logs || []).length > 0 && (
+              <span className={styles.badge} style={{ fontSize: 12, padding: '4px 10px', background: '#e0e7ff', color: '#3730a3' }}>
+                {(selected.salary_audit_logs || []).length} update(s)
+              </span>
+            )}
+          </div>
+
+          {(selected.salary_audit_logs || []).length > 0 ? (
+            <div className={styles.list} style={{ gap: 12 }}>
+              {(selected.salary_audit_logs || []).map((log, idx) => {
+                const formattedDate = new Date(log.created_at).toLocaleString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+                const isInitial = log.change_type === 'initial_created' || log.previous_annual_salary == null;
+                const salaryDiff = !isInitial && log.previous_annual_salary != null
+                  ? Number(log.annual_salary) - Number(log.previous_annual_salary)
+                  : 0;
+
+                return (
+                  <div className={styles.row} key={log.id || idx} style={{ alignItems: 'flex-start', padding: 14 }}>
+                    <div className={styles.rowMain} style={{ gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <strong style={{ fontSize: 14 }}>
+                            {formatSalaryAmount(log.annual_salary, log.currency)} / yr
+                          </strong>
+                          <span style={{ fontSize: 13, color: '#64748b' }}>
+                            ({formatSalaryAmount(regularPayForSalary(log.annual_salary, 'monthly'), log.currency)} / mo)
+                          </span>
+                          {!isInitial && salaryDiff !== 0 && (
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: salaryDiff > 0 ? '#166534' : '#991b1b',
+                              background: salaryDiff > 0 ? '#dcfce7' : '#fee2e2',
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                            }}>
+                              {salaryDiff > 0 ? `+${formatSalaryAmount(salaryDiff, log.currency)}` : `-${formatSalaryAmount(Math.abs(salaryDiff), log.currency)}`}
+                            </span>
+                          )}
+                          {isInitial && (
+                            <span className={styles.badge} style={{ fontSize: 10, background: '#f1f5f9', color: '#475569' }}>
+                              Initial term
+                            </span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+                          {formattedDate}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, color: '#475569', marginTop: 4 }}>
+                        <div>
+                          <span style={{ color: '#94a3b8' }}>Variable pay: </span>
+                          <strong>
+                            {Number(log.variable_pay || 0) > 0
+                              ? `${formatSalaryAmount(log.variable_pay, log.currency)} (${log.variable_pay_frequency || 'monthly'})`
+                              : 'None'}
+                          </strong>
+                          {!isInitial && log.previous_variable_pay != null && Number(log.previous_variable_pay) !== Number(log.variable_pay || 0) && (
+                            <span style={{ color: '#94a3b8', marginLeft: 4 }}>
+                              (was {formatSalaryAmount(log.previous_variable_pay, log.previous_currency || log.currency)})
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <span style={{ color: '#94a3b8' }}>Effective from: </span>
+                          <strong>{log.effective_from}</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#94a3b8' }}>Pay frequency: </span>
+                          <span style={{ textTransform: 'capitalize' }}>{log.pay_frequency}</span>
+                        </div>
+                        <div>
+                          <span style={{ color: '#94a3b8' }}>Updated by: </span>
+                          <strong>{log.changed_by_name || log.changed_by_email || 'Superadmin'}</strong>
+                          {log.changed_by_email && log.changed_by_name && log.changed_by_name !== log.changed_by_email && (
+                            <span style={{ color: '#94a3b8' }}> ({log.changed_by_email})</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {log.salary_note && (
+                        <div style={{ marginTop: 4, fontSize: 12, color: '#334155', fontStyle: 'italic', background: '#f8fafc', padding: '6px 10px', borderRadius: 6, borderLeft: '3px solid #cbd5e1' }}>
+                          Note: "{log.salary_note}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              No salary update history recorded yet. Future changes to this employee's salary will be automatically logged here.
+            </div>
+          )}
+        </section>
+        <section className={`${styles.card} ${styles.full}`}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 style={{ margin: 0 }}>Bank account (Indian Banking)</h3>
             {selected.bank && (
               <button

@@ -248,5 +248,29 @@ test("people manager displays pay statements cards for selected employee", async
   assert.match(peopleFile, /selected\.paystubs/);
 });
 
+test("salary update audit trail is preserved in schema, logged on changes, and visible only to admin", async () => {
+  const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS salary_audit_logs/);
+  assert.match(schema, /previous_annual_salary NUMERIC/);
+  assert.match(schema, /previous_variable_pay NUMERIC/);
+  assert.match(schema, /salary_audit_logs_owner_read ON salary_audit_logs/);
+  assert.match(schema, /GRANT SELECT ON[\s\S]*salary_audit_logs TO authenticated/);
+
+  const route = await readFile(new URL("../app/api/admin/hr/route.js", import.meta.url), "utf8");
+  assert.match(route, /from\("salary_audit_logs"\)/);
+  assert.match(route, /salary_audit_logs: salaryAuditById\.get\(employee\.user_id\)/);
+
+  // Ensure employee getSummary function body does not query salary_audit_logs
+  const getSummaryBlock = route.slice(route.indexOf("async function getSummary"), route.indexOf("async function getPeople"));
+  assert.doesNotMatch(getSummaryBlock, /salary_audit_logs/);
+
+  const peopleFile = await readFile(new URL("../src/components/Admin/HR/PeopleManager.jsx", import.meta.url), "utf8");
+  assert.match(peopleFile, /Salary update audit trail/);
+  assert.match(peopleFile, /selected\.salary_audit_logs/);
+  assert.match(peopleFile, /Immutable historical record of every salary and compensation change/);
+  assert.match(peopleFile, /Updated by:/);
+});
+
+
 
 
