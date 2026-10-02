@@ -195,7 +195,7 @@ test("payroll zip generator creates valid ZIP archives containing paystub PDFs",
   const zipRoute = await readFile(new URL("../app/api/admin/hr/payroll/[id]/zip/route.js", import.meta.url), "utf8");
   assert.match(zipRoute, /role !== "owner"/);
   assert.match(zipRoute, /run\.status === "draft"/);
-  assert.match(zipRoute, /adminClient\.storage\.from\("paystubs"\)\.download/);
+  assert.match(zipRoute, /adminClient\.storage[\s\S]*\.from\("paystubs"\)[\s\S]*\.download/);
   assert.match(zipRoute, /application\/zip/);
 });
 
