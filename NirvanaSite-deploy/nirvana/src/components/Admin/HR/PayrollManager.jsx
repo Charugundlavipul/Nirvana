@@ -306,42 +306,164 @@ export default function PayrollManager() {
         <section className={`${styles.card} ${styles.full}`}>
           <h2>Payroll history</h2>
           <div className={styles.list}>
-            {data.runs.map((historyRun) => (
-              <div className={styles.row} key={historyRun.id}>
-                <div className={styles.rowMain}>
-                  <strong>Pay date {historyRun.pay_date}</strong>
-                  <span>{historyRun.period_start} – {historyRun.period_end} · {data.paystubs.filter((paystub) => paystub.payroll_run_id === historyRun.id).length} employee(s)</span>
-                </div>
-                <div className={styles.actions} style={{ margin: 0, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                  {["finalized", "paid"].includes(historyRun.status) && (
-                    <>
-                      <button
-                        type="button"
-                        className={`${styles.button} ${styles.secondary}`}
-                        style={{ padding: "6px 12px", fontSize: 12 }}
-                        disabled={busy || downloadingZip}
-                        onClick={() => handleDownloadZip(historyRun)}
-                        title="Download all paystubs (.zip)"
+            {data.runs.map((historyRun) => {
+              const isPublished = ["finalized", "paid"].includes(historyRun.status);
+              const runStubsList = data.paystubs.filter((paystub) => paystub.payroll_run_id === historyRun.id);
+              const totalGross = runStubsList.reduce((sum, s) => sum + Number(s.gross_pay || 0), 0);
+              const totalTaxes = runStubsList.reduce((sum, s) => sum + Number(s.employee_taxes || 0), 0);
+              const totalDeductions = runStubsList.reduce((sum, s) => sum + Number(s.deductions || 0), 0);
+              const totalNet = runStubsList.reduce((sum, s) => sum + Number(s.net_pay || 0), 0);
+
+              if (isPublished) {
+                return (
+                  <details className={styles.payrollEmployee} key={historyRun.id} style={{ marginBottom: 12 }}>
+                    <summary style={{ cursor: "pointer" }}>
+                      <div className={styles.payrollEmployeeName}>
+                        <strong>Pay date {historyRun.pay_date}</strong>
+                        <span>
+                          {historyRun.period_start} – {historyRun.period_end} · {runStubsList.length} employee(s) · Net total: {formatSalaryAmount(totalNet, historyRun.currency)}
+                        </span>
+                      </div>
+                      <div
+                        className={styles.actions}
+                        style={{ margin: 0, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}
+                        onClick={(event) => event.stopPropagation()}
                       >
-                        Download .zip
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.button} ${styles.secondary}`}
-                        style={{ padding: "6px 12px", fontSize: 12 }}
-                        disabled={busy || downloadingCsv}
-                        onClick={() => handleDownloadCsv(historyRun)}
-                        title="Export employee names, total monthly salaries, and bank details (.csv)"
-                      >
-                        Export .csv
-                      </button>
-                    </>
-                  )}
-                  <span className={`${styles.badge} ${historyRun.status === "void" ? styles.badgeDanger : ""}`}>{historyRun.status}</span>
-                  <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(historyRun)}>{historyRun.status === "draft" ? "Delete draft" : "Delete run"}</button>
+                        <button
+                          type="button"
+                          className={`${styles.button} ${styles.secondary}`}
+                          style={{ padding: "6px 12px", fontSize: 12 }}
+                          disabled={busy || downloadingZip}
+                          onClick={() => handleDownloadZip(historyRun)}
+                          title="Download all paystubs (.zip)"
+                        >
+                          Download .zip
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.button} ${styles.secondary}`}
+                          style={{ padding: "6px 12px", fontSize: 12 }}
+                          disabled={busy || downloadingCsv}
+                          onClick={() => handleDownloadCsv(historyRun)}
+                          title="Export employee names, total monthly salaries, and bank details (.csv)"
+                        >
+                          Export .csv
+                        </button>
+                        <span className={styles.badge}>{historyRun.status}</span>
+                        <button
+                          className={`${styles.button} ${styles.danger}`}
+                          disabled={busy}
+                          onClick={() => deleteRun(historyRun)}
+                        >
+                          Delete run
+                        </button>
+                      </div>
+                    </summary>
+                    <div className={styles.payrollEmployeeBody}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid #e7ece8" }}>
+                        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13 }}>
+                          <div><span style={{ color: "#64748b" }}>Gross:</span> <strong>{formatSalaryAmount(totalGross, historyRun.currency)}</strong></div>
+                          <div><span style={{ color: "#64748b" }}>Taxes:</span> <strong>{formatSalaryAmount(totalTaxes, historyRun.currency)}</strong></div>
+                          <div><span style={{ color: "#64748b" }}>Deductions:</span> <strong>{formatSalaryAmount(totalDeductions, historyRun.currency)}</strong></div>
+                          <div><span style={{ color: "#64748b" }}>Net Total:</span> <strong style={{ color: "#166534" }}>{formatSalaryAmount(totalNet, historyRun.currency)}</strong></div>
+                        </div>
+                        <button
+                          type="button"
+                          className={`${styles.button} ${styles.secondary}`}
+                          style={{ padding: "5px 12px", fontSize: 12 }}
+                          onClick={() => {
+                            setRunId(historyRun.id);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                        >
+                          Open in workspace ↑
+                        </button>
+                      </div>
+
+                      {runStubsList.length ? (
+                        <div className={styles.balanceTableWrapper}>
+                          <table className={styles.balanceTable}>
+                            <thead>
+                              <tr>
+                                <th>Employee</th>
+                                <th>Paystub #</th>
+                                <th>Gross</th>
+                                <th>Taxes & Deductions</th>
+                                <th>Net Pay</th>
+                                <th style={{ textAlign: "right" }}>Paystub</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {runStubsList.map((stub) => (
+                                <tr key={stub.id}>
+                                  <td>
+                                    <strong>{stub.employee_name_snapshot || "Employee"}</strong>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontSize: 12, color: "#64748b" }}>{stub.paystub_number || "—"}</span>
+                                  </td>
+                                  <td>{formatSalaryAmount(stub.gross_pay, historyRun.currency)}</td>
+                                  <td>
+                                    <span style={{ color: "#dc2626", fontSize: 12 }}>
+                                      -{formatSalaryAmount(Number(stub.employee_taxes || 0) + Number(stub.deductions || 0), historyRun.currency)}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <strong style={{ color: "#166534", fontSize: 14 }}>
+                                      {formatSalaryAmount(stub.net_pay, historyRun.currency)}
+                                    </strong>
+                                  </td>
+                                  <td style={{ textAlign: "right" }}>
+                                    {stub.pdf_path ? (
+                                      <button
+                                        type="button"
+                                        className={`${styles.button} ${styles.secondary}`}
+                                        style={{ padding: "4px 10px", fontSize: 11 }}
+                                        onClick={() => downloadPaystub(stub)}
+                                      >
+                                        Download PDF
+                                      </button>
+                                    ) : (
+                                      <span style={{ fontSize: 11, color: "#94a3b8" }}>No PDF</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className={styles.empty}>No employee paystubs found for this run.</div>
+                      )}
+                    </div>
+                  </details>
+                );
+              }
+
+              return (
+                <div className={styles.row} key={historyRun.id} style={{ marginBottom: 10 }}>
+                  <div className={styles.rowMain}>
+                    <strong>Pay date {historyRun.pay_date}</strong>
+                    <span>{historyRun.period_start} – {historyRun.period_end} · {runStubsList.length} employee(s)</span>
+                  </div>
+                  <div className={styles.actions} style={{ margin: 0, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      className={`${styles.button} ${styles.secondary}`}
+                      style={{ padding: "6px 12px", fontSize: 12 }}
+                      onClick={() => {
+                        setRunId(historyRun.id);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      Edit in workspace
+                    </button>
+                    <span className={`${styles.badge} ${historyRun.status === "void" ? styles.badgeDanger : ""}`}>{historyRun.status}</span>
+                    <button className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={() => deleteRun(historyRun)}>{historyRun.status === "draft" ? "Delete draft" : "Delete run"}</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {!data.runs.length && <div className={styles.empty}>No payroll runs yet.</div>}
           </div>
         </section>
