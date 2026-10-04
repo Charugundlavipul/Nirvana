@@ -240,7 +240,7 @@ function PropertyInquiryForm() {
 
     if (missingConfig) {
       setStatus({
-        message: "Online inquiries are temporarily unavailable. Please call or email our owner team.",
+        message: "Online inquiries are temporarily unavailable. Please call or email our sales team.",
         tone: "error",
       });
       return;
@@ -284,7 +284,7 @@ function PropertyInquiryForm() {
 
       form.reset();
       setStatus({
-        message: `Thank you, ${name}. Your property details have been sent to our owner team.`,
+        message: `Thank you, ${name}. Your property details have been sent to our sales team.`,
         tone: "success",
       });
     } catch (error) {
@@ -731,8 +731,8 @@ export default function PropertyManagementPage() {
                     <Icon name="phone" className="h-5 w-5 text-[#b8c9ad]" />
                     (704) 780-1368
                   </a>
-                  <a href="mailto:reservations@vkr-ventures.com" className="break-all font-bold text-stone-200 hover:text-white">
-                    reservations@vkr-ventures.com
+                  <a href="mailto:sales@vkr-ventures.com" className="break-all font-bold text-stone-200 hover:text-white">
+                    sales@vkr-ventures.com
                   </a>
                 </div>
               </div>
@@ -749,7 +749,7 @@ export default function PropertyManagementPage() {
         <div className="mx-auto flex max-w-lg gap-2">
           <a href="tel:+17047801368" className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-stone-200 px-4 py-3 text-xs font-bold text-stone-800">
             <Icon name="phone" className="h-4 w-4 text-[#607054]" />
-            Call owner team
+            Call sales team
           </a>
           <a href="#owner-consultation" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#233329] px-4 py-3 text-xs font-bold text-white">
             Management plan
