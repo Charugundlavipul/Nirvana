@@ -6,6 +6,10 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { PROPERTY_MANAGEMENT_FAQS } from "./propertyManagementContent";
 
+const FAQ_MIDPOINT = Math.ceil(PROPERTY_MANAGEMENT_FAQS.length / 2);
+const FAQ_COL_1 = PROPERTY_MANAGEMENT_FAQS.slice(0, FAQ_MIDPOINT);
+const FAQ_COL_2 = PROPERTY_MANAGEMENT_FAQS.slice(FAQ_MIDPOINT);
+
 const emailJsConfig = {
   serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID ?? "",
   contactTemplateId: process.env.NEXT_PUBLIC_EMAILJS_CONTACT_TEMPLATE_ID ?? "",
@@ -103,24 +107,24 @@ const MARKETS = [
 
 const LOCAL_MARKETS = [
   {
-    title: "Sevierville vacation rental management",
-    text: "For mountain-view cabins, indoor-pool homes, and large-group lodges, we focus on amenity presentation, guest-ready operations, and pricing around the property's specific Sevierville setting.",
+    title: "Sevierville vacation rentals",
+    text: "Operations tailored to private indoor pools, mountain views, and large-group lodges.",
   },
   {
-    title: "Pigeon Forge cabin management",
-    text: "Pigeon Forge demand is shaped by family travel, attractions, event weekends, and group stays. Listings and stay rules should reflect how those guests search, book, and use the home.",
+    title: "Pigeon Forge cabin care",
+    text: "Positioned for family travelers, Parkway attractions, and peak event-weekend demand.",
   },
   {
-    title: "Gatlinburg property management",
-    text: "Park access, downtown proximity, views, parking, and road access all influence a Gatlinburg cabin's guest fit. We turn those practical details into clearer marketing and smoother arrivals.",
+    title: "Gatlinburg property care",
+    text: "Optimized for national park access, mountain ridge views, and smooth guest arrivals.",
   },
   {
-    title: "Wears Valley cabin management",
-    text: "Privacy and a quieter mountain setting are part of the appeal. Accurate directions, seasonal preparation, outdoor amenities, and realistic guest expectations matter here.",
+    title: "Wears Valley cabin care",
+    text: "Dedicated care for quiet mountain settings, seasonal road access, and peaceful stays.",
   },
   {
-    title: "Lake Norman Airbnb management",
-    text: "Waterfront homes need a different playbook: dock and lake information, boating-season demand, outdoor-space presentation, and operational care designed around the shoreline setting.",
+    title: "Lake Norman Airbnb care",
+    text: "Specialized operations covering private docks, boating seasons, and shoreline living.",
   },
 ];
 
@@ -574,25 +578,42 @@ export default function PropertyManagementPage() {
           </div>
 
           <div className="mt-16 rounded-[2rem] border border-stone-200 bg-white p-7 shadow-[0_18px_50px_rgba(60,65,55,0.06)] sm:p-10">
-            <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#607054]">Smokies and lake service areas</p>
-                <h2 className="mt-4 text-3xl font-bold leading-[1.15] tracking-normal text-[#1f2c24]">
-                  Local property management should reflect the destination.
-                </h2>
-                <p className="mt-4 text-sm leading-7 text-stone-600">
-                  Search demand, guest expectations, access, amenities, and seasonality change from one community to the next. We build the operating plan around those differences.
-                </p>
+            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14 items-center">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#607054]">Smokies and lake service areas</p>
+                  <h2 className="mt-4 text-3xl font-bold leading-[1.15] tracking-normal text-[#1f2c24]">
+                    Local property management should reflect the destination.
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-stone-600">
+                    Search demand, guest expectations, access, amenities, and seasonality change across communities. We shape the operating plan around those differences.
+                  </p>
+                </div>
+
+                <div className="relative mt-6 aspect-[16/10] overflow-hidden rounded-2xl bg-stone-200 shadow-md">
+                  <Image
+                    src="/assets/pm-cabin-hero.jpg"
+                    alt="Luxury mountain cabin overlooking the Great Smoky Mountains at dusk"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover transition duration-700 hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs text-white">
+                    <span className="font-semibold drop-shadow">Smoky Mountains &amp; Lake Norman</span>
+                    <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-medium backdrop-blur">Local Care</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+              <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
                 {LOCAL_MARKETS.map((market, index) => (
                   <article key={market.title} className={index === LOCAL_MARKETS.length - 1 ? "sm:col-span-2" : ""}>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold text-[#91a086]">{String(index + 1).padStart(2, "0")}</span>
                       <h3 className="text-base font-extrabold text-[#233329]">{market.title}</h3>
                     </div>
-                    <p className="mt-2 border-l border-[#d7dfd0] pl-8 text-sm leading-6 text-stone-600">{market.text}</p>
+                    <p className="mt-1.5 border-l border-[#d7dfd0] pl-8 text-sm leading-6 text-stone-600">{market.text}</p>
                   </article>
                 ))}
               </div>
@@ -669,8 +690,8 @@ export default function PropertyManagementPage() {
       </section>
 
       <section className="bg-white py-20 md:py-28">
-        <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.62fr_1fr] lg:gap-20 lg:px-10">
-          <div>
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="mb-12 max-w-3xl sm:mb-16">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#607054]">Owner questions</p>
             <h2 className="mt-4 text-3xl font-bold leading-[1.15] tracking-normal text-[#1f2c24] sm:text-4xl">
               Vacation rental management FAQs.
@@ -680,34 +701,72 @@ export default function PropertyManagementPage() {
             </p>
           </div>
 
-          <div className="divide-y divide-stone-200 border-y border-stone-200">
-            {PROPERTY_MANAGEMENT_FAQS.map((faq, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <div key={faq.question}>
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls={`property-management-faq-${index}`}
-                    onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-6 py-6 text-left"
-                  >
-                    <span className="text-base font-extrabold text-[#233329] sm:text-lg">{faq.question}</span>
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#edf1e9] text-[#526247] transition ${isOpen ? "rotate-180" : ""}`}>
-                      <Icon name="chevron" className="h-4 w-4" />
-                    </span>
-                  </button>
-                  <div
-                    id={`property-management-faq-${index}`}
-                    className={`grid transition-[grid-template-rows] duration-300 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-                  >
-                    <div className="overflow-hidden">
-                      <p className="max-w-2xl pb-6 pr-10 text-sm leading-7 text-stone-600">{faq.answer}</p>
+          <div className="grid gap-x-12 lg:gap-x-16 md:grid-cols-2 items-start">
+            <div className="divide-y divide-stone-200 border-y border-stone-200">
+              {FAQ_COL_1.map((faq, idx) => {
+                const index = idx;
+                const isOpen = openFaq === index;
+                return (
+                  <div key={faq.question}>
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-controls={`property-management-faq-${index}`}
+                      onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                      className="group flex w-full items-center justify-between gap-6 py-6 text-left"
+                    >
+                      <span className="text-base font-extrabold text-[#233329] transition group-hover:text-[#40513a] sm:text-lg">
+                        {faq.question}
+                      </span>
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#edf1e9] text-[#526247] transition group-hover:bg-[#dfe8d6] ${isOpen ? "rotate-180" : ""}`}>
+                        <Icon name="chevron" className="h-4 w-4" />
+                      </span>
+                    </button>
+                    <div
+                      id={`property-management-faq-${index}`}
+                      className={`grid transition-[grid-template-rows] duration-300 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                    >
+                      <div className="overflow-hidden">
+                        <p className="pb-6 pr-6 text-sm leading-7 text-stone-600 sm:pr-8">{faq.answer}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            <div className="divide-y divide-stone-200 border-b border-stone-200 md:border-t">
+              {FAQ_COL_2.map((faq, idx) => {
+                const index = FAQ_MIDPOINT + idx;
+                const isOpen = openFaq === index;
+                return (
+                  <div key={faq.question}>
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-controls={`property-management-faq-${index}`}
+                      onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                      className="group flex w-full items-center justify-between gap-6 py-6 text-left"
+                    >
+                      <span className="text-base font-extrabold text-[#233329] transition group-hover:text-[#40513a] sm:text-lg">
+                        {faq.question}
+                      </span>
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#edf1e9] text-[#526247] transition group-hover:bg-[#dfe8d6] ${isOpen ? "rotate-180" : ""}`}>
+                        <Icon name="chevron" className="h-4 w-4" />
+                      </span>
+                    </button>
+                    <div
+                      id={`property-management-faq-${index}`}
+                      className={`grid transition-[grid-template-rows] duration-300 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                    >
+                      <div className="overflow-hidden">
+                        <p className="pb-6 pr-6 text-sm leading-7 text-stone-600 sm:pr-8">{faq.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
