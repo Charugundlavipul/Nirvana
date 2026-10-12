@@ -229,7 +229,7 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     className="absolute inset-0 z-10 flex flex-col items-center justify-start px-4 pb-10 text-center text-white sm:px-6 sm:pb-12 md:justify-center"
                     style={{ paddingTop: 'var(--site-header-height)' }}
                 >
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-rose-950/40 border border-white/25 backdrop-blur-md">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#233329] via-[#3d5a3e] to-[#60BD68] px-4 py-1.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#233329]/40 border border-white/25 backdrop-blur-md">
                         <span className="text-sm">🏷️</span>
                         <span>Direct Booking Special: Flat 30% OFF Applied</span>
                     </div>

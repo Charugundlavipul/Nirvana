@@ -183,7 +183,7 @@ const Booking = ({ initialProperties = [], initialSlug = null }) => {
                         </h3>
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-gray-500 uppercase tracking-wider">{property.location}</p>
-                          <span className="bg-gradient-to-r from-red-600 to-amber-500 text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full shadow-xs">
+                          <span className="bg-gradient-to-r from-[#233329] to-[#60BD68] text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full shadow-xs">
                             30% OFF
                           </span>
                         </div>

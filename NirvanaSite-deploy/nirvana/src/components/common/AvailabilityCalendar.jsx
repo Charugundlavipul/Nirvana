@@ -488,7 +488,7 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                         <h3 className="text-2xl text-slate-800 font-sans font-semibold tracking-tight">Select Dates</h3>
                         <p className="text-sm text-slate-400 mt-1">Greyed out dates are not available</p>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-rose-950/20 border border-white/20">
+                    <div className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-gradient-to-r from-[#233329] via-[#3d5a3e] to-[#60BD68] px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-[#233329]/20 border border-white/20">
                         <span className="text-sm">🏷️</span>
                         <span>Flat 30% OFF Stays</span>
                     </div>
@@ -608,9 +608,9 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                     
                     {/* Total Nightly Rate of All Nights Highlight Banner */}
                     {quote && subTotalDollars > 0 ? (
-                      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-orange-50/70 border border-rose-200/80 shadow-xs animate-in fade-in duration-300">
+                      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-green-50/50 to-emerald-50/70 border border-emerald-200/80 shadow-xs animate-in fade-in duration-300">
                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#40513a] flex items-center gap-1.5">
                             <span className="text-sm">🏷️</span> TOTAL NIGHTLY RATE ({nightsCount} {nightsCount === 1 ? 'NIGHT' : 'NIGHTS'})
                           </span>
                         </div>
@@ -628,12 +628,12 @@ const AvailabilityCalendar = ({ propertyId, maxGuests = 12, checkInTime = '4:00 
                         </p>
                       </div>
                     ) : (
-                      <div className="mb-6 p-3.5 rounded-2xl bg-gradient-to-br from-rose-50/80 via-amber-50/40 to-rose-50/80 border border-rose-200/70 shadow-xs">
+                      <div className="mb-6 p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 via-green-50/40 to-emerald-50/80 border border-emerald-200/70 shadow-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#40513a] flex items-center gap-1.5">
                             <span className="text-sm">🏷️</span> Direct Booking Special
                           </span>
-                          <span className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs tracking-wider">
+                          <span className="bg-gradient-to-r from-[#233329] via-[#3d5a3e] to-[#60BD68] text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs tracking-wider">
                             Flat 30% OFF
                           </span>
                         </div>

@@ -566,7 +566,7 @@ const SignatureCard = ({ title, location, images, currentIndex, onPrev, onNext, 
         )}
 
         {/* Floating Flat 30% OFF Banner */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-md shadow-rose-950/25 border border-white/30 backdrop-blur-md">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#233329] via-[#3d5a3e] to-[#60BD68] px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-md shadow-[#233329]/25 border border-white/30 backdrop-blur-md">
           <span className="text-xs">🏷️</span>
           <span>FLAT 30% OFF</span>
         </div>
