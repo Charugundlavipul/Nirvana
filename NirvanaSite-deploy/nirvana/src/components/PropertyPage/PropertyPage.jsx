@@ -12,7 +12,6 @@ import InlineActivities from './InlineActivities';
 import ContactForm from '../Contact/ContactForm';
 import HospitableWidget from '../common/HospitableWidget';
 import { getBathroomSummary, normalizeBathroomCounts } from '../../lib/bathrooms';
-import CarouselNavigation from '../common/CarouselNavigation';
 
 const LIGHTBOX_PRELOAD_RADIUS = 5;
 
@@ -21,12 +20,9 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
     const [lightboxType, setLightboxType] = useState('');
     const [lightboxImages, setLightboxImages] = useState([]);
     const heroRef = useRef(null);
-    const mobileGalleryRef = useRef(null);
+    const introGalleryRef = useRef(null);
     const lightboxPreloadCacheRef = useRef(new Map());
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isMobile, setIsMobile] = useState(false);
-    const [visibleCount, setVisibleCount] = useState(10);
-    const [mobileGalleryIndex, setMobileGalleryIndex] = useState(0);
 
     const property = initialBundle?.property || null;
     const galleryImages = initialBundle?.galleryImages || [];
@@ -45,30 +41,9 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
     }, []);
 
     useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    useEffect(() => {
         window.scrollTo(0, 0);
         setCurrentIndex(0);
-        setVisibleCount(10);
-        setMobileGalleryIndex(0);
     }, [slug]);
-
-    useEffect(() => {
-        if (galleryImages.length > 0 && visibleCount < galleryImages.length) {
-            const timer = setTimeout(() => {
-                setVisibleCount((prev) => Math.min(prev + 10, galleryImages.length));
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [visibleCount, galleryImages.length]);
 
     const sliderImages = galleryImages;
 
@@ -97,29 +72,17 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
         });
     };
 
-    const updateMobileGalleryIndex = () => {
-        const track = mobileGalleryRef.current;
+    const updateIntroGalleryIndex = () => {
+        const track = introGalleryRef.current;
         const firstCard = track?.firstElementChild;
         if (!track || !firstCard) return;
-        const step = firstCard.getBoundingClientRect().width + 16;
-        setMobileGalleryIndex(Math.min(Math.round(track.scrollLeft / step), Math.max(sliderImages.length - 1, 0)));
+        const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+        const step = firstCard.getBoundingClientRect().width + gap;
+        setCurrentIndex(Math.min(
+            Math.round(track.scrollLeft / step),
+            Math.max(track.children.length - 1, 0)
+        ));
     };
-
-    const moveMobileGallery = (direction) => {
-        if (!sliderImages.length) return;
-        const nextIndex = (mobileGalleryIndex + direction + sliderImages.length) % sliderImages.length;
-        setVisibleCount((previous) => Math.max(previous, nextIndex + 1));
-        setMobileGalleryIndex(nextIndex);
-        window.requestAnimationFrame(() => {
-            const track = mobileGalleryRef.current;
-            const firstCard = track?.firstElementChild;
-            if (!track || !firstCard) return;
-            const step = firstCard.getBoundingClientRect().width + 16;
-            track.scrollTo({ left: nextIndex * step, behavior: 'smooth' });
-        });
-    };
-
-    // Carousel logic removed for modern gallery grid style
 
     // Manage body scroll lock
     useEffect(() => {
@@ -364,7 +327,35 @@ const PropertyPage = ({ slug, initialBundle = null, initialReviews = [], initial
                     </div>
 
                     <div className="order-1 w-full min-w-0 lg:order-2">
-                        <div className="rounded-[2rem] border border-white/80 bg-white/70 p-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] backdrop-blur-sm sm:p-3">
+                        <div
+                            ref={introGalleryRef}
+                            onScroll={updateIntroGalleryIndex}
+                            className="-mr-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pr-5 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden md:hidden"
+                            aria-label="Property photos"
+                        >
+                            {introGalleryImages.map((image, index) => (
+                                <button
+                                    type="button"
+                                    key={image}
+                                    onClick={() => openLightbox(image, '', introGalleryImages)}
+                                    className="relative block aspect-[4/3] w-[88%] flex-none snap-start overflow-hidden rounded-[1.35rem] bg-slate-200 text-left shadow-[0_16px_40px_rgba(15,23,42,0.14)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                                    aria-label={`Open photo ${index + 1} of ${introGalleryImages.length} in full screen`}
+                                >
+                                    <img
+                                        src={image}
+                                        alt={`${property.name} photo ${index + 1} - luxury vacation rental in ${property.location || 'Smoky Mountains'}`}
+                                        loading={index === 0 ? 'eager' : 'lazy'}
+                                        decoding="async"
+                                        className="h-full w-full object-cover"
+                                    />
+                                    <span className="absolute bottom-4 right-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-slate-950 shadow-md backdrop-blur-sm">
+                                        {index + 1} / {introGalleryImages.length}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="hidden rounded-[2rem] border border-white/80 bg-white/70 p-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] backdrop-blur-sm md:block sm:p-3">
                             <div className="group relative overflow-hidden rounded-[1.45rem] bg-slate-200">
                                 <button
                                     type="button"
