@@ -73,6 +73,8 @@
 .taskActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .historyDetails { margin-top: 14px; border-top: 1px solid #eef2f7; padding-top: 12px; }
 .historyDetails summary { cursor: pointer; color: #424334; font-size: 13px; font-weight: 800; }
+.historySummaryLabel { display: inline-flex; align-items: center; gap: 7px; }
+.historySummaryLabel svg { flex: 0 0 auto; }
 .timeline { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
 .timelineItem { padding: 11px 12px; border-left: 3px solid #94a3b8; background: #f8fafc; border-radius: 0 10px 10px 0; }
 .completionHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
