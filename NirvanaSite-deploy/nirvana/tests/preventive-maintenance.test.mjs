@@ -34,6 +34,7 @@ test("team selections are deduplicated and restricted to configured choices", ()
 test("schema preserves completion, undo, due adjustment, attachments, and team history", async () => {
   const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
   assert.match(schema, /CREATE TABLE IF NOT EXISTS preventive_maintenance_catalog/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS preventive_maintenance_exclusions/);
   assert.match(schema, /CREATE TABLE IF NOT EXISTS preventive_maintenance_schedules/);
   assert.match(schema, /due_on_snapshot DATE NOT NULL/);
   assert.match(schema, /undo_reason TEXT/);
@@ -58,4 +59,17 @@ test("maintenance API enforces notes for completion, undo, and due-date updates"
   assert.match(route, /A reason is required when changing a due date/);
   assert.match(route, /current_due_on: completion\.due_on_snapshot/);
   assert.match(route, /completed_by_name/);
+});
+
+test("catalog properties can be excluded and restored without deleting maintenance history", async () => {
+  const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
+  const route = await readFile(new URL("../app/api/admin/preventive-maintenance/route.js", import.meta.url), "utf8");
+  const catalog = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceCatalog.jsx", import.meta.url), "utf8");
+  assert.match(schema, /PRIMARY KEY \(catalog_task_id, property_id\)/);
+  assert.match(schema, /'property_excluded', 'property_restored'/);
+  assert.match(route, /action === "exclude_property"/);
+  assert.match(route, /is_active: false/);
+  assert.match(route, /action === "restore_property"/);
+  assert.match(catalog, /Remove property/);
+  assert.match(catalog, /Restore/);
 });

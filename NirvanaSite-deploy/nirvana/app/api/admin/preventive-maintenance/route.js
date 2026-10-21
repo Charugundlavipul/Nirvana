@@ -39,20 +39,23 @@ async function actorName(adminClient, user) {
 }
 
 async function loadWorkspace(adminClient, role) {
-  const [propertiesResult, catalogResult, schedulesResult, completionsResult, attachmentsResult, eventsResult] = await Promise.all([
+  const [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult, eventsResult] = await Promise.all([
     adminClient.from("properties").select("id, name, slug, location").order("name"),
     adminClient.from("preventive_maintenance_catalog").select("*").order("name"),
+    adminClient.from("preventive_maintenance_exclusions").select("catalog_task_id, property_id, excluded_by, created_at"),
     adminClient.from("preventive_maintenance_schedules").select("*").eq("is_active", true).order("current_due_on"),
     adminClient.from("preventive_maintenance_completions").select("*").order("created_at", { ascending: false }).limit(1000),
     adminClient.from("preventive_maintenance_attachments").select("*").order("created_at", { ascending: false }),
     adminClient.from("preventive_maintenance_events").select("*").order("created_at", { ascending: false }).limit(1000),
   ]);
-  for (const result of [propertiesResult, catalogResult, schedulesResult, completionsResult, attachmentsResult, eventsResult]) {
+  for (const result of [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult, eventsResult]) {
     if (result.error) throw result.error;
   }
 
   const properties = propertiesResult.data || [];
   const catalog = catalogResult.data || [];
+  const exclusions = exclusionsResult.data || [];
+  const exclusionKeys = new Set(exclusions.map((item) => `${item.catalog_task_id}:${item.property_id}`));
   const propertyMap = new Map(properties.map((item) => [item.id, item]));
   const catalogMap = new Map(catalog.map((item) => [item.id, item]));
   const attachmentMap = new Map();
@@ -67,7 +70,10 @@ async function loadWorkspace(adminClient, role) {
   for (const completion of completions) {
     completionMap.set(completion.schedule_id, [...(completionMap.get(completion.schedule_id) || []), completion]);
   }
-  const schedules = (schedulesResult.data || []).filter((schedule) => catalogMap.get(schedule.catalog_task_id)?.is_active).map((schedule) => ({
+  const schedules = (schedulesResult.data || []).filter((schedule) => (
+    catalogMap.get(schedule.catalog_task_id)?.is_active
+    && !exclusionKeys.has(`${schedule.catalog_task_id}:${schedule.property_id}`)
+  )).map((schedule) => ({
     ...schedule,
     property: propertyMap.get(schedule.property_id) || null,
     task: catalogMap.get(schedule.catalog_task_id) || null,
@@ -77,7 +83,10 @@ async function loadWorkspace(adminClient, role) {
   const counts = { overdue: 0, urgent: 0, upcoming: 0, on_track: 0, unscheduled: 0 };
   for (const schedule of schedules) counts[schedule.status] += 1;
   const activeCatalog = catalog.filter((item) => item.is_active);
-  const expectedSchedules = activeCatalog.length * properties.length;
+  const expectedSchedules = activeCatalog.reduce(
+    (total, task) => total + properties.filter((property) => !exclusionKeys.has(`${task.id}:${property.id}`)).length,
+    0,
+  );
   counts.unscheduled = Math.max(0, expectedSchedules - schedules.length);
 
   return {
@@ -85,6 +94,7 @@ async function loadWorkspace(adminClient, role) {
     canConfigure: ['owner', 'admin'].includes(role),
     properties,
     catalog,
+    exclusions,
     schedules,
     completions,
     events: eventsResult.data || [],
@@ -185,6 +195,9 @@ export async function POST(request) {
       if (!MAINTENANCE_UNITS.includes(recurrenceUnit)) fail("Choose a valid recurrence unit.");
       if (baselineDate && !isDateString(baselineDate)) fail("Starting date is invalid.");
       const nextDue = addRecurrence(baselineDate || todayDateString(), recurrenceCount, recurrenceUnit);
+      const { error: exclusionError } = await adminClient.from("preventive_maintenance_exclusions")
+        .delete().eq("catalog_task_id", taskId).eq("property_id", propertyId);
+      if (exclusionError) throw exclusionError;
       const { data: existing, error: existingError } = await adminClient.from("preventive_maintenance_schedules")
         .select("*").eq("catalog_task_id", taskId).eq("property_id", propertyId).maybeSingle();
       if (existingError) throw existingError;
@@ -228,6 +241,72 @@ export async function POST(request) {
         metadata: { recurrence_count: recurrenceCount, recurrence_unit: recurrenceUnit, baseline_date: baselineDate },
       });
       return json({ ok: true, schedule });
+    }
+
+    if (action === "exclude_property") {
+      assertConfigurator(role);
+      const taskId = text(body.taskId, 80);
+      const propertyId = text(body.propertyId, 80);
+      if (!taskId || !propertyId) fail("Task and property are required.");
+      const [{ data: existingExclusion, error: exclusionLookupError }, { data: schedule, error: scheduleLookupError }] = await Promise.all([
+        adminClient.from("preventive_maintenance_exclusions").select("catalog_task_id").eq("catalog_task_id", taskId).eq("property_id", propertyId).maybeSingle(),
+        adminClient.from("preventive_maintenance_schedules").select("*").eq("catalog_task_id", taskId).eq("property_id", propertyId).maybeSingle(),
+      ]);
+      if (exclusionLookupError) throw exclusionLookupError;
+      if (scheduleLookupError) throw scheduleLookupError;
+      const { error: excludeError } = await adminClient.from("preventive_maintenance_exclusions").upsert({
+        catalog_task_id: taskId,
+        property_id: propertyId,
+        excluded_by: user.id,
+      }, { onConflict: "catalog_task_id,property_id" });
+      if (excludeError) throw excludeError;
+      if (schedule?.is_active) {
+        const { data: deactivated, error: deactivateError } = await adminClient.from("preventive_maintenance_schedules").update({
+          is_active: false,
+          updated_by: user.id,
+          version: schedule.version + 1,
+        }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
+        if (deactivateError || !deactivated) {
+          if (!existingExclusion) {
+            await adminClient.from("preventive_maintenance_exclusions").delete().eq("catalog_task_id", taskId).eq("property_id", propertyId);
+          }
+          if (deactivateError) throw deactivateError;
+          fail("This schedule changed while you were removing the property. Please refresh and try again.", 409);
+        }
+      }
+      if (!existingExclusion) {
+        await adminClient.from("preventive_maintenance_events").insert({
+          property_id: propertyId,
+          catalog_task_id: taskId,
+          schedule_id: schedule?.id || null,
+          event_type: "property_excluded",
+          actor_user_id: user.id,
+          actor_name: actor,
+          note: "Property removed from this preventive maintenance task. Existing history was preserved.",
+        });
+      }
+      return json({ ok: true });
+    }
+
+    if (action === "restore_property") {
+      assertConfigurator(role);
+      const taskId = text(body.taskId, 80);
+      const propertyId = text(body.propertyId, 80);
+      if (!taskId || !propertyId) fail("Task and property are required.");
+      const { data: removed, error: restoreError } = await adminClient.from("preventive_maintenance_exclusions")
+        .delete().eq("catalog_task_id", taskId).eq("property_id", propertyId).select("catalog_task_id").maybeSingle();
+      if (restoreError) throw restoreError;
+      if (removed) {
+        await adminClient.from("preventive_maintenance_events").insert({
+          property_id: propertyId,
+          catalog_task_id: taskId,
+          event_type: "property_restored",
+          actor_user_id: user.id,
+          actor_name: actor,
+          note: "Property restored to this preventive maintenance task. A schedule must be applied before it becomes active.",
+        });
+      }
+      return json({ ok: true });
     }
 
     const scheduleId = text(body.scheduleId, 80);

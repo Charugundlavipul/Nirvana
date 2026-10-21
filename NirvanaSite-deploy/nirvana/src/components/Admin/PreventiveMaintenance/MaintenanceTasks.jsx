@@ -37,11 +37,12 @@ export default function MaintenanceTasks() {
   useEffect(() => { load().catch((e) => setMessage({ type: "error", text: e.message })); }, []);
   const propertySchedules = useMemo(() => (data?.schedules || []).filter((item) => item.property_id === selectedPropertyId && (!statusFilter || item.status === statusFilter)), [data, selectedPropertyId, statusFilter]);
   const selectedProperty = data?.properties.find((item) => item.id === selectedPropertyId);
+  const exclusionSet = useMemo(() => new Set((data?.exclusions || []).map((item) => `${item.catalog_task_id}:${item.property_id}`)), [data]);
   const missingCatalogTasks = useMemo(() => {
     if (!data || !selectedPropertyId) return [];
     const scheduledTaskIds = new Set(data.schedules.filter((item) => item.property_id === selectedPropertyId).map((item) => item.catalog_task_id));
-    return data.catalog.filter((item) => item.is_active && !scheduledTaskIds.has(item.id));
-  }, [data, selectedPropertyId]);
+    return data.catalog.filter((item) => item.is_active && !exclusionSet.has(`${item.id}:${selectedPropertyId}`) && !scheduledTaskIds.has(item.id));
+  }, [data, selectedPropertyId, exclusionSet]);
   const propertyEvents = useMemo(() => (data?.events || []).filter((event) => event.property_id === selectedPropertyId), [data, selectedPropertyId]);
   const scheduleEventMap = useMemo(() => {
     const map = new Map();
@@ -71,7 +72,7 @@ export default function MaintenanceTasks() {
         const urgent = schedules.filter((item) => item.status === "urgent").length;
         const overdue = schedules.filter((item) => item.status === "overdue").length;
         const scheduledTaskIds = new Set(schedules.map((item) => item.catalog_task_id));
-        const missing = data.catalog.filter((item) => item.is_active && !scheduledTaskIds.has(item.id)).length;
+        const missing = data.catalog.filter((item) => item.is_active && !exclusionSet.has(`${item.id}:${property.id}`) && !scheduledTaskIds.has(item.id)).length;
         const worst = overdue ? "overdue" : urgent ? "urgent" : schedules.some((item) => item.status === "upcoming") ? "upcoming" : missing ? "unscheduled" : "on_track";
         return <button key={property.id} className={`${styles.card} ${styles.propertyCard} ${selectedPropertyId === property.id ? styles.propertyCardActive : ""}`} onClick={() => setSelectedPropertyId(property.id)}>
           <div className={styles.propertyCardHeader}><div><h3>{property.name}</h3><span className={styles.muted}>{property.location || "Property"}</span></div><span className={`${styles.badge} ${styles[worst]}`}>{worst === "overdue" && <FaExclamationTriangle />} {MAINTENANCE_STATUS[worst].label}</span></div>
@@ -98,7 +99,7 @@ export default function MaintenanceTasks() {
           <div className={styles.list}>{missingCatalogTasks.map((task) => <div className={styles.listItem} key={task.id}><div className={styles.listMain}><strong>{task.name}</strong><span>{task.description || "Recurrence has not been configured"}</span></div><span className={`${styles.badge} ${styles.unscheduled}`}>Not scheduled</span></div>)}</div>
         </div>}
         <details className={`${styles.card} ${styles.cardPadding}`} style={{ marginTop: 18 }}>
-          <summary style={{ cursor: "pointer", color: "#425b3d", fontWeight: 800 }}><FaHistory /> Complete property history ({propertyEvents.length})</summary>
+          <summary style={{ cursor: "pointer", color: "#424334", fontWeight: 800 }}><FaHistory /> Complete property history ({propertyEvents.length})</summary>
           <div className={styles.timeline}>{propertyEvents.map((event) => <div className={styles.timelineItem} key={event.id}><strong>{labelEvent(event.event_type)}</strong><span>{dateTime(event.created_at)} · {event.actor_name}{event.previous_due_on || event.new_due_on ? ` · ${event.previous_due_on || "—"} → ${event.new_due_on || "—"}` : ""}</span>{event.note && <p>{event.note}</p>}</div>)}{!propertyEvents.length && <div className={styles.empty}>No property history yet.</div>}</div>
         </details>
       </section>}

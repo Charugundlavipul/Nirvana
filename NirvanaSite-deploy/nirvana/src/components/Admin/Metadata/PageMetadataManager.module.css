@@ -11,12 +11,12 @@
 .searchBox input, .filters select, .field input, .field textarea { width: 100%; box-sizing: border-box; border: 1px solid #dfe3dc; border-radius: 9px; background: #fff; color: #20231f; font: inherit; transition: border-color .2s, box-shadow .2s; }
 .searchBox input { padding: 10px 12px 10px 34px; font-size: 13px; }
 .filters select { padding: 9px 10px; font-size: 12px; }
-.searchBox input:focus, .filters select:focus, .field input:focus, .field textarea:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .12); }
+.searchBox input:focus, .filters select:focus, .field input:focus, .field textarea:focus { outline: none; border-color: #424334; box-shadow: 0 0 0 3px rgba(66, 67, 52, .18); }
 .pageList { max-height: calc(100vh - 285px); overflow-y: auto; padding: 0 9px 14px; }
 .pageGroup h3 { margin: 13px 10px 6px; color: #93988f; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
 .pageItem { width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; border-radius: 9px; padding: 10px; text-align: left; cursor: pointer; color: #343833; }
 .pageItem:hover { background: #f5f6f3; }
-.pageItemActive { background: #ecfdf5 !important; color: #065f46; }
+.pageItemActive { background: #f2f2ed !important; color: #424334; }
 .pageItemText { min-width: 0; flex: 1; display: grid; gap: 2px; }
 .pageItemText strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .pageItemText small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #899086; font-size: 10px; }
@@ -28,7 +28,7 @@
 .editorPanel { min-width: 0; padding: 26px; }
 .editorHeader { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .editorHeader h2 { margin-top: 3px; font-size: 24px; }
-.editorHeader a { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: #059669; text-decoration: none; font-size: 12px; }
+.editorHeader a { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: #424334; text-decoration: none; font-size: 12px; }
 .editorHeader a svg { font-size: 9px; }
 .eyebrow { color: #7c8576; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .headerStatus { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; gap: 6px; }
@@ -44,7 +44,7 @@
 .card { border: 1px solid #e7e9e5; border-radius: 13px; padding: 20px; margin-bottom: 16px; }
 .cardTitle { display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; margin-bottom: 18px; }
 .cardTitle h3 { font-size: 15px; }
-.cardTitle > svg { color: #059669; }
+.cardTitle > svg { color: #424334; }
 .formGrid { display: grid; gap: 15px; }
 .field { display: grid; gap: 7px; color: #343833; font-size: 12px; font-weight: 650; }
 .fieldHeader { display: flex; justify-content: space-between; gap: 10px; }
@@ -52,8 +52,8 @@
 .field input, .field textarea { padding: 10px 11px; font-size: 13px; line-height: 1.45; resize: vertical; }
 .imageFieldRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .fileInput { display: none; }
-.uploadButton { align-self: stretch; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 116px; border: 1px solid #059669; border-radius: 9px; background: #fff; color: #047857; padding: 0 13px; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background-color .2s, color .2s, border-color .2s; }
-.uploadButton:hover { border-color: #047857; background: #ecfdf5; }
+.uploadButton { align-self: stretch; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 116px; border: 1px solid #424334; border-radius: 9px; background: #fff; color: #424334; padding: 0 13px; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background-color .2s, color .2s, border-color .2s; }
+.uploadButton:hover { border-color: #34352a; background: #f2f2ed; }
 .uploadButton:disabled { cursor: wait; border-color: #a7f3d0; color: #6b7280; background: #f8fafc; }
 .hint { color: #858b82; font-size: 10px; font-weight: 400; line-height: 1.4; }
 .characterCount { color: #949990; font-size: 10px; font-weight: 500; }
@@ -73,7 +73,7 @@
 .previewCopy strong { color: #242724; font-size: 13px; line-height: 1.3; }
 .previewCopy p { margin: 0; color: #71776f; font-size: 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .advanced { margin-top: 18px; border-top: 1px solid #eceeeb; padding-top: 14px; }
-.advanced summary { cursor: pointer; color: #047857; font-size: 12px; font-weight: 700; }
+.advanced summary { cursor: pointer; color: #424334; font-size: 12px; font-weight: 700; }
 .advanced .formGrid { margin-top: 15px; }
 .toggleGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .toggleCard { display: flex; gap: 11px; align-items: flex-start; border: 1px solid #e5e8e2; border-radius: 10px; padding: 13px; cursor: pointer; }
@@ -86,8 +86,8 @@
 .formActions > div { display: grid; gap: 2px; }
 .formActions strong { color: #30352d; font-size: 12px; }
 .formActions span { color: #7f867c; font-size: 10px; }
-.formActions button { border: 0; border-radius: 9px; background: #059669; color: #fff; padding: 11px 17px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); transition: background-color .2s, transform .2s; }
-.formActions button:hover { background: #10b981; }
+.formActions button { border: 0; border-radius: 9px; background: #424334; color: #fff; padding: 11px 17px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); transition: background-color .2s, transform .2s; }
+.formActions button:hover { background: #34352a; }
 .formActions button:active { transform: scale(.98); }
 .formActions button:disabled { cursor: wait; opacity: .6; }
 

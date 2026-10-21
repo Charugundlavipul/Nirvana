@@ -2503,6 +2503,18 @@ CREATE TABLE IF NOT EXISTS preventive_maintenance_catalog (
 CREATE UNIQUE INDEX IF NOT EXISTS preventive_maintenance_catalog_active_name_uidx
 ON preventive_maintenance_catalog (LOWER(BTRIM(name))) WHERE is_active;
 
+-- A catalog task applies to every property by default. Rows here record the
+-- explicit exceptions while preserving any schedule and completion history.
+CREATE TABLE IF NOT EXISTS preventive_maintenance_exclusions (
+    catalog_task_id UUID NOT NULL REFERENCES preventive_maintenance_catalog(id) ON DELETE CASCADE,
+    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    excluded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (catalog_task_id, property_id)
+);
+CREATE INDEX IF NOT EXISTS preventive_maintenance_exclusions_property_idx
+ON preventive_maintenance_exclusions(property_id);
+
 CREATE TABLE IF NOT EXISTS preventive_maintenance_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     catalog_task_id UUID NOT NULL REFERENCES preventive_maintenance_catalog(id) ON DELETE RESTRICT,
@@ -2577,7 +2589,7 @@ CREATE TABLE IF NOT EXISTS preventive_maintenance_events (
     completion_id UUID REFERENCES preventive_maintenance_completions(id) ON DELETE SET NULL,
     event_type TEXT NOT NULL CHECK (event_type IN (
         'catalog_created', 'catalog_updated', 'catalog_archived',
-        'schedule_created', 'schedule_updated', 'due_date_updated',
+        'schedule_created', 'schedule_updated', 'property_excluded', 'property_restored', 'due_date_updated',
         'task_completed', 'completion_undone', 'attachment_added', 'csv_exported'
     )),
     actor_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -2593,7 +2605,7 @@ ALTER TABLE preventive_maintenance_events
     ADD CONSTRAINT preventive_maintenance_events_event_type_check
     CHECK (event_type IN (
         'catalog_created', 'catalog_updated', 'catalog_archived',
-        'schedule_created', 'schedule_updated', 'due_date_updated',
+        'schedule_created', 'schedule_updated', 'property_excluded', 'property_restored', 'due_date_updated',
         'task_completed', 'completion_undone', 'attachment_added', 'csv_exported'
     ));
 CREATE INDEX IF NOT EXISTS preventive_maintenance_events_property_idx
@@ -2617,6 +2629,7 @@ END;
 $$;
 
 ALTER TABLE preventive_maintenance_catalog ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_exclusions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE preventive_maintenance_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE preventive_maintenance_completions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE preventive_maintenance_due_adjustments ENABLE ROW LEVEL SECURITY;

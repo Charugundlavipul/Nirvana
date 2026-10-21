@@ -30,7 +30,7 @@ const TeamSelector = ({ value = [], onChange }) => (
     {TEAM_OPTIONS.map((team) => {
       const selected = value.includes(team);
       return (
-        <label key={team} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 11px", borderRadius: 10, border: `1px solid ${selected ? "#6b8a62" : "#cbd5e1"}`, background: selected ? "#eef6ec" : "#fff", color: selected ? "#31502b" : "#475569", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+        <label key={team} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 11px", borderRadius: 10, border: `1px solid ${selected ? "#424334" : "#cbd5e1"}`, background: selected ? "#f2f2ed" : "#fff", color: selected ? "#424334" : "#475569", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           <input type="checkbox" checked={selected} onChange={() => onChange(selected ? value.filter((item) => item !== team) : [...value, team])} />
           {team}
         </label>
@@ -197,7 +197,7 @@ export default function PeopleManager() {
               <div className={styles.muted} style={{ margin: 0 }}>
                 {formatRole(person.role)} · {person.private_profile?.employment_status || 'active'}
               </div>
-              {(person.private_profile?.teams || []).length > 0 && <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 5 }}>{person.private_profile.teams.map((team)=><span key={team} style={{ padding: '2px 6px', borderRadius: 999, background: '#eef6ec', color: '#31502b', fontSize: 10, fontWeight: 800 }}>{team}</span>)}</div>}
+              {(person.private_profile?.teams || []).length > 0 && <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 5 }}>{person.private_profile.teams.map((team)=><span key={team} style={{ padding: '2px 6px', borderRadius: 999, background: '#f2f2ed', color: '#424334', fontSize: 10, fontWeight: 800 }}>{team}</span>)}</div>}
             </button>
           ))}
         </div>

@@ -1,4 +1,9 @@
 .adminContainer {
+    --admin-primary: #424334;
+    --admin-primary-hover: #34352a;
+    --admin-primary-soft: #f2f2ed;
+    --admin-primary-border: #c7c8b9;
+    --admin-primary-ring: rgba(66, 67, 52, .18);
     display: flex;
     height: 100vh;
     width: 100vw;

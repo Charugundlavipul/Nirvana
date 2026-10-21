@@ -2392,9 +2392,9 @@ const ApprovalQueue = () => {
                     disabled={workingId === req.id}
                     style={{
                       padding: "10px 12px",
-                      border: "1px solid #10b981",
+                      border: "1px solid #424334",
                       color: "#fff",
-                      background: "#10b981",
+                      background: "#424334",
                       borderRadius: "6px",
                       cursor: "pointer",
                     }}

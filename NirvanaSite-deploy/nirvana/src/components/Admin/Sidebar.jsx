@@ -56,7 +56,7 @@ const Sidebar = ({ isOpen, toggle }) => {
         >
             <div className="flex h-20 items-center justify-between border-b border-slate-700/50 px-6">
                 <div className={`text-xl font-extrabold tracking-wide text-white transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>
-                    Nirvana<span className="text-emerald-400">Admin</span>
+                    Nirvana<span className="text-[#c7c8b9]">Admin</span>
                 </div>
                 <button
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
@@ -75,7 +75,7 @@ const Sidebar = ({ isOpen, toggle }) => {
                         className={({ isActive }) =>
                             `group flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                                 isActive
-                                    ? "bg-emerald-600/10 text-emerald-400"
+                                    ? "bg-[#424334] text-white shadow-sm"
                                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                             }`
                         }

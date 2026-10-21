@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FaArchive, FaCheckCircle, FaChevronDown, FaPlus } from "react-icons/fa";
+import { FaArchive, FaCheckCircle, FaChevronDown, FaMinusCircle, FaPlus, FaUndo } from "react-icons/fa";
 import MaintenanceShell from "./MaintenanceShell";
 import styles from "./Maintenance.module.css";
 import { getMaintenanceWorkspace, maintenanceAction } from "../../../lib/preventiveMaintenanceApi";
@@ -27,9 +27,12 @@ export default function MaintenanceCatalog() {
     }
     setDrafts(next);
   };
+
   useEffect(() => { load().catch((e) => setMessage({ type: "error", text: e.message })); }, []);
+
   const activeTasks = useMemo(() => (data?.catalog || []).filter((item) => item.is_active), [data]);
   const scheduleMap = useMemo(() => new Map((data?.schedules || []).map((item) => [`${item.catalog_task_id}:${item.property_id}`, item])), [data]);
+  const exclusionSet = useMemo(() => new Set((data?.exclusions || []).map((item) => `${item.catalog_task_id}:${item.property_id}`)), [data]);
   const setDraft = (key, patch) => setDrafts((current) => ({ ...current, [key]: { ...blankSchedule, ...(current[key] || {}), ...patch } }));
 
   async function createTask(event) {
@@ -62,7 +65,31 @@ export default function MaintenanceCatalog() {
     catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(""); }
   }
 
-  return <MaintenanceShell title="Maintenance Catalog" subtitle="Create standard tasks and configure a recurrence for every property">
+  async function excludeProperty(task, property) {
+    const key = `exclude:${task.id}:${property.id}`;
+    const warning = scheduleMap.has(`${task.id}:${property.id}`)
+      ? "Its active schedule will be removed from the task list, but all completion and due-date history will be preserved."
+      : "It will no longer be counted as needing a schedule for this task.";
+    if (!window.confirm(`Remove ${property.name} from ${task.name}? ${warning}`)) return;
+    setBusy(key); setMessage(null);
+    try {
+      await maintenanceAction("exclude_property", { taskId: task.id, propertyId: property.id });
+      await load();
+      setMessage({ type: "success", text: `${property.name} was removed from ${task.name}.` });
+    } catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(""); }
+  }
+
+  async function restoreProperty(task, property) {
+    const key = `restore:${task.id}:${property.id}`;
+    setBusy(key); setMessage(null);
+    try {
+      await maintenanceAction("restore_property", { taskId: task.id, propertyId: property.id });
+      await load();
+      setMessage({ type: "success", text: `${property.name} was restored. Apply a schedule when this task should begin.` });
+    } catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(""); }
+  }
+
+  return <MaintenanceShell title="Maintenance Catalog" subtitle="Create standard tasks and configure only the properties where each task applies">
     {message && <div className={`${styles.alert} ${message.type === "success" ? styles.success : ""}`}>{message.text}</div>}
     {data?.canConfigure && <form className={`${styles.card} ${styles.formCard}`} onSubmit={createTask}>
       <div className={styles.field}><label>Preventive maintenance task name</label><input className={styles.input} value={form.name} maxLength={160} placeholder="e.g. Replace HVAC filters" onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -71,15 +98,18 @@ export default function MaintenanceCatalog() {
     </form>}
     {!data ? <div className={`${styles.card} ${styles.loading}`}>Loading catalog…</div> : <div className={styles.catalogList}>
       {activeTasks.map((task) => {
-        const configured = (data.properties || []).filter((property) => scheduleMap.has(`${task.id}:${property.id}`)).length;
+        const applicableProperties = (data.properties || []).filter((property) => !exclusionSet.has(`${task.id}:${property.id}`));
+        const excludedProperties = (data.properties || []).filter((property) => exclusionSet.has(`${task.id}:${property.id}`));
+        const configured = applicableProperties.filter((property) => scheduleMap.has(`${task.id}:${property.id}`)).length;
+        const remaining = applicableProperties.length - configured;
         return <details className={`${styles.card} ${styles.catalogItem}`} key={task.id}>
           <summary className={styles.catalogSummary}>
-            <div className={styles.summaryTitle}><strong>{task.name}</strong><span>{task.description || "No description"} · {configured} of {data.properties.length} properties configured</span></div>
-            <span className={`${styles.badge} ${configured === data.properties.length ? styles.on_track : styles.unscheduled}`}>{configured === data.properties.length ? <><FaCheckCircle /> Ready</> : `${data.properties.length - configured} remaining`}</span>
+            <div className={styles.summaryTitle}><strong>{task.name}</strong><span>{task.description || "No description"} · {configured} of {applicableProperties.length} applicable properties configured{excludedProperties.length ? ` · ${excludedProperties.length} excluded` : ""}</span></div>
+            <span className={`${styles.badge} ${applicableProperties.length > 0 && remaining === 0 ? styles.on_track : styles.unscheduled}`}>{applicableProperties.length === 0 ? "No properties assigned" : remaining === 0 ? <><FaCheckCircle /> Ready</> : `${remaining} remaining`}</span>
             <FaChevronDown aria-hidden="true" />
           </summary>
           <div className={styles.propertyRows}>
-            {(data.properties || []).map((property) => {
+            {applicableProperties.map((property) => {
               const key = `${task.id}:${property.id}`;
               const schedule = scheduleMap.get(key);
               const draft = { ...blankSchedule, ...(drafts[key] || {}) };
@@ -89,9 +119,20 @@ export default function MaintenanceCatalog() {
                 <div className={styles.field}><label>Every</label><input className={styles.input} type="number" min="1" step="1" value={draft.recurrenceCount} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceCount: e.target.value })} /></div>
                 <div className={styles.field}><label>Unit</label><select className={styles.select} value={draft.recurrenceUnit} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceUnit: e.target.value })}><option value="day">Days</option><option value="week">Weeks</option><option value="month">Months</option><option value="year">Years</option></select></div>
                 <div className={styles.propertyName}><span>Next due</span><strong>{schedule?.current_due_on || "After applying"}</strong></div>
-                {data.canConfigure && <button type="button" className={`${styles.button} ${styles.smallButton}`} disabled={busy === key} onClick={() => saveSchedule(task.id, property.id)}>{busy === key ? "Saving…" : schedule ? "Update" : "Apply"}</button>}
+                {data.canConfigure && <div className={styles.rowActions}>
+                  <button type="button" className={`${styles.button} ${styles.smallButton}`} disabled={busy === key} onClick={() => saveSchedule(task.id, property.id)}>{busy === key ? "Saving…" : schedule ? "Update" : "Apply"}</button>
+                  <button type="button" className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `exclude:${task.id}:${property.id}`} onClick={() => excludeProperty(task, property)} title={`Remove ${property.name} from this task`}><FaMinusCircle /> Remove property</button>
+                </div>}
               </div>;
             })}
+            {!applicableProperties.length && <div className={styles.empty}>No properties are currently assigned to this catalog task.</div>}
+            {excludedProperties.length > 0 && <details className={styles.excludedProperties}>
+              <summary>Excluded properties ({excludedProperties.length})</summary>
+              <div className={styles.excludedList}>{excludedProperties.map((property) => <div className={styles.excludedRow} key={property.id}>
+                <div className={styles.propertyName}><strong>{property.name}</strong><span>Not applicable to this catalog task</span></div>
+                {data.canConfigure && <button type="button" className={`${styles.button} ${styles.secondaryButton} ${styles.smallButton}`} disabled={busy === `restore:${task.id}:${property.id}`} onClick={() => restoreProperty(task, property)}><FaUndo /> {busy === `restore:${task.id}:${property.id}` ? "Restoring…" : "Restore"}</button>}
+              </div>)}</div>
+            </details>}
             {data.canConfigure && <div className={styles.toolbar} style={{ marginTop: 14, marginBottom: 0 }}><span className={styles.muted}>Schedules take effect immediately; no approval is required.</span><button className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `archive:${task.id}`} onClick={() => archiveTask(task)}><FaArchive /> Archive task</button></div>}
           </div>
         </details>;
