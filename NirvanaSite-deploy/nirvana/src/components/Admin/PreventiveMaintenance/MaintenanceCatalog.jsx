@@ -3,9 +3,18 @@ import { FaArchive, FaCheckCircle, FaChevronDown, FaMinusCircle, FaPlus, FaUndo 
 import MaintenanceShell from "./MaintenanceShell";
 import styles from "./Maintenance.module.css";
 import { getMaintenanceWorkspace, maintenanceAction } from "../../../lib/preventiveMaintenanceApi";
-import { recurrenceLabel } from "../../../lib/preventiveMaintenance";
+import { addRecurrence, recurrenceLabel } from "../../../lib/preventiveMaintenance";
 
-const blankSchedule = { baselineDate: "", recurrenceCount: 1, recurrenceUnit: "month" };
+const blankSchedule = { baselineDate: "", nextDueOn: "", recurrenceCount: 1, recurrenceUnit: "month" };
+
+function calculatedDueDate(draft) {
+  if (!draft.baselineDate) return "";
+  try {
+    return addRecurrence(draft.baselineDate, Number(draft.recurrenceCount), draft.recurrenceUnit);
+  } catch {
+    return "";
+  }
+}
 
 export default function MaintenanceCatalog() {
   const [data, setData] = useState(null);
@@ -21,6 +30,7 @@ export default function MaintenanceCatalog() {
     for (const schedule of result.schedules || []) {
       next[`${schedule.catalog_task_id}:${schedule.property_id}`] = {
         baselineDate: schedule.baseline_date || "",
+        nextDueOn: schedule.baseline_date ? "" : schedule.current_due_on,
         recurrenceCount: schedule.recurrence_count,
         recurrenceUnit: schedule.recurrence_unit,
       };
@@ -50,6 +60,10 @@ export default function MaintenanceCatalog() {
   async function saveSchedule(taskId, propertyId) {
     const key = `${taskId}:${propertyId}`;
     const draft = { ...blankSchedule, ...(drafts[key] || {}) };
+    if (!draft.baselineDate && !draft.nextDueOn) {
+      setMessage({ type: "error", text: "Choose a next due date when no starting or last completion date is available." });
+      return;
+    }
     setBusy(key); setMessage(null);
     try {
       await maintenanceAction("upsert_schedule", { taskId, propertyId, ...draft });
@@ -113,12 +127,24 @@ export default function MaintenanceCatalog() {
               const key = `${task.id}:${property.id}`;
               const schedule = scheduleMap.get(key);
               const draft = { ...blankSchedule, ...(drafts[key] || {}) };
+              const automaticNextDue = calculatedDueDate(draft);
               return <div className={styles.scheduleRow} key={property.id}>
                 <div className={styles.propertyName}><strong>{property.name}</strong><span>{schedule ? `${recurrenceLabel(schedule.recurrence_count, schedule.recurrence_unit)} · Due ${schedule.current_due_on}` : "Schedule required"}</span></div>
                 <div className={styles.field}><label>Starting/last completion</label><input className={styles.input} type="date" value={draft.baselineDate} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { baselineDate: e.target.value })} /></div>
                 <div className={styles.field}><label>Every</label><input className={styles.input} type="number" min="1" step="1" value={draft.recurrenceCount} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceCount: e.target.value })} /></div>
                 <div className={styles.field}><label>Unit</label><select className={styles.select} value={draft.recurrenceUnit} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceUnit: e.target.value })}><option value="day">Days</option><option value="week">Weeks</option><option value="month">Months</option><option value="year">Years</option></select></div>
-                <div className={styles.propertyName}><span>Next due</span><strong>{schedule?.current_due_on || "After applying"}</strong></div>
+                <div className={styles.field}>
+                  <label>Next due date</label>
+                  <input
+                    className={styles.input}
+                    type="date"
+                    value={draft.baselineDate ? automaticNextDue : draft.nextDueOn}
+                    disabled={!data.canConfigure || Boolean(draft.baselineDate)}
+                    required={!draft.baselineDate}
+                    onChange={(e) => setDraft(key, { nextDueOn: e.target.value })}
+                  />
+                  <span className={styles.fieldHint}>{draft.baselineDate ? "Calculated from the last completion" : "Required when no last completion date is available"}</span>
+                </div>
                 {data.canConfigure && <div className={styles.rowActions}>
                   <button type="button" className={`${styles.button} ${styles.smallButton}`} disabled={busy === key} onClick={() => saveSchedule(task.id, property.id)}>{busy === key ? "Saving…" : schedule ? "Update" : "Apply"}</button>
                   <button type="button" className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `exclude:${task.id}:${property.id}`} onClick={() => excludeProperty(task, property)} title={`Remove ${property.name} from this task`}><FaMinusCircle /> Remove property</button>

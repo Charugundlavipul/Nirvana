@@ -73,3 +73,14 @@ test("catalog properties can be excluded and restored without deleting maintenan
   assert.match(catalog, /Remove property/);
   assert.match(catalog, /Restore/);
 });
+
+test("catalog schedules require an explicit next due date when no baseline exists", async () => {
+  const route = await readFile(new URL("../app/api/admin/preventive-maintenance/route.js", import.meta.url), "utf8");
+  const catalog = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceCatalog.jsx", import.meta.url), "utf8");
+  assert.match(route, /requestedNextDue/);
+  assert.match(route, /Choose the next due date when there is no starting or last completion date/);
+  assert.match(route, /baselineDate\s*\?\s*addRecurrence\(baselineDate/);
+  assert.match(route, /next_due_source: baselineDate \? "calculated_from_baseline" : "manually_selected"/);
+  assert.match(catalog, /Next due date/);
+  assert.match(catalog, /required=\{!draft\.baselineDate\}/);
+});

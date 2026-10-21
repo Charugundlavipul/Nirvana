@@ -190,11 +190,15 @@ export async function POST(request) {
       const recurrenceCount = Number(body.recurrenceCount);
       const recurrenceUnit = text(body.recurrenceUnit, 20);
       const baselineDate = text(body.baselineDate, 10) || null;
+      const requestedNextDue = text(body.nextDueOn, 10) || null;
       if (!taskId || !propertyId) fail("Task and property are required.");
       if (!Number.isInteger(recurrenceCount) || recurrenceCount < 1) fail("Recurrence must be a positive whole number.");
       if (!MAINTENANCE_UNITS.includes(recurrenceUnit)) fail("Choose a valid recurrence unit.");
       if (baselineDate && !isDateString(baselineDate)) fail("Starting date is invalid.");
-      const nextDue = addRecurrence(baselineDate || todayDateString(), recurrenceCount, recurrenceUnit);
+      if (!baselineDate && !isDateString(requestedNextDue)) fail("Choose the next due date when there is no starting or last completion date.");
+      const nextDue = baselineDate
+        ? addRecurrence(baselineDate, recurrenceCount, recurrenceUnit)
+        : requestedNextDue;
       const { error: exclusionError } = await adminClient.from("preventive_maintenance_exclusions")
         .delete().eq("catalog_task_id", taskId).eq("property_id", propertyId);
       if (exclusionError) throw exclusionError;
@@ -238,7 +242,12 @@ export async function POST(request) {
         actor_name: actor,
         previous_due_on: existing?.current_due_on || null,
         new_due_on: nextDue,
-        metadata: { recurrence_count: recurrenceCount, recurrence_unit: recurrenceUnit, baseline_date: baselineDate },
+        metadata: {
+          recurrence_count: recurrenceCount,
+          recurrence_unit: recurrenceUnit,
+          baseline_date: baselineDate,
+          next_due_source: baselineDate ? "calculated_from_baseline" : "manually_selected",
+        },
       });
       return json({ ok: true, schedule });
     }
