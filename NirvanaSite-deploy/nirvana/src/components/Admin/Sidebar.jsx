@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight, FaSearch, FaUserCircle, FaCalendarAlt, FaMoneyCheckAlt } from "react-icons/fa";
+import { FaChartPie, FaBuilding, FaPenNib, FaBookOpen, FaUsers, FaGlobeAmericas, FaUserShield, FaCheckSquare, FaChevronLeft, FaChevronRight, FaSearch, FaUserCircle, FaCalendarAlt, FaMoneyCheckAlt, FaTools } from "react-icons/fa";
 import { getCurrentAdminRole, isContentReviewerRole, isOwnerRole, normalizeAdminRole, fetchMyPendingDrafts } from "../../lib/adminApi";
 
 const NAV_ITEMS = [
     { label: "Dashboard", path: "/admin", exact: true, icon: <FaChartPie size={18} />, draftBadgeKey: "all" },
     { label: "Properties", path: "/admin/properties", icon: <FaBuilding size={18} /> },
+    { label: "Preventive Maintenance", path: "/admin/preventive-maintenance", icon: <FaTools size={18} /> },
     { label: "Blogs", path: "/admin/blogs", icon: <FaPenNib size={18} /> },
     { label: "Knowledge Hub", path: "/admin/knowledge", icon: <FaBookOpen size={18} /> },
     { label: "Subscribers", path: "/admin/subscribers", icon: <FaUsers size={18} /> },

@@ -19,9 +19,11 @@ import {
     FaBookOpen,
     FaClipboardList,
     FaExclamationTriangle,
-    FaPen
+    FaPen,
+    FaTools
 } from "react-icons/fa";
 import { getCurrentAdminRole, isContentReviewerRole, isOwnerRole, fetchMyPendingDrafts, parseApprovalObject } from "../../lib/adminApi";
+import { getMaintenanceWorkspace } from "../../lib/preventiveMaintenanceApi";
 
 const StatCard = ({ title, value, icon: Icon, color, bgColor, subtitle }) => (
     <div className={styles.statCard} style={{ '--accent-color': color, '--bg-color': bgColor }}>
@@ -119,9 +121,11 @@ const Dashboard = () => {
     const [adminRole, setAdminRole] = useState(null);
     const [pendingDrafts, setPendingDrafts] = useState([]);
     const [draftsLoading, setDraftsLoading] = useState(true);
+    const [maintenanceCounts, setMaintenanceCounts] = useState(null);
 
     useEffect(() => {
         getCurrentAdminRole().then(setAdminRole);
+        getMaintenanceWorkspace().then((payload) => setMaintenanceCounts(payload.counts)).catch(() => setMaintenanceCounts(null));
     }, []);
 
     useEffect(() => {
@@ -315,6 +319,22 @@ const Dashboard = () => {
                 </section>
             )}
 
+            {maintenanceCounts && (
+                <section style={{ marginBottom: 28, padding: 22, borderRadius: 18, border: "1px solid #dbe5d8", background: "linear-gradient(135deg, #f7faf6 0%, #eef6ec 100%)", boxShadow: "0 10px 28px rgba(66,91,61,0.08)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 12, display: "grid", placeItems: "center", color: "#fff", background: "#425b3d" }}><FaTools /></div>
+                            <div><h2 style={{ margin: 0, color: "#17221a", fontSize: 18 }}>Preventive Maintenance</h2><p style={{ margin: "3px 0 0", color: "#60705e", fontSize: 13 }}>Portfolio maintenance requiring attention</p></div>
+                        </div>
+                        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+                            <span style={{ padding: "7px 10px", borderRadius: 999, background: "#f3e8ff", color: "#6b21a8", fontSize: 12, fontWeight: 800 }}>{maintenanceCounts.overdue || 0} overdue</span>
+                            <span style={{ padding: "7px 10px", borderRadius: 999, background: "#fef2f2", color: "#b91c1c", fontSize: 12, fontWeight: 800 }}>{maintenanceCounts.urgent || 0} urgent</span>
+                            <Link to="/admin/preventive-maintenance" style={{ padding: "7px 12px", borderRadius: 9, background: "#425b3d", color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 800 }}>Open dashboard</Link>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Stats Grid */}
             <div className={styles.statsGrid}>
                 <StatCard
@@ -394,6 +414,13 @@ const Dashboard = () => {
                         icon={FaHiking}
                         to="/admin/global"
                         color="#8b5cf6"
+                    />
+                    <QuickAction
+                        title="Preventive Maintenance"
+                        description="Track property upkeep"
+                        icon={FaTools}
+                        to="/admin/preventive-maintenance"
+                        color="#425b3d"
                     />
                     <QuickAction
                         title="Knowledge Hub"

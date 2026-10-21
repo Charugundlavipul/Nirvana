@@ -18,6 +18,9 @@ import ProfileManager from "./HR/ProfileManager";
 import LeaveManager from "./HR/LeaveManager";
 import PeopleManager from "./HR/PeopleManager";
 import PayrollManager from "./HR/PayrollManager";
+import MaintenanceDashboard from "./PreventiveMaintenance/MaintenanceDashboard";
+import MaintenanceCatalog from "./PreventiveMaintenance/MaintenanceCatalog";
+import MaintenanceTasks from "./PreventiveMaintenance/MaintenanceTasks";
 
 const AdminApp = () => {
   return (
@@ -39,6 +42,9 @@ const AdminApp = () => {
           <Route path="profile" element={<ProfileManager />} />
           <Route path="leave" element={<LeaveManager />} />
           <Route path="payroll" element={<PayrollManager />} />
+          <Route path="preventive-maintenance" element={<MaintenanceDashboard />} />
+          <Route path="preventive-maintenance/catalog" element={<MaintenanceCatalog />} />
+          <Route path="preventive-maintenance/tasks" element={<MaintenanceTasks />} />
           <Route path="signatures" element={<AdminSignatures />} />
         </Route>
       </Routes>

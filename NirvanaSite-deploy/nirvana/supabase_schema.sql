@@ -48,29 +48,6 @@ CREATE TABLE IF NOT EXISTS properties (
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathroom_count NUMERIC(3,1);
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS bed_count INT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS hospitable_widget_code TEXT;
-UPDATE properties
-SET hospitable_property_id = NULLIF(LOWER(BTRIM(hospitable_property_id)), '')
-WHERE hospitable_property_id IS NOT NULL;
-UPDATE properties SET is_published = TRUE WHERE is_published IS DISTINCT FROM TRUE;
-UPDATE properties SET spaces = '[]'::jsonb WHERE spaces IS NULL;
-UPDATE properties
-SET
-    full_bath_count = COALESCE(full_bath_count, FLOOR(bathroom_count)::int),
-    half_bath_count = COALESCE(
-        half_bath_count,
-        CASE
-            WHEN bathroom_count IS NULL THEN NULL
-            WHEN bathroom_count - FLOOR(bathroom_count) >= 0.5 THEN 1
-            ELSE 0
-        END
-    )
-WHERE bathroom_count IS NOT NULL
-  AND (full_bath_count IS NULL OR half_bath_count IS NULL);
-UPDATE properties
-SET
-    full_bath_count = COALESCE(full_bath_count, 0),
-    half_bath_count = COALESCE(half_bath_count, 0)
-WHERE full_bath_count IS NULL OR half_bath_count IS NULL;
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -946,50 +923,6 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION apply_page_metadata_approval(UUID, TEXT, TEXT) TO authenticated;
-
--- Backfill Migration logic (Safe to run repeatedly)
--- 1. Reviews Migration
-INSERT INTO property_reviews (property_id, review_id)
-SELECT property_id, id FROM reviews WHERE property_id IS NOT NULL
-ON CONFLICT DO NOTHING;
-
--- 2. FAQs Migration
-INSERT INTO property_faqs (property_id, faq_id)
-SELECT property_id, id FROM faqs WHERE property_id IS NOT NULL
-ON CONFLICT DO NOTHING;
-
--- Backfill curated slots from legacy category values (safe to re-run).
-INSERT INTO property_curated_images (property_id, slot, url, display_order, created_at, updated_at)
-SELECT
-    pi.property_id,
-    CASE LOWER(TRIM(COALESCE(pi.category, '')))
-        WHEN 'primary' THEN 'home'
-        WHEN 'home' THEN 'home'
-        WHEN 'hero' THEN 'bg'
-        WHEN 'background' THEN 'bg'
-        WHEN 'bg' THEN 'bg'
-        WHEN 'secondary' THEN 'secondary'
-    END AS slot,
-    pi.url,
-    COALESCE(pi.display_order, 0),
-    COALESCE(pi.created_at, NOW()),
-    NOW()
-FROM property_images pi
-WHERE pi.property_id IS NOT NULL
-  AND LOWER(TRIM(COALESCE(pi.category, ''))) IN ('primary', 'home', 'hero', 'background', 'bg', 'secondary')
-ON CONFLICT (property_id, slot) DO UPDATE
-SET
-    url = EXCLUDED.url,
-    display_order = EXCLUDED.display_order,
-    updated_at = NOW();
-
--- Keep gallery table clean after backfill.
-DELETE FROM property_images
-WHERE LOWER(TRIM(COALESCE(category, ''))) IN ('primary', 'home', 'hero', 'background', 'bg', 'secondary');
-
-UPDATE property_images
-SET category = 'gallery'
-WHERE LOWER(TRIM(COALESCE(category, ''))) <> 'gallery';
 
 -- RLS: public read-only policies.
 ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
@@ -1952,12 +1885,6 @@ BEGIN
 END;
 $$;
 
-UPDATE knowledge_hubs
-SET description = 'Shared guidance and context that applies across properties.'
-WHERE scope_type = 'general'
-  AND property_id IS NULL
-  AND description IS DISTINCT FROM 'Shared guidance and context that applies across properties.';
-
 INSERT INTO knowledge_hubs (scope_type, property_id, title, description)
 SELECT
     'property',
@@ -1971,13 +1898,6 @@ WHERE NOT EXISTS (
     WHERE kh.scope_type = 'property'
       AND kh.property_id = p.id
 );
-
-UPDATE knowledge_hubs kh
-SET title = p.name || ' Knowledge Base'
-FROM properties p
-WHERE kh.scope_type = 'property'
-  AND kh.property_id = p.id
-  AND kh.title IS DISTINCT FROM p.name || ' Knowledge Base';
 
 -- ========================================================
 -- BLOGS & CONTENT MARKETING SCHEMA
@@ -2004,24 +1924,6 @@ CREATE TABLE IF NOT EXISTS public.blogs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 ALTER TABLE public.blogs ADD COLUMN IF NOT EXISTS draft_comment TEXT;
-
-UPDATE public.blogs
-SET
-    category = COALESCE(category, 'Travel Guides'),
-    author_name = COALESCE(author_name, 'Nirvana Luxe Team'),
-    author_image_url = COALESCE(author_image_url, '/favicon.png'),
-    read_time = COALESCE(read_time, '5 min read'),
-    published = COALESCE(published, false),
-    created_at = COALESCE(created_at, timezone('utc'::text, now())),
-    updated_at = COALESCE(updated_at, timezone('utc'::text, now()))
-WHERE
-    category IS NULL
-    OR author_name IS NULL
-    OR author_image_url IS NULL
-    OR read_time IS NULL
-    OR published IS NULL
-    OR created_at IS NULL
-    OR updated_at IS NULL;
 
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 
@@ -2454,36 +2356,6 @@ CREATE TABLE IF NOT EXISTS salary_audit_logs (
 
 CREATE INDEX IF NOT EXISTS salary_audit_logs_user_idx ON salary_audit_logs(user_id, created_at DESC);
 
-INSERT INTO salary_audit_logs (
-    user_id,
-    changed_by,
-    annual_salary,
-    variable_pay,
-    variable_pay_frequency,
-    currency,
-    pay_frequency,
-    effective_from,
-    salary_note,
-    change_type,
-    created_at
-)
-SELECT
-    ec.user_id,
-    ec.created_by,
-    ec.annual_salary,
-    ec.variable_pay,
-    ec.variable_pay_frequency,
-    ec.currency,
-    ec.pay_frequency,
-    ec.effective_from,
-    ec.salary_note,
-    'initial_created',
-    ec.created_at
-FROM employee_compensation ec
-WHERE NOT EXISTS (
-    SELECT 1 FROM salary_audit_logs sal WHERE sal.user_id = ec.user_id
-);
-
 CREATE OR REPLACE FUNCTION public.ensure_employee_profile()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -2605,3 +2477,161 @@ GRANT SELECT ON employee_directory, employee_private_profiles, employee_compensa
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('paystubs', 'paystubs', FALSE, 5242880, ARRAY['application/pdf'])
 ON CONFLICT (id) DO UPDATE SET public = FALSE;
+
+-- ============================================================
+-- Preventive maintenance tracking
+-- ============================================================
+
+ALTER TABLE employee_private_profiles
+    ADD COLUMN IF NOT EXISTS teams TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE employee_private_profiles DROP CONSTRAINT IF EXISTS employee_private_profiles_teams_check;
+ALTER TABLE employee_private_profiles
+    ADD CONSTRAINT employee_private_profiles_teams_check
+    CHECK (teams <@ ARRAY['STR', 'LTR', 'Leadership']::TEXT[]);
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_catalog (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (BTRIM(name) <> '')
+);
+CREATE UNIQUE INDEX IF NOT EXISTS preventive_maintenance_catalog_active_name_uidx
+ON preventive_maintenance_catalog (LOWER(BTRIM(name))) WHERE is_active;
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_schedules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    catalog_task_id UUID NOT NULL REFERENCES preventive_maintenance_catalog(id) ON DELETE RESTRICT,
+    property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    recurrence_count INTEGER NOT NULL CHECK (recurrence_count > 0),
+    recurrence_unit TEXT NOT NULL CHECK (recurrence_unit IN ('day', 'week', 'month', 'year')),
+    baseline_date DATE,
+    current_due_on DATE NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(catalog_task_id, property_id)
+);
+CREATE INDEX IF NOT EXISTS preventive_maintenance_schedules_property_due_idx
+ON preventive_maintenance_schedules(property_id, current_due_on) WHERE is_active;
+CREATE INDEX IF NOT EXISTS preventive_maintenance_schedules_task_idx
+ON preventive_maintenance_schedules(catalog_task_id) WHERE is_active;
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_completions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    schedule_id UUID NOT NULL REFERENCES preventive_maintenance_schedules(id) ON DELETE RESTRICT,
+    completed_on DATE NOT NULL,
+    due_on_snapshot DATE NOT NULL,
+    generated_next_due_on DATE NOT NULL,
+    note TEXT NOT NULL CHECK (BTRIM(note) <> ''),
+    completed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    completed_by_name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    undone_at TIMESTAMPTZ,
+    undone_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    undone_by_name TEXT,
+    undo_reason TEXT,
+    CHECK (undone_at IS NULL OR (undo_reason IS NOT NULL AND BTRIM(undo_reason) <> ''))
+);
+CREATE INDEX IF NOT EXISTS preventive_maintenance_completions_schedule_idx
+ON preventive_maintenance_completions(schedule_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_due_adjustments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    schedule_id UUID NOT NULL REFERENCES preventive_maintenance_schedules(id) ON DELETE RESTRICT,
+    previous_due_on DATE NOT NULL,
+    new_due_on DATE NOT NULL,
+    reason TEXT NOT NULL CHECK (BTRIM(reason) <> ''),
+    adjusted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    adjusted_by_name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    superseded_at TIMESTAMPTZ,
+    superseded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS preventive_maintenance_due_adjustments_schedule_idx
+ON preventive_maintenance_due_adjustments(schedule_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    completion_id UUID NOT NULL REFERENCES preventive_maintenance_completions(id) ON DELETE CASCADE,
+    storage_path TEXT NOT NULL UNIQUE,
+    original_filename TEXT NOT NULL,
+    mime_type TEXT,
+    file_size BIGINT NOT NULL DEFAULT 0 CHECK (file_size >= 0),
+    uploaded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS preventive_maintenance_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+    catalog_task_id UUID REFERENCES preventive_maintenance_catalog(id) ON DELETE SET NULL,
+    schedule_id UUID REFERENCES preventive_maintenance_schedules(id) ON DELETE SET NULL,
+    completion_id UUID REFERENCES preventive_maintenance_completions(id) ON DELETE SET NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN (
+        'catalog_created', 'catalog_updated', 'catalog_archived',
+        'schedule_created', 'schedule_updated', 'due_date_updated',
+        'task_completed', 'completion_undone', 'attachment_added', 'csv_exported'
+    )),
+    actor_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    actor_name TEXT NOT NULL,
+    previous_due_on DATE,
+    new_due_on DATE,
+    note TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE preventive_maintenance_events DROP CONSTRAINT IF EXISTS preventive_maintenance_events_event_type_check;
+ALTER TABLE preventive_maintenance_events
+    ADD CONSTRAINT preventive_maintenance_events_event_type_check
+    CHECK (event_type IN (
+        'catalog_created', 'catalog_updated', 'catalog_archived',
+        'schedule_created', 'schedule_updated', 'due_date_updated',
+        'task_completed', 'completion_undone', 'attachment_added', 'csv_exported'
+    ));
+CREATE INDEX IF NOT EXISTS preventive_maintenance_events_property_idx
+ON preventive_maintenance_events(property_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS preventive_maintenance_events_schedule_idx
+ON preventive_maintenance_events(schedule_id, created_at DESC);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'preventive_maintenance_catalog_set_updated_at') THEN
+        CREATE TRIGGER preventive_maintenance_catalog_set_updated_at
+        BEFORE UPDATE ON preventive_maintenance_catalog
+        FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'preventive_maintenance_schedules_set_updated_at') THEN
+        CREATE TRIGGER preventive_maintenance_schedules_set_updated_at
+        BEFORE UPDATE ON preventive_maintenance_schedules
+        FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+    END IF;
+END;
+$$;
+
+ALTER TABLE preventive_maintenance_catalog ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_completions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_due_adjustments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_attachments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preventive_maintenance_events ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'preventive-maintenance',
+    'preventive-maintenance',
+    FALSE,
+    10485760,
+    ARRAY['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+)
+ON CONFLICT (id) DO UPDATE SET
+    public = FALSE,
+    file_size_limit = 10485760,
+    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];

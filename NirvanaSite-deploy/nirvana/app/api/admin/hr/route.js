@@ -10,6 +10,7 @@ import {
   variablePayLineForPeriod,
 } from "../../../../src/lib/hr";
 import { createPaystubPdf } from "../../../../src/lib/server/paystubPdf";
+import { normalizeTeams } from "../../../../src/lib/preventiveMaintenance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -313,6 +314,7 @@ export async function POST(request) {
         privateProfile.job_title = cleanText(body.jobTitle, 150);
         privateProfile.hire_date = body.hireDate || null;
         privateProfile.employment_status = body.employmentStatus === "inactive" ? "inactive" : "active";
+        privateProfile.teams = normalizeTeams(body.teams);
       }
       const [{ error: directoryError }, { error: profileError }] = await Promise.all([
         adminClient.from("employee_directory").upsert(directory),

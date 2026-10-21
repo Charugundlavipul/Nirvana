@@ -6,6 +6,7 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 const ROLE_SET = new Set(["owner", "admin", "employee"]);
+const TEAM_SET = new Set(["STR", "LTR", "Leadership"]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -113,6 +114,9 @@ Deno.serve(async (req) => {
       const role = normalizeRole(body?.role);
       const firstName = String(body?.firstName || "").trim().slice(0, 100);
       const lastName = String(body?.lastName || "").trim().slice(0, 100);
+      const teams = [...new Set((Array.isArray(body?.teams) ? body.teams : [])
+        .map((value: unknown) => String(value || "").trim())
+        .filter((value: string) => TEAM_SET.has(value)))];
       if (!email) return error("Email is required");
       if (!password || password.length < 8) return error("Password must be at least 8 chars");
       if (!ROLE_SET.has(role)) return error("Invalid role");
@@ -144,6 +148,15 @@ Deno.serve(async (req) => {
       if (profileError) {
         await adminClient.auth.admin.deleteUser(newUserId);
         return error(profileError.message, 500);
+      }
+
+      const { error: privateProfileError } = await adminClient.from("employee_private_profiles").upsert({
+        user_id: newUserId,
+        teams,
+      });
+      if (privateProfileError) {
+        await adminClient.auth.admin.deleteUser(newUserId);
+        return error(privateProfileError.message, 500);
       }
 
       return json({ ok: true, user_id: newUserId, email, role });

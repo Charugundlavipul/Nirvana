@@ -28,7 +28,8 @@
     "dev": "next dev",
     "start": "next start",
     "build": "next build",
-    "test:hr": "node --experimental-default-type=module --test tests/hr.test.js",
+    "test:hr": "node --test tests/hr.test.js",
+    "test:maintenance": "node --test tests/preventive-maintenance.test.mjs",
     "cleanup:rejected": "node scripts/cleanup_rejected_requests.js",
     "preview": "next start"
   },
