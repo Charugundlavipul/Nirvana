@@ -48,6 +48,7 @@
 .summaryTitle span { display: block; margin-top: 3px; color: #64748b; font-size: 12px; }
 .propertyRows { padding: 0 20px 20px; border-top: 1px solid #eef2f7; }
 .scheduleRow { display: grid; grid-template-columns: minmax(180px, 1.2fr) minmax(150px, .75fr) 92px 130px minmax(165px, .8fr) minmax(132px, auto); gap: 10px; align-items: start; padding: 14px 0; border-bottom: 1px solid #eef2f7; }
+.scheduleRowConfigured { grid-template-columns: minmax(180px, 1fr) 92px 130px minmax(132px, auto); }
 .scheduleRow > .propertyName { padding-top: 25px; }
 .scheduleRow > .rowActions { padding-top: 25px; }
 .scheduleRow:last-child { border-bottom: 0; }
@@ -74,6 +75,7 @@
 .historyDetails summary { cursor: pointer; color: #424334; font-size: 13px; font-weight: 800; }
 .timeline { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
 .timelineItem { padding: 11px 12px; border-left: 3px solid #94a3b8; background: #f8fafc; border-radius: 0 10px 10px 0; }
+.completionHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .timelineItem strong { display: block; color: #334155; font-size: 13px; text-transform: capitalize; }
 .timelineItem span { color: #64748b; font-size: 11px; }
 .timelineItem p { margin: 5px 0 0; color: #475569; font-size: 12px; }
@@ -89,6 +91,6 @@
 .empty { padding: 34px 20px; text-align: center; color: #64748b; }
 .loading { min-height: 220px; display: grid; place-items: center; color: #64748b; }
 
-@media (max-width: 1100px) { .statsGrid { grid-template-columns: repeat(3, 1fr); } .scheduleRow { grid-template-columns: 1fr 1fr 90px 120px; } .rowActions { grid-column: 3 / -1; } }
-@media (max-width: 760px) { .statsGrid { grid-template-columns: 1fr 1fr; } .dashboardGrid { grid-template-columns: 1fr; } .formCard { grid-template-columns: 1fr; } .scheduleRow { grid-template-columns: 1fr 1fr; } .rowActions { grid-column: 1 / -1; justify-content: flex-start; } .taskHeader { flex-direction: column; } }
+@media (max-width: 1100px) { .statsGrid { grid-template-columns: repeat(3, 1fr); } .scheduleRow { grid-template-columns: 1fr 1fr 90px 120px; } .scheduleRowConfigured { grid-template-columns: 1fr 90px 120px minmax(132px, auto); } .rowActions { grid-column: 3 / -1; } .scheduleRowConfigured > .rowActions { grid-column: auto; } }
+@media (max-width: 760px) { .statsGrid { grid-template-columns: 1fr 1fr; } .dashboardGrid { grid-template-columns: 1fr; } .formCard { grid-template-columns: 1fr; } .scheduleRow, .scheduleRowConfigured { grid-template-columns: 1fr 1fr; } .rowActions, .scheduleRowConfigured > .rowActions { grid-column: 1 / -1; justify-content: flex-start; } .taskHeader { flex-direction: column; } }
 @media (max-width: 480px) { .statsGrid { grid-template-columns: 1fr; } .moduleNav { width: 100%; } .moduleLink { flex: 1; justify-content: center; padding-inline: 10px; } .scheduleRow { grid-template-columns: 1fr; } .rowActions { grid-column: auto; flex-direction: column; } .excludedRow { align-items: flex-start; flex-direction: column; } }

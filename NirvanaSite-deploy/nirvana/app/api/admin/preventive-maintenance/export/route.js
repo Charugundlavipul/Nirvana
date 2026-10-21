@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminAccess } from "../../../../../src/lib/server/supabaseAdmin";
-import { getMaintenanceStatus, recurrenceLabel } from "../../../../../src/lib/preventiveMaintenance";
+import { recurrenceLabel } from "../../../../../src/lib/preventiveMaintenance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,58 +23,47 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get("propertyId") || "";
 
-    let eventsQuery = adminClient.from("preventive_maintenance_events").select("*").order("created_at", { ascending: false });
     let schedulesQuery = adminClient.from("preventive_maintenance_schedules").select("*");
     if (propertyId) {
-      eventsQuery = eventsQuery.eq("property_id", propertyId);
       schedulesQuery = schedulesQuery.eq("property_id", propertyId);
     }
-    const [propertiesResult, catalogResult, schedulesResult, eventsResult, completionsResult, attachmentsResult, directoryResult] = await Promise.all([
+    const [propertiesResult, catalogResult, schedulesResult, completionsResult, attachmentsResult, directoryResult] = await Promise.all([
       adminClient.from("properties").select("id, name"),
       adminClient.from("preventive_maintenance_catalog").select("id, name"),
       schedulesQuery,
-      eventsQuery,
-      adminClient.from("preventive_maintenance_completions").select("id, schedule_id, completed_on, completed_by_name, note, undone_at, undo_reason"),
+      adminClient.from("preventive_maintenance_completions").select("id, schedule_id, completed_on, completed_by_name, note, undone_at").order("completed_on", { ascending: false }),
       adminClient.from("preventive_maintenance_attachments").select("completion_id, original_filename"),
       adminClient.from("employee_directory").select("first_name, last_name").eq("user_id", user.id).maybeSingle(),
     ]);
-    for (const result of [propertiesResult, catalogResult, schedulesResult, eventsResult, completionsResult, attachmentsResult]) {
+    for (const result of [propertiesResult, catalogResult, schedulesResult, completionsResult, attachmentsResult]) {
       if (result.error) throw result.error;
     }
     const propertyMap = new Map((propertiesResult.data || []).map((item) => [item.id, item.name]));
     const taskMap = new Map((catalogResult.data || []).map((item) => [item.id, item.name]));
     const scheduleMap = new Map((schedulesResult.data || []).map((item) => [item.id, item]));
-    const completionMap = new Map((completionsResult.data || []).map((item) => [item.id, item]));
     const attachmentMap = new Map();
     for (const item of attachmentsResult.data || []) {
       attachmentMap.set(item.completion_id, [...(attachmentMap.get(item.completion_id) || []), item.original_filename]);
     }
 
     const headers = [
-      "Property", "Maintenance Task", "Event", "Event Timestamp", "Current Status", "Current Due Date",
-      "Previous Due Date", "New Due Date", "Recurrence", "Completion Date", "Note / Reason", "Changed By",
-      "Completion State", "Attachments",
+      "Property", "Maintenance Task", "Completion Date", "Note", "Completed By",
+      "Recurrence", "Current Due Date", "Attachments",
     ];
     const rows = [csvRow(headers)];
-    for (const event of eventsResult.data || []) {
-      if (event.event_type === "csv_exported") continue;
-      const schedule = scheduleMap.get(event.schedule_id);
-      const completion = completionMap.get(event.completion_id);
+    for (const completion of completionsResult.data || []) {
+      if (completion.undone_at) continue;
+      const schedule = scheduleMap.get(completion.schedule_id);
+      if (!schedule) continue;
       rows.push(csvRow([
-        propertyMap.get(event.property_id) || "",
-        taskMap.get(event.catalog_task_id) || "",
-        event.event_type.replace(/_/g, " "),
-        event.created_at,
-        schedule ? getMaintenanceStatus(schedule.current_due_on).replace(/_/g, " ") : "",
-        schedule?.current_due_on || "",
-        event.previous_due_on || "",
-        event.new_due_on || "",
-        schedule ? recurrenceLabel(schedule.recurrence_count, schedule.recurrence_unit) : "",
-        completion?.completed_on || "",
-        event.note || completion?.note || "",
-        event.actor_name || completion?.completed_by_name || "",
-        completion ? (completion.undone_at ? "Undone" : "Completed") : "",
-        (attachmentMap.get(event.completion_id) || []).join(" | "),
+        propertyMap.get(schedule.property_id) || "",
+        taskMap.get(schedule.catalog_task_id) || "",
+        completion.completed_on,
+        completion.note || "",
+        completion.completed_by_name || "",
+        recurrenceLabel(schedule.recurrence_count, schedule.recurrence_unit),
+        schedule.current_due_on || "",
+        (attachmentMap.get(completion.id) || []).join(" | "),
       ]));
     }
 

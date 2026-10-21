@@ -3,7 +3,7 @@ import { FaArchive, FaCheckCircle, FaChevronDown, FaEdit, FaMinusCircle, FaPlus,
 import MaintenanceShell from "./MaintenanceShell";
 import styles from "./Maintenance.module.css";
 import { getMaintenanceWorkspace, maintenanceAction } from "../../../lib/preventiveMaintenanceApi";
-import { addRecurrence, recurrenceLabel } from "../../../lib/preventiveMaintenance";
+import { addRecurrence, maintenanceScheduleChanged, recurrenceLabel } from "../../../lib/preventiveMaintenance";
 
 const blankSchedule = { baselineDate: "", nextDueOn: "", recurrenceCount: 1, recurrenceUnit: "month" };
 
@@ -146,12 +146,13 @@ export default function MaintenanceCatalog() {
               const schedule = scheduleMap.get(key);
               const draft = { ...blankSchedule, ...(drafts[key] || {}) };
               const automaticNextDue = calculatedDueDate(draft);
-              return <div className={styles.scheduleRow} key={property.id}>
+              const hasScheduleChanges = maintenanceScheduleChanged(schedule, draft);
+              return <div className={`${styles.scheduleRow} ${schedule ? styles.scheduleRowConfigured : ""}`} key={property.id}>
                 <div className={styles.propertyName}><strong>{property.name}</strong><span>{schedule ? `${recurrenceLabel(schedule.recurrence_count, schedule.recurrence_unit)} · Due ${schedule.current_due_on}` : "Schedule required"}</span></div>
-                <div className={styles.field}><label>Starting/last completion</label><input className={styles.input} type="date" value={draft.baselineDate} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { baselineDate: e.target.value })} /></div>
-                <div className={styles.field}><label>Every</label><input className={styles.input} type="number" min="1" step="1" value={draft.recurrenceCount} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceCount: e.target.value })} /></div>
+                {!schedule && <div className={styles.field}><label>Starting/last completion</label><input className={styles.input} type="date" value={draft.baselineDate} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { baselineDate: e.target.value })} /></div>}
+                <div className={styles.field}><label>Every</label><input className={styles.input} type="number" min="1" step="1" value={draft.recurrenceCount} disabled={!data.canConfigure} onWheel={(event) => event.currentTarget.blur()} onChange={(e) => setDraft(key, { recurrenceCount: e.target.value })} /></div>
                 <div className={styles.field}><label>Unit</label><select className={styles.select} value={draft.recurrenceUnit} disabled={!data.canConfigure} onChange={(e) => setDraft(key, { recurrenceUnit: e.target.value })}><option value="day">Days</option><option value="week">Weeks</option><option value="month">Months</option><option value="year">Years</option></select></div>
-                <div className={styles.field}>
+                {!schedule && <div className={styles.field}>
                   <label>Next due date</label>
                   <input
                     className={styles.input}
@@ -162,9 +163,9 @@ export default function MaintenanceCatalog() {
                     onChange={(e) => setDraft(key, { nextDueOn: e.target.value })}
                   />
                   <span className={styles.fieldHint}>{draft.baselineDate ? "Calculated from the last completion" : "Required when no last completion date is available"}</span>
-                </div>
+                </div>}
                 {data.canConfigure && <div className={styles.rowActions}>
-                  <button type="button" className={`${styles.button} ${styles.smallButton}`} disabled={busy === key} onClick={() => saveSchedule(task.id, property.id)}>{busy === key ? "Saving…" : schedule ? "Update" : "Apply"}</button>
+                  {hasScheduleChanges && <button type="button" className={`${styles.button} ${styles.smallButton}`} disabled={busy === key} onClick={() => saveSchedule(task.id, property.id)}>{busy === key ? "Saving…" : schedule ? "Update" : "Apply"}</button>}
                   <button type="button" className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `exclude:${task.id}:${property.id}`} onClick={() => excludeProperty(task, property)} title={`Remove ${property.name} from this task`}><FaMinusCircle /> Remove property</button>
                 </div>}
               </div>;

@@ -2555,6 +2555,38 @@ CREATE TABLE IF NOT EXISTS preventive_maintenance_completions (
 CREATE INDEX IF NOT EXISTS preventive_maintenance_completions_schedule_idx
 ON preventive_maintenance_completions(schedule_id, created_at DESC);
 
+-- Treat the starting/last completion entered during initial schedule setup as
+-- the first editable completion-history record. This is idempotent for both
+-- existing schedules and schedules created by the application.
+INSERT INTO preventive_maintenance_completions (
+    schedule_id,
+    completed_on,
+    due_on_snapshot,
+    generated_next_due_on,
+    note,
+    completed_by,
+    completed_by_name,
+    created_at
+)
+SELECT
+    schedule.id,
+    schedule.baseline_date,
+    schedule.current_due_on,
+    schedule.current_due_on,
+    'Initial completion recorded during schedule setup',
+    schedule.created_by,
+    'Schedule setup',
+    schedule.created_at
+FROM preventive_maintenance_schedules AS schedule
+WHERE schedule.baseline_date IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1
+      FROM preventive_maintenance_completions AS completion
+      WHERE completion.schedule_id = schedule.id
+        AND completion.completed_on = schedule.baseline_date
+        AND completion.undone_at IS NULL
+  );
+
 CREATE TABLE IF NOT EXISTS preventive_maintenance_due_adjustments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     schedule_id UUID NOT NULL REFERENCES preventive_maintenance_schedules(id) ON DELETE RESTRICT,

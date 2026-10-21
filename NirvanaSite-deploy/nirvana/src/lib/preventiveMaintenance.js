@@ -58,6 +58,21 @@ export function recurrenceLabel(count, unit) {
   return `Every ${amount} ${unit}${amount === 1 ? "" : "s"}`;
 }
 
+export function latestCompletionDate(completions = [], baselineDate = "") {
+  const dates = [
+    baselineDate,
+    ...completions.filter((item) => !item?.undone_at).map((item) => item?.completed_on),
+  ].filter(isDateString);
+  return dates.sort().at(-1) || "";
+}
+
+export function maintenanceScheduleChanged(schedule, draft) {
+  if (!schedule) return true;
+
+  return Number(draft?.recurrenceCount) !== Number(schedule.recurrence_count)
+    || String(draft?.recurrenceUnit || "") !== String(schedule.recurrence_unit || "");
+}
+
 export const MAINTENANCE_STATUS = {
   overdue: { label: "Overdue", color: "purple" },
   urgent: { label: "Due within 7 days", color: "red" },

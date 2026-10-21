@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import {
   addRecurrence,
   getMaintenanceStatus,
+  latestCompletionDate,
+  maintenanceScheduleChanged,
   normalizeTeams,
   recurrenceLabel,
 } from "../src/lib/preventiveMaintenance.js";
@@ -27,8 +29,43 @@ test("maintenance status bands are complete and non-overlapping", () => {
   assert.equal(getMaintenanceStatus("", today), "unscheduled");
 });
 
+test("latest completion uses the latest date, including the initial baseline", () => {
+  const completions = [
+    { completed_on: "2026-09-15", undone_at: null },
+    { completed_on: "2026-12-01", undone_at: "2026-12-02T00:00:00Z" },
+    { completed_on: "2026-10-15", undone_at: null },
+  ];
+  assert.equal(latestCompletionDate(completions, "2026-10-01"), "2026-10-15");
+  assert.equal(latestCompletionDate(completions, "2026-11-01"), "2026-11-01");
+});
+
 test("team selections are deduplicated and restricted to configured choices", () => {
   assert.deepEqual(normalizeTeams(["STR", "Leadership", "STR", "Other"]), ["STR", "Leadership"]);
+});
+
+test("catalog schedules are dirty only when an editable value changes", () => {
+  const schedule = {
+    baseline_date: "2026-10-01",
+    current_due_on: "2026-11-01",
+    recurrence_count: 1,
+    recurrence_unit: "month",
+  };
+  const unchangedDraft = {
+    baselineDate: "2026-10-01",
+    nextDueOn: "",
+    recurrenceCount: "1",
+    recurrenceUnit: "month",
+  };
+
+  assert.equal(maintenanceScheduleChanged(schedule, unchangedDraft), false);
+  assert.equal(maintenanceScheduleChanged(schedule, { ...unchangedDraft, recurrenceCount: "2" }), true);
+  assert.equal(maintenanceScheduleChanged(schedule, { ...unchangedDraft, recurrenceUnit: "week" }), true);
+  assert.equal(maintenanceScheduleChanged(schedule, { ...unchangedDraft, baselineDate: "2026-10-02" }), false);
+  assert.equal(maintenanceScheduleChanged(null, unchangedDraft), true);
+
+  const manualSchedule = { ...schedule, baseline_date: null };
+  assert.equal(maintenanceScheduleChanged(manualSchedule, { ...unchangedDraft, baselineDate: "", nextDueOn: "2026-11-01" }), false);
+  assert.equal(maintenanceScheduleChanged(manualSchedule, { ...unchangedDraft, baselineDate: "", nextDueOn: "2026-11-02" }), false);
 });
 
 test("schema preserves completion, undo, due adjustment, attachments, and team history", async () => {
@@ -52,12 +89,13 @@ test("canonical schema does not rerun completed destructive data migrations", as
   assert.doesNotMatch(schema, /INSERT INTO salary_audit_logs/);
 });
 
-test("maintenance API enforces notes for completion, undo, and due-date updates", async () => {
+test("maintenance API derives due dates from the latest completion and supports history edits", async () => {
   const route = await readFile(new URL("../app/api/admin/preventive-maintenance/route.js", import.meta.url), "utf8");
-  assert.match(route, /A completion note is required/);
+  assert.match(route, /function dueFromLatestCompletion/);
+  assert.match(route, /\.order\("completed_on", \{ ascending: false \}\)/);
+  assert.match(route, /action === "update_completion"/);
+  assert.doesNotMatch(route, /action === "update_due"/);
   assert.match(route, /A reason is required to mark a completion as undone/);
-  assert.match(route, /A reason is required when changing a due date/);
-  assert.match(route, /current_due_on: completion\.due_on_snapshot/);
   assert.match(route, /completed_by_name/);
 });
 
@@ -80,9 +118,33 @@ test("catalog schedules require an explicit next due date when no baseline exist
   assert.match(route, /requestedNextDue/);
   assert.match(route, /Choose the next due date when there is no starting or last completion date/);
   assert.match(route, /baselineDate\s*\?\s*addRecurrence\(baselineDate/);
-  assert.match(route, /next_due_source: baselineDate \? "calculated_from_baseline" : "manually_selected"/);
+  assert.match(route, /next_due_source: existing \? "latest_completion" : baselineDate \? "calculated_from_baseline" : "manually_selected"/);
   assert.match(catalog, /Next due date/);
   assert.match(catalog, /required=\{!draft\.baselineDate\}/);
+  assert.match(catalog, /!schedule && <div className=\{styles\.field\}><label>Starting\/last completion/);
+  assert.match(catalog, /!schedule && <div className=\{styles\.field\}>[\s\S]*<label>Next due date/);
+});
+
+test("task history shows editable completions instead of audit events", async () => {
+  const tasks = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceTasks.jsx", import.meta.url), "utf8");
+  const dashboard = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceDashboard.jsx", import.meta.url), "utf8");
+  assert.match(tasks, /Completion history/);
+  assert.match(tasks, /mode: "edit"/);
+  assert.match(tasks, /maintenanceAction\("update_completion"/);
+  assert.doesNotMatch(tasks, /scheduleEventMap|Complete property history|Update due date/);
+  assert.match(dashboard, /Recent completions/);
+  assert.doesNotMatch(dashboard, /data\.events/);
+});
+
+test("the initial baseline date becomes an editable completion-history record", async () => {
+  const route = await readFile(new URL("../app/api/admin/preventive-maintenance/route.js", import.meta.url), "utf8");
+  const migration = await readFile(new URL("../supabase/migrations/20261021000000_backfill_maintenance_baseline_completions.sql", import.meta.url), "utf8");
+  assert.match(route, /Initial completion recorded during schedule setup/);
+  assert.match(route, /completed_on: baselineDate/);
+  assert.match(route, /completion\.completed_on === schedule\.baseline_date/);
+  assert.match(migration, /schedule\.baseline_date IS NOT NULL/);
+  assert.match(migration, /NOT EXISTS/);
+  assert.match(migration, /completion\.completed_on = schedule\.baseline_date/);
 });
 
 test("catalog task names and descriptions can be edited by configurators", async () => {

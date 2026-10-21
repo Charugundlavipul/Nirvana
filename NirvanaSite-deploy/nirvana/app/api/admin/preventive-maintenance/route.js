@@ -5,6 +5,7 @@ import {
   addRecurrence,
   getMaintenanceStatus,
   isDateString,
+  latestCompletionDate,
   todayDateString,
 } from "../../../../src/lib/preventiveMaintenance";
 
@@ -38,17 +39,36 @@ async function actorName(adminClient, user) {
   return `${data?.first_name || ""} ${data?.last_name || ""}`.trim() || user.email || "Admin user";
 }
 
+async function latestActiveCompletion(adminClient, scheduleId) {
+  const { data, error } = await adminClient
+    .from("preventive_maintenance_completions")
+    .select("id, completed_on")
+    .eq("schedule_id", scheduleId)
+    .is("undone_at", null)
+    .order("completed_on", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function dueFromLatestCompletion(adminClient, schedule, recurrenceCount, recurrenceUnit, fallbackDue) {
+  const latest = await latestActiveCompletion(adminClient, schedule.id);
+  const anchorDate = latestCompletionDate(latest ? [latest] : [], schedule.baseline_date);
+  return anchorDate ? addRecurrence(anchorDate, recurrenceCount, recurrenceUnit) : fallbackDue;
+}
+
 async function loadWorkspace(adminClient, role) {
-  const [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult, eventsResult] = await Promise.all([
+  const [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult] = await Promise.all([
     adminClient.from("properties").select("id, name, slug, location").order("name"),
     adminClient.from("preventive_maintenance_catalog").select("*").order("name"),
     adminClient.from("preventive_maintenance_exclusions").select("catalog_task_id, property_id, excluded_by, created_at"),
     adminClient.from("preventive_maintenance_schedules").select("*").eq("is_active", true).order("current_due_on"),
     adminClient.from("preventive_maintenance_completions").select("*").order("created_at", { ascending: false }).limit(1000),
     adminClient.from("preventive_maintenance_attachments").select("*").order("created_at", { ascending: false }),
-    adminClient.from("preventive_maintenance_events").select("*").order("created_at", { ascending: false }).limit(1000),
   ]);
-  for (const result of [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult, eventsResult]) {
+  for (const result of [propertiesResult, catalogResult, exclusionsResult, schedulesResult, completionsResult, attachmentsResult]) {
     if (result.error) throw result.error;
   }
 
@@ -97,7 +117,6 @@ async function loadWorkspace(adminClient, role) {
     exclusions,
     schedules,
     completions,
-    events: eventsResult.data || [],
     counts,
   };
 }
@@ -194,11 +213,6 @@ export async function POST(request) {
       if (!taskId || !propertyId) fail("Task and property are required.");
       if (!Number.isInteger(recurrenceCount) || recurrenceCount < 1) fail("Recurrence must be a positive whole number.");
       if (!MAINTENANCE_UNITS.includes(recurrenceUnit)) fail("Choose a valid recurrence unit.");
-      if (baselineDate && !isDateString(baselineDate)) fail("Starting date is invalid.");
-      if (!baselineDate && !isDateString(requestedNextDue)) fail("Choose the next due date when there is no starting or last completion date.");
-      const nextDue = baselineDate
-        ? addRecurrence(baselineDate, recurrenceCount, recurrenceUnit)
-        : requestedNextDue;
       const { error: exclusionError } = await adminClient.from("preventive_maintenance_exclusions")
         .delete().eq("catalog_task_id", taskId).eq("property_id", propertyId);
       if (exclusionError) throw exclusionError;
@@ -206,11 +220,18 @@ export async function POST(request) {
         .select("*").eq("catalog_task_id", taskId).eq("property_id", propertyId).maybeSingle();
       if (existingError) throw existingError;
       let schedule;
+      let nextDue;
       if (existing) {
+        nextDue = await dueFromLatestCompletion(
+          adminClient,
+          existing,
+          recurrenceCount,
+          recurrenceUnit,
+          existing.current_due_on,
+        );
         const { data, error } = await adminClient.from("preventive_maintenance_schedules").update({
           recurrence_count: recurrenceCount,
           recurrence_unit: recurrenceUnit,
-          baseline_date: baselineDate,
           current_due_on: nextDue,
           is_active: true,
           updated_by: user.id,
@@ -220,6 +241,11 @@ export async function POST(request) {
         if (!data) fail("This schedule changed while you were editing it. Please refresh and try again.", 409);
         schedule = data;
       } else {
+        if (baselineDate && !isDateString(baselineDate)) fail("Starting date is invalid.");
+        if (!baselineDate && !isDateString(requestedNextDue)) fail("Choose the next due date when there is no starting or last completion date.");
+        nextDue = baselineDate
+          ? addRecurrence(baselineDate, recurrenceCount, recurrenceUnit)
+          : requestedNextDue;
         const { data, error } = await adminClient.from("preventive_maintenance_schedules").insert({
           catalog_task_id: taskId,
           property_id: propertyId,
@@ -232,6 +258,21 @@ export async function POST(request) {
         }).select("*").single();
         if (error) throw error;
         schedule = data;
+        if (baselineDate) {
+          const { error: baselineCompletionError } = await adminClient.from("preventive_maintenance_completions").insert({
+            schedule_id: schedule.id,
+            completed_on: baselineDate,
+            due_on_snapshot: nextDue,
+            generated_next_due_on: nextDue,
+            note: "Initial completion recorded during schedule setup",
+            completed_by: user.id,
+            completed_by_name: actor,
+          });
+          if (baselineCompletionError) {
+            await adminClient.from("preventive_maintenance_schedules").delete().eq("id", schedule.id);
+            throw baselineCompletionError;
+          }
+        }
       }
       await adminClient.from("preventive_maintenance_events").insert({
         property_id: propertyId,
@@ -245,8 +286,8 @@ export async function POST(request) {
         metadata: {
           recurrence_count: recurrenceCount,
           recurrence_unit: recurrenceUnit,
-          baseline_date: baselineDate,
-          next_due_source: baselineDate ? "calculated_from_baseline" : "manually_selected",
+          baseline_date: existing?.baseline_date || baselineDate,
+          next_due_source: existing ? "latest_completion" : baselineDate ? "calculated_from_baseline" : "manually_selected",
         },
       });
       return json({ ok: true, schedule });
@@ -319,47 +360,15 @@ export async function POST(request) {
     }
 
     const scheduleId = text(body.scheduleId, 80);
-    if (!["complete", "undo_completion", "update_due"].includes(action)) fail("Unknown maintenance action.", 404);
+    if (!["complete", "update_completion", "undo_completion"].includes(action)) fail("Unknown maintenance action.", 404);
     const { data: schedule, error: scheduleError } = await adminClient.from("preventive_maintenance_schedules")
       .select("*").eq("id", scheduleId).eq("is_active", true).maybeSingle();
     if (scheduleError) throw scheduleError;
     if (!schedule) fail("Maintenance schedule not found.", 404);
 
-    if (action === "update_due") {
-      assertConfigurator(role);
-      const newDueOn = text(body.newDueOn, 10);
-      const reason = text(body.reason, 1000);
-      if (!isDateString(newDueOn)) fail("Choose a valid due date.");
-      if (!reason) fail("A reason is required when changing a due date.");
-      const { data: adjustment, error: adjustmentError } = await adminClient.from("preventive_maintenance_due_adjustments").insert({
-        schedule_id: schedule.id,
-        previous_due_on: schedule.current_due_on,
-        new_due_on: newDueOn,
-        reason,
-        adjusted_by: user.id,
-        adjusted_by_name: actor,
-      }).select("*").single();
-      if (adjustmentError) throw adjustmentError;
-      const { data: updated, error: updateError } = await adminClient.from("preventive_maintenance_schedules").update({
-        current_due_on: newDueOn, updated_by: user.id, version: schedule.version + 1,
-      }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
-      if (updateError || !updated) {
-        await adminClient.from("preventive_maintenance_due_adjustments").delete().eq("id", adjustment.id);
-        if (updateError) throw updateError;
-        fail("This task changed while you were editing it. Please refresh and try again.", 409);
-      }
-      await adminClient.from("preventive_maintenance_events").insert({
-        property_id: schedule.property_id, catalog_task_id: schedule.catalog_task_id, schedule_id: schedule.id,
-        event_type: "due_date_updated", actor_user_id: user.id, actor_name: actor,
-        previous_due_on: schedule.current_due_on, new_due_on: newDueOn, note: reason,
-      });
-      return json({ ok: true });
-    }
-
     if (action === "complete") {
-      const note = text(body.note, 3000);
+      const note = text(body.note, 3000) || "Completed";
       const completedOn = text(body.completedOn, 10) || todayDateString();
-      if (!note) fail("A completion note is required.");
       if (!isDateString(completedOn)) fail("Completion date is invalid.");
       if (files.length > 5) fail("Attach no more than 5 files.");
       const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -367,19 +376,26 @@ export async function POST(request) {
         if (!allowedTypes.has(file.type)) fail(`${file.name} is not a supported file type.`);
         if (file.size > 10485760) fail(`${file.name} is larger than 10 MB.`);
       }
-      const nextDue = addRecurrence(completedOn, schedule.recurrence_count, schedule.recurrence_unit);
+      const completionNextDue = addRecurrence(completedOn, schedule.recurrence_count, schedule.recurrence_unit);
       const completionId = crypto.randomUUID();
       const { error: completionError } = await adminClient.from("preventive_maintenance_completions").insert({
         id: completionId,
         schedule_id: schedule.id,
         completed_on: completedOn,
         due_on_snapshot: schedule.current_due_on,
-        generated_next_due_on: nextDue,
+        generated_next_due_on: completionNextDue,
         note,
         completed_by: user.id,
         completed_by_name: actor,
       });
       if (completionError) throw completionError;
+      const nextDue = await dueFromLatestCompletion(
+        adminClient,
+        schedule,
+        schedule.recurrence_count,
+        schedule.recurrence_unit,
+        schedule.current_due_on,
+      );
       const { data: updated, error: updateError } = await adminClient.from("preventive_maintenance_schedules").update({
         current_due_on: nextDue, updated_by: user.id, version: schedule.version + 1,
       }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
@@ -429,6 +445,59 @@ export async function POST(request) {
       return json({ ok: true, completionId, nextDue, attachmentWarnings });
     }
 
+    if (action === "update_completion") {
+      const completionId = text(body.completionId, 80);
+      const completedOn = text(body.completedOn, 10);
+      const note = text(body.note, 3000) || "Completed";
+      if (!completionId) fail("Completion is required.");
+      if (!isDateString(completedOn)) fail("Completion date is invalid.");
+      const { data: completion, error: completionLookupError } = await adminClient
+        .from("preventive_maintenance_completions")
+        .select("*")
+        .eq("id", completionId)
+        .eq("schedule_id", schedule.id)
+        .is("undone_at", null)
+        .maybeSingle();
+      if (completionLookupError) throw completionLookupError;
+      if (!completion) fail("Completion record not found.", 404);
+
+      const generatedNextDue = addRecurrence(completedOn, schedule.recurrence_count, schedule.recurrence_unit);
+      const { data: edited, error: editError } = await adminClient.from("preventive_maintenance_completions").update({
+        completed_on: completedOn,
+        generated_next_due_on: generatedNextDue,
+        note,
+      }).eq("id", completion.id).is("undone_at", null).select("id").maybeSingle();
+      if (editError) throw editError;
+      if (!edited) fail("This completion changed while you were editing it. Please refresh and try again.", 409);
+
+      const baselineDate = completion.completed_on === schedule.baseline_date
+        ? completedOn
+        : schedule.baseline_date;
+      const nextDue = await dueFromLatestCompletion(
+        adminClient,
+        { ...schedule, baseline_date: baselineDate },
+        schedule.recurrence_count,
+        schedule.recurrence_unit,
+        schedule.current_due_on,
+      );
+      const { data: updated, error: updateError } = await adminClient.from("preventive_maintenance_schedules").update({
+        current_due_on: nextDue,
+        baseline_date: baselineDate,
+        updated_by: user.id,
+        version: schedule.version + 1,
+      }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
+      if (updateError || !updated) {
+        await adminClient.from("preventive_maintenance_completions").update({
+          completed_on: completion.completed_on,
+          generated_next_due_on: completion.generated_next_due_on,
+          note: completion.note,
+        }).eq("id", completion.id);
+        if (updateError) throw updateError;
+        fail("This task changed while you were editing its history. Please refresh and try again.", 409);
+      }
+      return json({ ok: true, nextDue });
+    }
+
     const reason = text(body.reason, 1000);
     if (!reason) fail("A reason is required to mark a completion as undone.");
     const { data: completion, error: completionLookupError } = await adminClient.from("preventive_maintenance_completions")
@@ -441,8 +510,15 @@ export async function POST(request) {
     }).eq("id", completion.id).is("undone_at", null).select("id").maybeSingle();
     if (undoError) throw undoError;
     if (!undone) fail("This completion has already been undone.", 409);
+    const restoredDueOn = await dueFromLatestCompletion(
+      adminClient,
+      schedule,
+      schedule.recurrence_count,
+      schedule.recurrence_unit,
+      completion.due_on_snapshot,
+    );
     const { data: restored, error: restoreError } = await adminClient.from("preventive_maintenance_schedules").update({
-      current_due_on: completion.due_on_snapshot, updated_by: user.id, version: schedule.version + 1,
+      current_due_on: restoredDueOn, updated_by: user.id, version: schedule.version + 1,
     }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
     if (restoreError || !restored) {
       await adminClient.from("preventive_maintenance_completions").update({
@@ -457,9 +533,9 @@ export async function POST(request) {
     await adminClient.from("preventive_maintenance_events").insert({
       property_id: schedule.property_id, catalog_task_id: schedule.catalog_task_id, schedule_id: schedule.id,
       completion_id: completion.id, event_type: "completion_undone", actor_user_id: user.id, actor_name: actor,
-      previous_due_on: schedule.current_due_on, new_due_on: completion.due_on_snapshot, note: reason,
+      previous_due_on: schedule.current_due_on, new_due_on: restoredDueOn, note: reason,
     });
-    return json({ ok: true, restoredDueOn: completion.due_on_snapshot });
+    return json({ ok: true, restoredDueOn });
   } catch (error) {
     return json({ error: error.message || "Preventive maintenance action failed." }, error.status || 500);
   }

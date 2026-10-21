@@ -14,8 +14,9 @@ const cards = [
   { key: "unscheduled", icon: FaExclamationCircle, vars: { "--status-bg": "#f8fafc", "--status-border": "#cbd5e1", "--status-text": "#475569" } },
 ];
 
-const prettyEvent = (value) => String(value || "").replace(/_/g, " ");
-const dateLabel = (value) => value ? new Date(value).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+const dateLabel = (value) => value
+  ? new Date(`${value}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  : "";
 
 export default function MaintenanceDashboard() {
   const navigate = useNavigate();
@@ -24,14 +25,18 @@ export default function MaintenanceDashboard() {
   const [exporting, setExporting] = useState(false);
   useEffect(() => { getMaintenanceWorkspace().then(setData).catch((e) => setError(e.message)); }, []);
   const priority = useMemo(() => (data?.schedules || []).filter((item) => ["overdue", "urgent", "upcoming"].includes(item.status)).slice(0, 10), [data]);
-  const propertyMap = useMemo(() => new Map((data?.properties || []).map((item) => [item.id, item])), [data]);
-  const taskMap = useMemo(() => new Map((data?.catalog || []).map((item) => [item.id, item])), [data]);
+  const recentCompletions = useMemo(() => (data?.schedules || [])
+    .flatMap((schedule) => schedule.completions
+      .filter((completion) => !completion.undone_at)
+      .map((completion) => ({ completion, schedule })))
+    .sort((a, b) => b.completion.created_at.localeCompare(a.completion.created_at))
+    .slice(0, 8), [data]);
 
   return <MaintenanceShell title="Preventive Maintenance" subtitle="Portfolio-wide maintenance health and upcoming work">
     {error && <div className={styles.alert}>{error}</div>}
     <div className={styles.toolbar}>
       <div><h2 className={styles.sectionTitle}>Maintenance overview</h2><span className={styles.muted}>Select a status to open the matching tasks.</span></div>
-      <button className={styles.button} disabled={exporting} onClick={async () => { setExporting(true); try { await downloadMaintenanceExport(); } catch (e) { setError(e.message); } finally { setExporting(false); } }}><FaFileCsv /> {exporting ? "Preparing…" : "Export all history"}</button>
+      <button className={styles.button} disabled={exporting} onClick={async () => { setExporting(true); try { await downloadMaintenanceExport(); } catch (e) { setError(e.message); } finally { setExporting(false); } }}><FaFileCsv /> {exporting ? "Preparing…" : "Export completion log"}</button>
     </div>
     {!data ? <div className={`${styles.card} ${styles.loading}`}>Loading maintenance dashboard…</div> : <>
       <div className={styles.statsGrid}>
@@ -50,12 +55,12 @@ export default function MaintenanceDashboard() {
           </div>) : <div className={styles.empty}>No upcoming or overdue work.</div>}</div>
         </section>
         <section className={`${styles.card} ${styles.cardPadding}`}>
-          <h2 className={styles.sectionTitle}>Recent activity</h2>
-          <p className={styles.muted}>The latest recorded maintenance changes.</p>
-          <div className={styles.list}>{(data.events || []).filter((event) => event.event_type !== "csv_exported").slice(0, 8).map((event) => <div className={styles.listItem} key={event.id}>
-            <div className={styles.listMain}><strong style={{ textTransform: "capitalize" }}>{prettyEvent(event.event_type)}</strong><span>{propertyMap.get(event.property_id)?.name || taskMap.get(event.catalog_task_id)?.name || "Maintenance"} · {event.actor_name}</span></div>
-            <span className={styles.muted}>{dateLabel(event.created_at)}</span>
-          </div>)}</div>
+          <h2 className={styles.sectionTitle}>Recent completions</h2>
+          <p className={styles.muted}>The latest maintenance work recorded.</p>
+          <div className={styles.list}>{recentCompletions.map(({ completion, schedule }) => <div className={styles.listItem} key={completion.id}>
+            <div className={styles.listMain}><strong>{schedule.task?.name || "Maintenance task"}</strong><span>{schedule.property?.name || "Property"}</span></div>
+            <span className={styles.muted}>{dateLabel(completion.completed_on)}</span>
+          </div>)}{!recentCompletions.length && <div className={styles.empty}>No completions recorded yet.</div>}</div>
         </section>
       </div>
     </>}
