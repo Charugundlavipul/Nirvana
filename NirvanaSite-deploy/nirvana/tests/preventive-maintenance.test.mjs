@@ -84,3 +84,12 @@ test("catalog schedules require an explicit next due date when no baseline exist
   assert.match(catalog, /Next due date/);
   assert.match(catalog, /required=\{!draft\.baselineDate\}/);
 });
+
+test("catalog task names and descriptions can be edited by configurators", async () => {
+  const route = await readFile(new URL("../app/api/admin/preventive-maintenance/route.js", import.meta.url), "utf8");
+  const catalog = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceCatalog.jsx", import.meta.url), "utf8");
+  assert.match(route, /action === "update_catalog"[\s\S]*assertConfigurator\(role\)/);
+  assert.match(catalog, /Edit task details/);
+  assert.match(catalog, /maintenanceAction\("update_catalog"/);
+  assert.match(catalog, /Task name and description updated/);
+});

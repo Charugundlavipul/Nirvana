@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FaArchive, FaCheckCircle, FaChevronDown, FaMinusCircle, FaPlus, FaUndo } from "react-icons/fa";
+import { FaArchive, FaCheckCircle, FaChevronDown, FaEdit, FaMinusCircle, FaPlus, FaUndo } from "react-icons/fa";
 import MaintenanceShell from "./MaintenanceShell";
 import styles from "./Maintenance.module.css";
 import { getMaintenanceWorkspace, maintenanceAction } from "../../../lib/preventiveMaintenanceApi";
@@ -22,6 +22,7 @@ export default function MaintenanceCatalog() {
   const [drafts, setDrafts] = useState({});
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
 
   const load = async () => {
     const result = await getMaintenanceWorkspace();
@@ -77,6 +78,23 @@ export default function MaintenanceCatalog() {
     setBusy(`archive:${task.id}`); setMessage(null);
     try { await maintenanceAction("archive_catalog", { taskId: task.id }); await load(); setMessage({ type: "success", text: "Catalog task archived." }); }
     catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(""); }
+  }
+
+  async function updateTask(event) {
+    event.preventDefault();
+    if (!editingTask?.name.trim()) return;
+    const key = `edit:${editingTask.id}`;
+    setBusy(key); setMessage(null);
+    try {
+      await maintenanceAction("update_catalog", {
+        taskId: editingTask.id,
+        name: editingTask.name,
+        description: editingTask.description,
+      });
+      await load();
+      setEditingTask(null);
+      setMessage({ type: "success", text: "Task name and description updated." });
+    } catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(""); }
   }
 
   async function excludeProperty(task, property) {
@@ -159,11 +177,37 @@ export default function MaintenanceCatalog() {
                 {data.canConfigure && <button type="button" className={`${styles.button} ${styles.secondaryButton} ${styles.smallButton}`} disabled={busy === `restore:${task.id}:${property.id}`} onClick={() => restoreProperty(task, property)}><FaUndo /> {busy === `restore:${task.id}:${property.id}` ? "Restoring…" : "Restore"}</button>}
               </div>)}</div>
             </details>}
-            {data.canConfigure && <div className={styles.toolbar} style={{ marginTop: 14, marginBottom: 0 }}><span className={styles.muted}>Schedules take effect immediately; no approval is required.</span><button className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `archive:${task.id}`} onClick={() => archiveTask(task)}><FaArchive /> Archive task</button></div>}
+            {data.canConfigure && <div className={styles.toolbar} style={{ marginTop: 14, marginBottom: 0 }}>
+              <span className={styles.muted}>Schedules take effect immediately; no approval is required.</span>
+              <div className={styles.rowActions}>
+                <button type="button" className={`${styles.button} ${styles.secondaryButton} ${styles.smallButton}`} onClick={() => setEditingTask({ id: task.id, name: task.name, description: task.description || "" })}><FaEdit /> Edit task details</button>
+                <button type="button" className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={busy === `archive:${task.id}`} onClick={() => archiveTask(task)}><FaArchive /> Archive task</button>
+              </div>
+            </div>}
           </div>
         </details>;
       })}
       {!activeTasks.length && <div className={`${styles.card} ${styles.empty}`}>No maintenance tasks yet. Add the first catalog task above.</div>}
+    </div>}
+    {editingTask && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingTask(null); }}>
+      <section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="edit-maintenance-task-title">
+        <h2 id="edit-maintenance-task-title">Edit task details</h2>
+        <p className={styles.muted}>Schedules and maintenance history will remain unchanged.</p>
+        <form className={styles.modalForm} onSubmit={updateTask}>
+          <div className={styles.field}>
+            <label>Preventive maintenance task name</label>
+            <input className={styles.input} value={editingTask.name} maxLength={160} required autoFocus onChange={(event) => setEditingTask({ ...editingTask, name: event.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label>Description (optional)</label>
+            <textarea className={styles.textarea} value={editingTask.description} maxLength={1000} placeholder="Short instructions, scope, or suggested recurrence" onChange={(event) => setEditingTask({ ...editingTask, description: event.target.value })} />
+          </div>
+          <div className={styles.modalActions}>
+            <button type="button" className={`${styles.button} ${styles.secondaryButton}`} onClick={() => setEditingTask(null)}>Cancel</button>
+            <button className={styles.button} disabled={busy === `edit:${editingTask.id}`}>{busy === `edit:${editingTask.id}` ? "Saving…" : "Save task details"}</button>
+          </div>
+        </form>
+      </section>
     </div>}
   </MaintenanceShell>;
 }
