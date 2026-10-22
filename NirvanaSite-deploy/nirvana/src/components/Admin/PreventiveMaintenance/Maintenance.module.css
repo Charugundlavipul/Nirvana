@@ -41,7 +41,7 @@
 .textarea { min-height: 90px; resize: vertical; }
 .catalogList { display: flex; flex-direction: column; gap: 14px; }
 .catalogItem { overflow: hidden; }
-.catalogSummary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; cursor: pointer; }
+.catalogSummary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 18px 20px; cursor: pointer; }
 .catalogSummary::-webkit-details-marker { display: none; }
 .summaryTitle { min-width: 0; }
 .summaryTitle strong { display: block; color: #0f172a; font-size: 16px; }
