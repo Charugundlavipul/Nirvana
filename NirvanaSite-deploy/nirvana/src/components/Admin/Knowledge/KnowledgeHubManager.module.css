@@ -14,7 +14,7 @@
   background:
     radial-gradient(circle at top right, rgba(110, 135, 90, 0.18), transparent 36%),
     linear-gradient(135deg, #ffffff 0%, #f4f8f1 100%);
-  border: 1px solid rgba(66, 67, 52, 0.14);
+  border: 1px solid rgba(96, 189, 104, 0.14);
   box-shadow: 0 22px 50px rgba(23, 33, 43, 0.08);
 }
 
@@ -96,13 +96,13 @@
 
 .syncButton,
 .primaryButton {
-  border: 1px solid #424334;
-  background: #424334;
+  border: 1px solid #60BD68;
+  background: #60BD68;
   color: #ffffff;
 }
 
 .secondaryButton {
-  border: 1px solid rgba(66, 67, 52, 0.18);
+  border: 1px solid rgba(96, 189, 104, 0.18);
   background: #eef3e8;
   color: #36412f;
 }
@@ -245,12 +245,12 @@
 
 .sourceTab:hover {
   background: rgba(110, 135, 90, 0.05);
-  color: #424334;
+  color: #60BD68;
 }
 
 .activeSourceTab {
   background: #eef3e8;
-  border-color: rgba(66, 67, 52, 0.15);
+  border-color: rgba(96, 189, 104, 0.15);
   color: #36412f;
 }
 
@@ -710,7 +710,7 @@
 .sourceIconButton:hover {
   transform: translateY(-1px);
   background: #f6f9f3;
-  border-color: rgba(66, 67, 52, 0.18);
+  border-color: rgba(96, 189, 104, 0.18);
 }
 
 .sourceIconButton:disabled {

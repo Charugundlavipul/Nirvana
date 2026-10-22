@@ -655,7 +655,7 @@ const PropertyEditor = () => {
                                         </p>
                                     )}
                                     {hospitableWidgetValidation.config && (
-                                        <p style={{ marginTop: "6px", color: "#424334", fontSize: "12px", fontWeight: 600 }}>
+                                        <p style={{ marginTop: "6px", color: "#60BD68", fontSize: "12px", fontWeight: 600 }}>
                                             Valid widget for property {hospitableWidgetValidation.config.propertyId}.
                                         </p>
                                     )}
@@ -789,7 +789,7 @@ const PropertyEditor = () => {
                                     <button
                                         type="button"
                                         className={styles.saveBtn}
-                                        style={{ background: "#424334", borderColor: "#424334" }}
+                                        style={{ background: "#60BD68", borderColor: "#60BD68" }}
                                         disabled={publishing}
                                         onClick={handleSubmitForPublish}
                                     >

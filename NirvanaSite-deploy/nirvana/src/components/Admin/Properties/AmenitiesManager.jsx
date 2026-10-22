@@ -340,7 +340,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                 <h3 className="text-xl font-bold text-slate-800">Amenities ({amenities.length})</h3>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="flex items-center gap-2 rounded-xl bg-[#424334] px-4 py-2 font-semibold text-white shadow-sm transition-all hover:bg-[#34352a] active:scale-95"
+                    className="flex items-center gap-2 rounded-xl bg-[#60BD68] px-4 py-2 font-semibold text-white shadow-sm transition-all hover:bg-[#4DA857] active:scale-95"
                 >
                     <FaPlus /> Add Amenity
                 </button>
@@ -356,7 +356,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                 setMode("BANK");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
                             }}
-                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "BANK" ? "bg-white text-[#424334] shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "BANK" ? "bg-white text-[#60BD68] shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                         >
                             Choose Standard Amenity
                         </button>
@@ -365,7 +365,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                 setMode("CUSTOM");
                                 setNewAmenity({ title: "", description: "", icon_key: "" });
                             }}
-                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "CUSTOM" ? "bg-white text-[#424334] shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === "CUSTOM" ? "bg-white text-[#60BD68] shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                         >
                             Create Custom Amenity
                         </button>
@@ -410,7 +410,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                         placeholder="e.g. 'PS5 Gaming Room'"
                                         value={newAmenity.title}
                                         onChange={(e) => setNewAmenity({ ...newAmenity, title: e.target.value })}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:ring-2 focus:ring-[#424334]/20"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:ring-2 focus:ring-[#60BD68]/20"
                                     />
                                 </div>
 
@@ -449,12 +449,12 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                             placeholder={mode === "BANK" ? "Description (Optional)" : "Description (e.g. 'Has 2 controllers')"}
                             value={newAmenity.description}
                             onChange={(e) => setNewAmenity({ ...newAmenity, description: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:ring-2 focus:ring-[#424334]/20"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:ring-2 focus:ring-[#60BD68]/20"
                             rows={2}
                         />
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={handleAdd} className="rounded-lg bg-[#424334] px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-[#34352a] active:scale-95">Add Amenity</button>
+                        <button onClick={handleAdd} className="rounded-lg bg-[#60BD68] px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-[#4DA857] active:scale-95">Add Amenity</button>
                         <button onClick={() => setIsAdding(false)} className="rounded-lg bg-slate-500 px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-slate-400 active:scale-95">Cancel</button>
                     </div>
                 </div>
@@ -560,7 +560,7 @@ const AmenitiesManager = ({ propertyId, isDraft = false }) => {
                                     <button
                                         onClick={() => handleSaveRow(item)}
                                         disabled={submitDisabled}
-                                        className="w-full md:w-auto rounded-lg bg-[#424334] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#34352a] active:scale-95 disabled:bg-[#424334]/50 disabled:active:scale-100"
+                                        className="w-full md:w-auto rounded-lg bg-[#60BD68] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#4DA857] active:scale-95 disabled:bg-[#60BD68]/50 disabled:active:scale-100"
                                     >
                                         {savingAmenityId === item.id ? "Saving..." : pendingDelete ? "Delete Pending" : pendingUpdate ? "Update Pending" : (canEditDirectly ? "Save" : "Submit")}
                                     </button>

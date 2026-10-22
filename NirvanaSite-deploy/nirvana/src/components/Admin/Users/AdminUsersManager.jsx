@@ -188,19 +188,19 @@ const AdminUsersManager = () => {
             placeholder="Email"
             value={newUser.email}
             onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
           />
           <input
             placeholder="Password"
             type="password"
             value={newUser.password}
             onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
           />
           <select
             value={newUser.role}
             onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
           >
             {ROLE_OPTIONS.map((r) => (
               <option key={r} value={r}>{r === "owner" ? "Superadmin" : r === "admin" ? "Admin" : "Employee"}</option>
@@ -209,7 +209,7 @@ const AdminUsersManager = () => {
           <button
             onClick={handleCreate}
             disabled={busyUserId === "create"}
-            className="w-full rounded-xl bg-[#424334] px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-[#34352a] active:scale-95 disabled:opacity-50 md:w-auto"
+            className="w-full rounded-xl bg-[#60BD68] px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-[#4DA857] active:scale-95 disabled:opacity-50 md:w-auto"
           >
             {busyUserId === "create" ? "Creating..." : "Create Admin"}
           </button>
@@ -226,7 +226,7 @@ const AdminUsersManager = () => {
             placeholder="Search by email/role"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20 md:w-64"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20 md:w-64"
           />
         </div>
 
@@ -246,12 +246,12 @@ const AdminUsersManager = () => {
                     value={row.email}
                     onChange={(e) => setRowState(u.user_id, { email: e.target.value })}
                     placeholder="Email"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
                   />
                   <select
                     value={row.role}
                     onChange={(e) => setRowState(u.user_id, { role: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
                   >
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r} value={r}>{r === "owner" ? "Superadmin" : r === "admin" ? "Admin" : "Employee"}</option>
@@ -264,14 +264,14 @@ const AdminUsersManager = () => {
                     type="password"
                     value={row.password}
                     onChange={(e) => setRowState(u.user_id, { password: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#424334] focus:bg-white focus:ring-2 focus:ring-[#424334]/20"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-[#60BD68] focus:bg-white focus:ring-2 focus:ring-[#60BD68]/20"
                   />
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleSaveUser(u)}
                     disabled={busyUserId === u.user_id || !isChanged}
-                    className="rounded-lg bg-[#424334] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#34352a] active:scale-95 disabled:bg-[#424334]/50 disabled:active:scale-100"
+                    className="rounded-lg bg-[#60BD68] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#4DA857] active:scale-95 disabled:bg-[#60BD68]/50 disabled:active:scale-100"
                   >
                     {busyUserId === u.user_id ? "Saving..." : "Save Changes"}
                   </button>

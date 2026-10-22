@@ -962,7 +962,7 @@ const BlogManager = () => {
                     </div>
                     <button
                         onClick={handleCreate}
-                        className="flex items-center justify-center gap-2 bg-[#424334] text-white px-6 py-3 rounded-lg hover:bg-[#34352a] transition-colors shadow-lg font-bold w-full sm:w-auto"
+                        className="flex items-center justify-center gap-2 bg-[#60BD68] text-white px-6 py-3 rounded-lg hover:bg-[#4DA857] transition-colors shadow-lg font-bold w-full sm:w-auto"
                     >
                         <FaPlus /> Create New Post
                     </button>

@@ -442,7 +442,7 @@ export default function LeaveManager() {
                               className={styles.balanceBarFill}
                               style={{
                                 width: `${pct}%`,
-                                background: pct > 80 ? "#dc2626" : pct > 50 ? "#d97706" : "#424334",
+                                background: pct > 80 ? "#dc2626" : pct > 50 ? "#d97706" : "#60BD68",
                               }}
                             />
                           </div>
