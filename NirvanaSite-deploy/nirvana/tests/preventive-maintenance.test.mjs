@@ -94,6 +94,8 @@ test("maintenance API derives due dates from the latest completion and supports 
   assert.match(route, /function dueFromLatestCompletion/);
   assert.match(route, /\.order\("completed_on", \{ ascending: false \}\)/);
   assert.match(route, /action === "update_completion"/);
+  assert.match(route, /delete_completion/);
+  assert.match(route, /requestedCompletionId/);
   assert.doesNotMatch(route, /action === "update_due"/);
   assert.match(route, /A reason is required to mark a completion as undone/);
   assert.match(route, /completed_by_name/);
@@ -131,6 +133,9 @@ test("task history shows editable completions instead of audit events", async ()
   assert.match(tasks, /Completion history/);
   assert.match(tasks, /mode: "edit"/);
   assert.match(tasks, /maintenanceAction\("update_completion"/);
+  assert.match(tasks, /Recorded by/);
+  assert.match(tasks, /maintenanceAction\("delete_completion"/);
+  assert.match(tasks, /setTimeout\(\(\) => setMessage\(null\), 10000\)/);
   assert.doesNotMatch(tasks, /scheduleEventMap|Complete property history|Update due date/);
   assert.match(dashboard, /Recent completions/);
   assert.doesNotMatch(dashboard, /data\.events/);
@@ -154,4 +159,40 @@ test("catalog task names and descriptions can be edited by configurators", async
   assert.match(catalog, /Edit task details/);
   assert.match(catalog, /maintenanceAction\("update_catalog"/);
   assert.match(catalog, /Task name and description updated/);
+});
+
+test("maintenance offers a toggleable flat catalog and property-first row view", async () => {
+  const app = await readFile(new URL("../src/components/Admin/AdminApp.jsx", import.meta.url), "utf8");
+  const shell = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceShell.jsx", import.meta.url), "utf8");
+  const catalog2 = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceCatalog2.jsx", import.meta.url), "utf8");
+  const properties = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/MaintenanceProperties.jsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../src/components/Admin/PreventiveMaintenance/Maintenance.module.css", import.meta.url), "utf8");
+
+  assert.match(app, /preventive-maintenance\/catalog-2/);
+  assert.match(app, /preventive-maintenance\/properties/);
+  assert.match(shell, /role="switch"/);
+  assert.match(shell, /label: "Catalog"/);
+  assert.doesNotMatch(shell, /Catalog 2/);
+  assert.match(shell, /Property view/);
+  assert.doesNotMatch(catalog2, /<details className=\{`\$\{styles\.card\} \$\{styles\.catalogItem\}`\}/);
+  assert.match(catalog2, /flatCatalogRow/);
+  assert.match(properties, /Select a property…/);
+  assert.match(properties, /Near due/);
+  assert.match(properties, /1–7 days/);
+  assert.match(properties, /8–21 days/);
+  assert.doesNotMatch(properties, /key: "completed"/);
+  assert.match(properties, /Recently completed/);
+  assert.match(properties, /Last 30 days/);
+  assert.match(properties, /recentCompletionRows/);
+  assert.doesNotMatch(properties, /Completion history/);
+  assert.match(properties, /propertyTaskRow/);
+  assert.match(properties, /maintenanceAction\("upsert_schedule"/);
+  assert.match(properties, /Recorded by/);
+  assert.match(properties, /maintenanceAction\("delete_completion"/);
+  assert.match(properties, /setTimeout\(\(\) => setMessage\(null\), 10000\)/);
+  assert.match(properties, /Create schedule/);
+  assert.doesNotMatch(properties, /Switch to Classic view to configure it/);
+  assert.match(styles, /--property-task-columns:/);
+  assert.match(styles, /grid-template-columns: var\(--property-task-columns\)/);
+  assert.match(styles, /\.propertyTaskTop > \.rowActions \{ grid-column: 4;/);
 });

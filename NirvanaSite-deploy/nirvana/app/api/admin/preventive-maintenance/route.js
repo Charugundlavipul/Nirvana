@@ -360,7 +360,7 @@ export async function POST(request) {
     }
 
     const scheduleId = text(body.scheduleId, 80);
-    if (!["complete", "update_completion", "undo_completion"].includes(action)) fail("Unknown maintenance action.", 404);
+    if (!["complete", "update_completion", "undo_completion", "delete_completion"].includes(action)) fail("Unknown maintenance action.", 404);
     const { data: schedule, error: scheduleError } = await adminClient.from("preventive_maintenance_schedules")
       .select("*").eq("id", scheduleId).eq("is_active", true).maybeSingle();
     if (scheduleError) throw scheduleError;
@@ -498,27 +498,36 @@ export async function POST(request) {
       return json({ ok: true, nextDue });
     }
 
-    const reason = text(body.reason, 1000);
+    const requestedCompletionId = text(body.completionId, 80);
+    const reason = text(body.reason, 1000)
+      || (action === "delete_completion" ? "Completion record deleted from history." : "");
     if (!reason) fail("A reason is required to mark a completion as undone.");
-    const { data: completion, error: completionLookupError } = await adminClient.from("preventive_maintenance_completions")
-      .select("*").eq("schedule_id", schedule.id).is("undone_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    let completionQuery = adminClient.from("preventive_maintenance_completions")
+      .select("*").eq("schedule_id", schedule.id).is("undone_at", null);
+    completionQuery = requestedCompletionId
+      ? completionQuery.eq("id", requestedCompletionId).limit(1)
+      : completionQuery.order("created_at", { ascending: false }).limit(1);
+    const { data: completion, error: completionLookupError } = await completionQuery.maybeSingle();
     if (completionLookupError) throw completionLookupError;
-    if (!completion) fail("There is no active completion to undo.");
+    if (!completion) fail(requestedCompletionId ? "Completion record not found." : "There is no active completion to undo.", 404);
+    const latestBeforeDelete = await latestActiveCompletion(adminClient, schedule.id);
+    const wasLatestCompletion = latestBeforeDelete?.id === completion.id;
     const now = new Date().toISOString();
     const { data: undone, error: undoError } = await adminClient.from("preventive_maintenance_completions").update({
       undone_at: now, undone_by: user.id, undone_by_name: actor, undo_reason: reason,
     }).eq("id", completion.id).is("undone_at", null).select("id").maybeSingle();
     if (undoError) throw undoError;
     if (!undone) fail("This completion has already been undone.", 409);
+    const baselineDate = completion.completed_on === schedule.baseline_date ? null : schedule.baseline_date;
     const restoredDueOn = await dueFromLatestCompletion(
       adminClient,
-      schedule,
+      { ...schedule, baseline_date: baselineDate },
       schedule.recurrence_count,
       schedule.recurrence_unit,
       completion.due_on_snapshot,
     );
     const { data: restored, error: restoreError } = await adminClient.from("preventive_maintenance_schedules").update({
-      current_due_on: restoredDueOn, updated_by: user.id, version: schedule.version + 1,
+      current_due_on: restoredDueOn, baseline_date: baselineDate, updated_by: user.id, version: schedule.version + 1,
     }).eq("id", schedule.id).eq("version", schedule.version).select("id").maybeSingle();
     if (restoreError || !restored) {
       await adminClient.from("preventive_maintenance_completions").update({
@@ -527,15 +536,17 @@ export async function POST(request) {
       if (restoreError) throw restoreError;
       fail("This task changed while you were undoing it. Please refresh and try again.", 409);
     }
-    await adminClient.from("preventive_maintenance_due_adjustments").update({
-      superseded_at: now, superseded_by: user.id,
-    }).eq("schedule_id", schedule.id).gt("created_at", completion.created_at).is("superseded_at", null);
+    if (wasLatestCompletion) {
+      await adminClient.from("preventive_maintenance_due_adjustments").update({
+        superseded_at: now, superseded_by: user.id,
+      }).eq("schedule_id", schedule.id).gt("created_at", completion.created_at).is("superseded_at", null);
+    }
     await adminClient.from("preventive_maintenance_events").insert({
       property_id: schedule.property_id, catalog_task_id: schedule.catalog_task_id, schedule_id: schedule.id,
       completion_id: completion.id, event_type: "completion_undone", actor_user_id: user.id, actor_name: actor,
       previous_due_on: schedule.current_due_on, new_due_on: restoredDueOn, note: reason,
     });
-    return json({ ok: true, restoredDueOn });
+    return json({ ok: true, restoredDueOn, deletedCompletionId: action === "delete_completion" ? completion.id : null });
   } catch (error) {
     return json({ error: error.message || "Preventive maintenance action failed." }, error.status || 500);
   }

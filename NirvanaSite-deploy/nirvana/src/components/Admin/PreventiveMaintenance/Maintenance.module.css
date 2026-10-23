@@ -1,7 +1,15 @@
-.moduleNav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; padding: 6px; width: fit-content; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(15,23,42,.05); }
+.moduleNavRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.moduleNav { display: flex; gap: 8px; flex-wrap: wrap; padding: 6px; width: fit-content; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(15,23,42,.05); }
 .moduleLink { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; color: #64748b; font-size: 14px; font-weight: 700; text-decoration: none; }
 .moduleLink:hover { color: #0f172a; background: #f8fafc; }
 .moduleLinkActive { color: #fff; background: #60BD68; box-shadow: 0 5px 14px rgba(96,189,104,.22); }
+.viewToggleWrap { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; color: #94a3b8; font-size: 12px; font-weight: 750; box-shadow: 0 4px 18px rgba(15,23,42,.04); }
+.viewToggleLabelActive { color: #334155; }
+.viewToggle { position: relative; width: 44px; height: 24px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 999px; background: #cbd5e1; cursor: pointer; transition: .2s ease; }
+.viewToggle span { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(15,23,42,.2); transition: .2s ease; }
+.viewToggleOn { background: #60BD68; }
+.viewToggleOn span { transform: translateX(20px); }
+.viewToggle:focus-visible { outline: 3px solid rgba(96,189,104,.25); outline-offset: 2px; }
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 11px; padding: 10px 16px; background: #60BD68; color: #fff; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; transition: .18s ease; }
 .button:hover { background: #4DA857; transform: translateY(-1px); }
@@ -40,6 +48,17 @@
 .input:focus, .select:focus, .textarea:focus { border-color: #60BD68; box-shadow: 0 0 0 3px rgba(96,189,104,.18); }
 .textarea { min-height: 90px; resize: vertical; }
 .catalogList { display: flex; flex-direction: column; gap: 14px; }
+.flatListCard { overflow: hidden; }
+.flatListHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid #e2e8f0; }
+.flatListHeading > svg { color: #60BD68; font-size: 20px; }
+.flatCatalogList { display: flex; flex-direction: column; }
+.flatCatalogRow { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eef2f7; }
+.flatCatalogRow:last-child { border-bottom: 0; }
+.catalogRowIcon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: #3f9148; background: #f0fdf4; }
+.flatRowMain { min-width: 0; }
+.flatRowMain strong { display: block; color: #0f172a; font-size: 14px; }
+.flatRowMain span { display: block; margin-top: 3px; color: #64748b; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catalogUsage { color: #64748b; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .catalogItem { overflow: hidden; }
 .catalogSummary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 18px 20px; cursor: pointer; }
 .catalogSummary::-webkit-details-marker { display: none; }
@@ -66,6 +85,46 @@
 .propertyCardHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .propertyCard h3 { margin: 0; color: #0f172a; font-size: 16px; }
 .propertyCounts { display: flex; gap: 10px; margin-top: 14px; color: #64748b; font-size: 12px; }
+.propertyPicker { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(320px, 1.2fr); gap: 24px; align-items: center; padding: 20px; margin-bottom: 20px; }
+.propertyPicker label { display: block; color: #0f172a; font-size: 15px; font-weight: 800; }
+.propertyPicker span { display: block; margin-top: 4px; color: #64748b; font-size: 12px; }
+.propertySelect { width: 100%; min-height: 46px; padding: 10px 42px 10px 13px; border: 1px solid #cbd5e1; border-radius: 11px; background: #fff; color: #0f172a; font: inherit; font-size: 14px; outline: none; }
+.propertySelect:focus { border-color: #60BD68; box-shadow: 0 0 0 3px rgba(96,189,104,.18); }
+.propertyPrompt { display: flex; min-height: 260px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 30px; color: #64748b; text-align: center; }
+.propertyPrompt strong { color: #334155; font-size: 17px; }
+.propertyPrompt span { font-size: 13px; }
+.propertyWorkspace { margin-top: 26px; }
+.statusFilterRow { display: flex; gap: 0; margin-bottom: 18px; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 13px; background: #fff; }
+.statusFilterButton { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: max-content; flex: 1; min-height: 58px; padding: 8px 14px; border: 0; border-right: 1px solid #e2e8f0; background: #fff; color: #64748b; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+.statusFilterButton:last-child { border-right: 0; }
+.statusFilterButton:hover { color: #334155; background: #f8fafc; }
+.statusFilterTop { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.statusFilterButton strong { display: grid; min-width: 22px; height: 22px; place-items: center; padding: 0 5px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 11px; }
+.statusFilterButton small { color: #94a3b8; font-size: 10px; font-weight: 650; line-height: 1.2; }
+.statusFilterButtonActive { color: #166534; background: #f0fdf4; box-shadow: inset 0 -3px #60BD68; }
+.statusFilterButtonActive strong { color: #166534; background: #dcfce7; }
+.statusFilterButtonActive small { color: #3f9148; }
+.propertyTaskTable { --property-task-columns: minmax(320px, 1fr) 220px 180px 270px; overflow-x: auto; overflow-y: hidden; }
+.propertyTaskHeader { display: grid; grid-template-columns: var(--property-task-columns); gap: 18px; min-width: 1080px; box-sizing: border-box; padding: 11px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.propertyTaskRow { border-bottom: 1px solid #e2e8f0; }
+.propertyTaskRow:last-child { border-bottom: 0; }
+.propertyTaskTop { display: grid; grid-template-columns: var(--property-task-columns); gap: 18px; min-width: 1080px; box-sizing: border-box; align-items: center; padding: 16px 20px; }
+.propertyTaskTop > * { min-width: 0; }
+.propertyTaskTop > .rowActions { grid-column: 4; justify-content: flex-start; flex-wrap: nowrap; }
+.scheduleSummary strong, .scheduleSummary span { display: block; }
+.scheduleSummary strong { color: #334155; font-size: 12px; }
+.scheduleSummary span { margin-top: 3px; color: #64748b; font-size: 11px; }
+.scheduleEditor { margin: 0 20px 16px; padding: 16px; border: 1px solid #b7dfbb; border-radius: 12px; background: #f7fdf8; }
+.scheduleEditorHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.scheduleEditorHeading strong, .scheduleEditorHeading span { display: block; }
+.scheduleEditorHeading strong { color: #0f172a; font-size: 14px; }
+.scheduleEditorHeading span { margin-top: 3px; color: #64748b; font-size: 11px; }
+.scheduleEditorGrid { display: grid; grid-template-columns: minmax(165px, 1fr) 90px 125px minmax(165px, 1fr) auto; gap: 12px; align-items: start; }
+.scheduleEditorGridCompact { grid-template-columns: 90px 140px auto; justify-content: start; }
+.scheduleEditorActions { display: flex; align-items: flex-start; justify-content: flex-end; gap: 8px; padding-top: 24px; }
+.rowHistory { margin: 0 20px 16px; padding: 11px 13px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+.rowHistory > summary { cursor: pointer; color: #3f9148; font-size: 12px; font-weight: 800; }
+.rowHistory > summary span { display: inline-flex; align-items: center; gap: 7px; }
 .taskList { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 16px; margin-top: 18px; }
 .taskList > .empty { grid-column: 1 / -1; }
 .taskCard { padding: 18px; }
@@ -79,6 +138,9 @@
 .timeline { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
 .timelineItem { padding: 11px 12px; border-left: 3px solid #94a3b8; background: #f8fafc; border-radius: 0 10px 10px 0; }
 .completionHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.completionTitle { min-width: 0; }
+.completionTitle span { display: block; margin-top: 3px; color: #64748b; font-size: 11px; }
+.completionActions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .timelineItem strong { display: block; color: #334155; font-size: 13px; text-transform: capitalize; }
 .timelineItem span { color: #64748b; font-size: 11px; }
 .timelineItem p { margin: 5px 0 0; color: #475569; font-size: 12px; }
@@ -95,6 +157,6 @@
 .loading { min-height: 220px; display: grid; place-items: center; color: #64748b; }
 
 @media (max-width: 1200px) { .taskList { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 1100px) { .statsGrid { grid-template-columns: repeat(3, 1fr); } .scheduleRow { grid-template-columns: 1fr 1fr 90px 120px; } .scheduleRowConfigured { grid-template-columns: 1fr 90px 120px minmax(132px, auto); } .rowActions { grid-column: 3 / -1; } .scheduleRowConfigured > .rowActions { grid-column: auto; } }
-@media (max-width: 760px) { .statsGrid { grid-template-columns: 1fr 1fr; } .dashboardGrid { grid-template-columns: 1fr; } .formCard { grid-template-columns: 1fr; } .scheduleRow, .scheduleRowConfigured { grid-template-columns: 1fr 1fr; } .rowActions, .scheduleRowConfigured > .rowActions { grid-column: 1 / -1; justify-content: flex-start; } .taskList { grid-template-columns: 1fr; } .taskHeader { flex-direction: column; } }
-@media (max-width: 480px) { .statsGrid { grid-template-columns: 1fr; } .moduleNav { width: 100%; } .moduleLink { flex: 1; justify-content: center; padding-inline: 10px; } .scheduleRow { grid-template-columns: 1fr; } .rowActions { grid-column: auto; flex-direction: column; } .excludedRow { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 1100px) { .statsGrid { grid-template-columns: repeat(3, 1fr); } .scheduleRow { grid-template-columns: 1fr 1fr 90px 120px; } .scheduleRowConfigured { grid-template-columns: 1fr 90px 120px minmax(132px, auto); } .rowActions { grid-column: 3 / -1; } .scheduleRowConfigured > .rowActions { grid-column: auto; } .propertyTaskTop > .rowActions { grid-column: 4; } .scheduleEditorGrid, .scheduleEditorGridCompact { grid-template-columns: minmax(180px, 1fr) 100px 140px; } .scheduleEditorActions { grid-column: 1 / -1; justify-content: flex-start; padding-top: 0; } }
+@media (max-width: 760px) { .moduleNavRow { align-items: stretch; } .viewToggleWrap { justify-content: center; } .statsGrid { grid-template-columns: 1fr 1fr; } .dashboardGrid { grid-template-columns: 1fr; } .formCard, .propertyPicker { grid-template-columns: 1fr; } .scheduleRow, .scheduleRowConfigured { grid-template-columns: 1fr 1fr; } .rowActions, .scheduleRowConfigured > .rowActions { grid-column: 1 / -1; justify-content: flex-start; } .propertyTaskTop > .rowActions { grid-column: 4; flex-direction: row; } .taskList { grid-template-columns: 1fr; } .taskHeader { flex-direction: column; } .flatCatalogRow { grid-template-columns: 38px minmax(0, 1fr); } .flatCatalogRow > .catalogUsage { grid-column: 2; } .flatCatalogRow > .rowActions { grid-column: 2; } .scheduleEditorGrid, .scheduleEditorGridCompact { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .statsGrid { grid-template-columns: 1fr; } .moduleNav { width: 100%; } .moduleLink { flex: 1; justify-content: center; padding-inline: 10px; } .viewToggleWrap { width: 100%; } .scheduleRow { grid-template-columns: 1fr; } .rowActions { grid-column: auto; flex-direction: column; } .propertyTaskTop > .rowActions { grid-column: 4; flex-direction: row; } .excludedRow { align-items: flex-start; flex-direction: column; } .flatCatalogRow { grid-template-columns: 1fr; } .flatCatalogRow > .catalogUsage, .flatCatalogRow > .rowActions { grid-column: 1; } .catalogRowIcon { display: none; } .scheduleEditor { margin-inline: 12px; } .scheduleEditorGrid, .scheduleEditorGridCompact { grid-template-columns: 1fr; } .scheduleEditorActions { flex-direction: column-reverse; } .scheduleEditorActions button { width: 100%; } .completionHeader { align-items: flex-start; flex-direction: column; } }

@@ -2084,6 +2084,7 @@ CREATE TABLE IF NOT EXISTS employee_private_profiles (
     hire_date DATE,
     employment_status TEXT NOT NULL DEFAULT 'active'
         CHECK (employment_status IN ('active', 'inactive')),
+    payroll_not_applicable BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -2484,6 +2485,8 @@ ON CONFLICT (id) DO UPDATE SET public = FALSE;
 
 ALTER TABLE employee_private_profiles
     ADD COLUMN IF NOT EXISTS teams TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE employee_private_profiles
+    ADD COLUMN IF NOT EXISTS payroll_not_applicable BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE employee_private_profiles DROP CONSTRAINT IF EXISTS employee_private_profiles_teams_check;
 ALTER TABLE employee_private_profiles
     ADD CONSTRAINT employee_private_profiles_teams_check
@@ -2586,6 +2589,17 @@ WHERE schedule.baseline_date IS NOT NULL
         AND completion.completed_on = schedule.baseline_date
         AND completion.undone_at IS NULL
   );
+
+-- Replace the generic backfill label with the schedule creator's directory
+-- name when that information is available. Existing custom names are kept.
+UPDATE preventive_maintenance_completions AS completion
+SET completed_by_name = COALESCE(
+    NULLIF(BTRIM(CONCAT_WS(' ', employee.first_name, employee.last_name)), ''),
+    completion.completed_by_name
+)
+FROM employee_directory AS employee
+WHERE completion.completed_by = employee.user_id
+  AND completion.completed_by_name = 'Schedule setup';
 
 CREATE TABLE IF NOT EXISTS preventive_maintenance_due_adjustments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

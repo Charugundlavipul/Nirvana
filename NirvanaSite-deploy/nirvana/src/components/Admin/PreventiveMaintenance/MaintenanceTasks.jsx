@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FaCheck, FaDownload, FaEdit, FaExclamationTriangle, FaFileCsv, FaHistory } from "react-icons/fa";
+import { FaDownload, FaEdit, FaExclamationTriangle, FaFileCsv, FaHistory, FaPlus, FaTrashAlt } from "react-icons/fa";
 import MaintenanceShell from "./MaintenanceShell";
 import styles from "./Maintenance.module.css";
 import { completeMaintenanceTask, downloadMaintenanceAttachment, downloadMaintenanceExport, getMaintenanceWorkspace, maintenanceAction } from "../../../lib/preventiveMaintenanceApi";
@@ -9,6 +9,12 @@ import { MAINTENANCE_STATUS, recurrenceLabel, todayDateString } from "../../../l
 const dateLabel = (value) => value
   ? new Date(`${value}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   : "";
+
+const recordedAtLabel = (value) => {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.valueOf())) return "an unknown date";
+  return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+};
 
 function CompletionModal({ mode, schedule, completion, busy, onClose, onSubmit }) {
   const editing = mode === "edit";
@@ -39,9 +45,15 @@ export default function MaintenanceTasks() {
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [deletingCompletionId, setDeletingCompletionId] = useState("");
   const [message, setMessage] = useState(null);
   const load = async () => { const result = await getMaintenanceWorkspace(); setData(result); setSelectedPropertyId((current) => current || result.properties[0]?.id || ""); };
   useEffect(() => { load().catch((e) => setMessage({ type: "error", text: e.message })); }, []);
+  useEffect(() => {
+    if (!message) return undefined;
+    const timeout = window.setTimeout(() => setMessage(null), 10000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
   const propertySchedules = useMemo(() => (data?.schedules || []).filter((item) => item.property_id === selectedPropertyId && (!statusFilter || item.status === statusFilter)), [data, selectedPropertyId, statusFilter]);
   const selectedProperty = data?.properties.find((item) => item.id === selectedPropertyId);
   const exclusionSet = useMemo(() => new Set((data?.exclusions || []).map((item) => `${item.catalog_task_id}:${item.property_id}`)), [data]);
@@ -60,6 +72,15 @@ export default function MaintenanceTasks() {
       const warning = result?.attachmentWarnings?.length ? ` Some attachments could not be saved: ${result.attachmentWarnings.join("; ")}` : "";
       setMessage({ type: "success", text: `${modal.mode === "complete" ? "Completion recorded." : "Completion updated."} Next due date recalculated.${warning}` });
     } catch (e) { setMessage({ type: "error", text: e.message }); } finally { setBusy(false); }
+  }
+  async function deleteCompletion(schedule, completion) {
+    if (!window.confirm(`Delete the completion recorded for ${dateLabel(completion.completed_on)}? The task's next due date will be recalculated.`)) return;
+    setDeletingCompletionId(completion.id); setMessage(null);
+    try {
+      await maintenanceAction("delete_completion", { scheduleId: schedule.id, completionId: completion.id, reason: "Completion record deleted from history." });
+      await load();
+      setMessage({ type: "success", text: "Completion record deleted. Next due date recalculated." });
+    } catch (e) { setMessage({ type: "error", text: e.message }); } finally { setDeletingCompletionId(""); }
   }
 
   return <MaintenanceShell title="Maintenance Tasks" subtitle="Record completed work and review completion history">
@@ -87,9 +108,15 @@ export default function MaintenanceTasks() {
             .sort((a, b) => b.completed_on.localeCompare(a.completed_on) || b.created_at.localeCompare(a.created_at));
           return <article className={`${styles.card} ${styles.taskCard}`} key={schedule.id}>
             <div className={styles.taskHeader}><div><h3>{schedule.task?.name || "Maintenance task"}</h3><span className={styles.muted}>{recurrenceLabel(schedule.recurrence_count, schedule.recurrence_unit)} · Due {schedule.current_due_on}</span></div><span className={`${styles.badge} ${styles[schedule.status]}`}>{schedule.status === "overdue" && <FaExclamationTriangle />} {MAINTENANCE_STATUS[schedule.status].label}</span></div>
-            <div className={styles.taskActions}><button className={`${styles.button} ${styles.smallButton}`} onClick={() => setModal({ mode: "complete", schedule })}><FaCheck /> Add new record</button></div>
+            <div className={styles.taskActions}><button className={`${styles.button} ${styles.smallButton}`} onClick={() => setModal({ mode: "complete", schedule })}><FaPlus /> Add new record</button></div>
             <details className={styles.historyDetails}><summary><span className={styles.historySummaryLabel}><FaHistory /> Completion history ({completions.length})</span></summary><div className={styles.timeline}>{completions.map((completion) => <div className={styles.timelineItem} key={completion.id}>
-              <div className={styles.completionHeader}><strong>Completed {dateLabel(completion.completed_on)}</strong><button type="button" className={`${styles.button} ${styles.secondaryButton} ${styles.smallButton}`} onClick={() => setModal({ mode: "edit", schedule, completion })}><FaEdit /> Edit</button></div>
+              <div className={styles.completionHeader}>
+                <div className={styles.completionTitle}><strong>Completed {dateLabel(completion.completed_on)}</strong><span>Recorded by {completion.completed_by_name || "Unknown user"} on {recordedAtLabel(completion.created_at)}</span></div>
+                <div className={styles.completionActions}>
+                  <button type="button" className={`${styles.button} ${styles.secondaryButton} ${styles.smallButton}`} onClick={() => setModal({ mode: "edit", schedule, completion })}><FaEdit /> Edit</button>
+                  <button type="button" className={`${styles.button} ${styles.dangerButton} ${styles.smallButton}`} disabled={deletingCompletionId === completion.id} onClick={() => deleteCompletion(schedule, completion)}><FaTrashAlt /> {deletingCompletionId === completion.id ? "Deleting…" : "Delete"}</button>
+                </div>
+              </div>
               {completion.note && <p>{completion.note}</p>}
               {completion.attachments?.length > 0 && <div className={styles.attachments}>{completion.attachments.map((attachment) => <button className={styles.attachment} key={attachment.id} onClick={() => downloadMaintenanceAttachment(attachment)}><FaDownload /> {attachment.original_filename}</button>)}</div>}
             </div>)}{!completions.length && <div className={styles.empty}>No completions recorded yet.</div>}</div></details>

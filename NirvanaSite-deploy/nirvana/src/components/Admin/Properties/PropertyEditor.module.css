@@ -116,7 +116,7 @@
 
 .row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
     gap: 32px;
 }
 
@@ -300,7 +300,7 @@
 
 .row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
     gap: 24px;
 }
 
@@ -361,6 +361,38 @@
 
 .cancelBtn:hover {
     background: #f5f5f5;
+}
+
+@media (max-width: 640px) {
+    .tabsHeader {
+        max-width: 100%;
+        padding-bottom: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    .row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .actionBar {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .actionBar button {
+        width: 100%;
+    }
 }
 
 .richToolbar {

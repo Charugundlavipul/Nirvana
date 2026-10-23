@@ -20,6 +20,8 @@ import PeopleManager from "./HR/PeopleManager";
 import PayrollManager from "./HR/PayrollManager";
 import MaintenanceDashboard from "./PreventiveMaintenance/MaintenanceDashboard";
 import MaintenanceCatalog from "./PreventiveMaintenance/MaintenanceCatalog";
+import MaintenanceCatalog2 from "./PreventiveMaintenance/MaintenanceCatalog2";
+import MaintenanceProperties from "./PreventiveMaintenance/MaintenanceProperties";
 import MaintenanceTasks from "./PreventiveMaintenance/MaintenanceTasks";
 
 const AdminApp = () => {
@@ -44,6 +46,8 @@ const AdminApp = () => {
           <Route path="payroll" element={<PayrollManager />} />
           <Route path="preventive-maintenance" element={<MaintenanceDashboard />} />
           <Route path="preventive-maintenance/catalog" element={<MaintenanceCatalog />} />
+          <Route path="preventive-maintenance/catalog-2" element={<MaintenanceCatalog2 />} />
+          <Route path="preventive-maintenance/properties" element={<MaintenanceProperties />} />
           <Route path="preventive-maintenance/tasks" element={<MaintenanceTasks />} />
           <Route path="signatures" element={<AdminSignatures />} />
         </Route>

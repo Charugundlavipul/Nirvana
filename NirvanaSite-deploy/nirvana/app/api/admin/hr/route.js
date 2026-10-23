@@ -530,6 +530,54 @@ export async function POST(request) {
       return noStore({ ok: true });
     }
 
+    if (action === "set_payroll_not_applicable") {
+      ownerOnly();
+      const targetId = String(body.userId || "");
+      const payrollNotApplicable = body.payrollNotApplicable === true;
+      if (!targetId) throwStatus("Employee is required.");
+      await assertEmployee(adminClient, targetId);
+
+      const { error: profileError } = await adminClient
+        .from("employee_private_profiles")
+        .upsert({
+          user_id: targetId,
+          payroll_not_applicable: payrollNotApplicable,
+          updated_at: new Date().toISOString(),
+        });
+      if (profileError) throw profileError;
+
+      let removedDraftPaystubs = 0;
+      if (payrollNotApplicable) {
+        const { data: draftRuns, error: draftRunsError } = await adminClient
+          .from("payroll_runs")
+          .select("id")
+          .eq("status", "draft");
+        if (draftRunsError) throw draftRunsError;
+        const draftRunIds = (draftRuns || []).map((run) => run.id);
+        if (draftRunIds.length) {
+          const { data: deletedPaystubs, error: deleteError } = await adminClient
+            .from("employee_paystubs")
+            .delete()
+            .eq("user_id", targetId)
+            .in("payroll_run_id", draftRunIds)
+            .select("id");
+          if (deleteError) throw deleteError;
+          removedDraftPaystubs = (deletedPaystubs || []).length;
+        }
+      }
+
+      await audit(
+        adminClient,
+        user.id,
+        "payroll_applicability_updated",
+        "employee_private_profile",
+        targetId,
+        targetId,
+        { payroll_not_applicable: payrollNotApplicable, removed_draft_paystubs: removedDraftPaystubs }
+      );
+      return noStore({ ok: true, payrollNotApplicable, removedDraftPaystubs });
+    }
+
     if (action === "set_compensation") {
       ownerOnly();
       const targetId = String(body.userId || "");
@@ -708,7 +756,7 @@ export async function POST(request) {
       if (!run || run.status !== "draft") throwStatus("Only draft payroll runs can be saved.");
 
       const [profilesResult, directoryResult, existingResult] = await Promise.all([
-        adminClient.from("employee_private_profiles").select("user_id, job_title").eq("employment_status", "active"),
+        adminClient.from("employee_private_profiles").select("user_id, job_title").eq("employment_status", "active").eq("payroll_not_applicable", false),
         adminClient.from("employee_directory").select("user_id, first_name, last_name"),
         adminClient.from("employee_paystubs").select("id, user_id").eq("payroll_run_id", run.id),
       ]);
@@ -723,7 +771,7 @@ export async function POST(request) {
       const missingSubmissions = activeIds.filter((employeeId) => !submittedById.has(employeeId));
       const unexpectedSubmissions = [...submittedById.keys()].filter((employeeId) => !activeIds.includes(employeeId));
       if (missingSubmissions.length || unexpectedSubmissions.length) {
-        throwStatus("The payroll draft must include every active employee and no inactive employees. Refresh and try again.", 409);
+        throwStatus("The payroll draft must include every payroll-eligible active employee and no excluded or inactive employees. Refresh and try again.", 409);
       }
 
       const [compensationResult, priorVoidResult] = await Promise.all([
@@ -817,12 +865,13 @@ export async function POST(request) {
       await assertEmployee(adminClient, targetId);
       const [{ data: directory, error: directoryError }, { data: profile, error: profileError }, { data: compensation, error: compensationError }] = await Promise.all([
         adminClient.from("employee_directory").select("*").eq("user_id", targetId).single(),
-        adminClient.from("employee_private_profiles").select("job_title").eq("user_id", targetId).maybeSingle(),
+        adminClient.from("employee_private_profiles").select("job_title, payroll_not_applicable").eq("user_id", targetId).maybeSingle(),
         adminClient.from("employee_compensation").select("*").eq("user_id", targetId).lte("effective_from", run.pay_date).or(`effective_to.is.null,effective_to.gte.${run.pay_date}`).order("effective_from", { ascending: false }).limit(1).maybeSingle(),
       ]);
       if (directoryError) throw directoryError;
       if (profileError) throw profileError;
       if (compensationError) throw compensationError;
+      if (profile?.payroll_not_applicable) throwStatus("Payroll is marked not applicable for this employee.", 409);
       if (!compensation) throwStatus("Add salary information before creating this paystub.");
       const sanitizedItems = preparePaystubItems(body.items, compensation, run);
       const totals = computePayrollTotals(sanitizedItems);
@@ -872,17 +921,31 @@ export async function POST(request) {
       const { data: run, error: runError } = await adminClient.from("payroll_runs").select("*").eq("id", body.runId).maybeSingle();
       if (runError) throw runError;
       if (!run || run.status !== "draft") throwStatus("Only draft payroll runs can be finalized.");
-      const [stubsResult, activeProfilesResult] = await Promise.all([
+      const [stubsResult, profilesResult] = await Promise.all([
         adminClient.from("employee_paystubs").select("*, paystub_line_items(*)").eq("payroll_run_id", run.id),
-        adminClient.from("employee_private_profiles").select("user_id").eq("employment_status", "active"),
+        adminClient.from("employee_private_profiles").select("user_id, employment_status, payroll_not_applicable"),
       ]);
       if (stubsResult.error) throw stubsResult.error;
-      if (activeProfilesResult.error) throw activeProfilesResult.error;
-      const paystubs = stubsResult.data || [];
+      if (profilesResult.error) throw profilesResult.error;
+      const profilesById = new Map((profilesResult.data || []).map((profile) => [profile.user_id, profile]));
+      const excludedPaystubIds = (stubsResult.data || [])
+        .filter((paystub) => profilesById.get(paystub.user_id)?.payroll_not_applicable)
+        .map((paystub) => paystub.id);
+      if (excludedPaystubIds.length) {
+        const { error: excludedDeleteError } = await adminClient
+          .from("employee_paystubs")
+          .delete()
+          .in("id", excludedPaystubIds);
+        if (excludedDeleteError) throw excludedDeleteError;
+      }
+      const paystubs = (stubsResult.data || []).filter((paystub) => !excludedPaystubIds.includes(paystub.id));
       const paystubUserIds = new Set(paystubs.map((paystub) => paystub.user_id));
-      const missingEmployeeCount = (activeProfilesResult.data || []).filter((profile) => !paystubUserIds.has(profile.user_id)).length;
+      const eligibleProfiles = (profilesResult.data || []).filter(
+        (profile) => profile.employment_status === "active" && !profile.payroll_not_applicable
+      );
+      const missingEmployeeCount = eligibleProfiles.filter((profile) => !paystubUserIds.has(profile.user_id)).length;
       if (!paystubs.length || missingEmployeeCount) {
-        throwStatus(`Save the entire draft before finalizing. ${missingEmployeeCount || "All"} active employee(s) are missing.`, 409);
+        throwStatus(`Save the entire draft before finalizing. ${missingEmployeeCount || "All"} payroll-eligible employee(s) are missing.`, 409);
       }
       for (let index = 0; index < paystubs.length; index += 1) {
         const stub = paystubs[index];

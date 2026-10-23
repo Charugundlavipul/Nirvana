@@ -46,6 +46,19 @@
 .peopleList { display: flex; flex-direction: column; gap: 6px; }
 .personButton { width: 100%; border: 1px solid transparent; border-radius: 10px; background: transparent; padding: 11px; text-align: left; cursor: pointer; }
 .personButton:hover, .personButtonActive { background: #F0FDF4; border-color: #B7DFBB; }
+.payrollToggle { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; margin: 14px 0 18px; padding: 12px 13px; border: 1px solid #dbe2e8; border-radius: 12px; background: #f8fafc; cursor: pointer; }
+.payrollToggle:hover { border-color: #a7cfab; }
+.payrollToggle input { position: absolute; opacity: 0; pointer-events: none; }
+.payrollToggleControl { position: relative; width: 38px; height: 22px; border-radius: 999px; background: #cbd5e1; transition: background .15s ease; }
+.payrollToggleControl::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, .25); transition: transform .15s ease; }
+.payrollToggle input:focus-visible + .payrollToggleControl { outline: 3px solid rgba(96, 189, 104, .25); outline-offset: 2px; }
+.payrollToggle input:checked + .payrollToggleControl { background: #b4233b; }
+.payrollToggle input:checked + .payrollToggleControl::after { transform: translateX(16px); }
+.payrollToggle > span:last-child { min-width: 0; }
+.payrollToggle strong, .payrollToggle small { display: block; }
+.payrollToggle strong { color: #1e293b; font-size: 13px; }
+.payrollToggle small { margin-top: 2px; color: #64748b; font-size: 11px; line-height: 1.35; }
+.payrollToggleActive { border-color: #fecdd3; background: #fff7f8; }
 .empty { padding: 28px; text-align: center; color: #64748b; }
 .lineGrid { display: grid; grid-template-columns: 170px 1fr 130px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
 .payrollRosterHeader { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 13px 15px; border-radius: 13px; background: #F5FBF6; }

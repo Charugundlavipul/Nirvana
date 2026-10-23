@@ -248,6 +248,26 @@ test("people manager displays pay statements cards for selected employee", async
   assert.match(peopleFile, /selected\.paystubs/);
 });
 
+test("payroll not-applicable employees are excluded from future paystub generation", async () => {
+  const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
+  assert.match(schema, /payroll_not_applicable BOOLEAN NOT NULL DEFAULT FALSE/);
+  assert.match(schema, /ADD COLUMN IF NOT EXISTS payroll_not_applicable BOOLEAN NOT NULL DEFAULT FALSE/);
+
+  const route = await readFile(new URL("../app/api/admin/hr/route.js", import.meta.url), "utf8");
+  assert.match(route, /action === "set_payroll_not_applicable"/);
+  assert.match(route, /\.eq\("payroll_not_applicable", false\)/);
+  assert.match(route, /Payroll is marked not applicable for this employee/);
+  assert.match(route, /excludedPaystubIds/);
+
+  const peopleFile = await readFile(new URL("../src/components/Admin/HR/PeopleManager.jsx", import.meta.url), "utf8");
+  assert.match(peopleFile, /Payroll not applicable/);
+  assert.match(peopleFile, /future paystub generation/);
+
+  const payrollFile = await readFile(new URL("../src/components/Admin/HR/PayrollManager.jsx", import.meta.url), "utf8");
+  assert.match(payrollFile, /isPayrollApplicable/);
+  assert.match(payrollFile, /No paystub will be generated/);
+});
+
 test("salary update audit trail is preserved in schema, logged on changes, and visible only to admin", async () => {
   const schema = await readFile(new URL("../supabase_schema.sql", import.meta.url), "utf8");
   assert.match(schema, /CREATE TABLE IF NOT EXISTS salary_audit_logs/);
@@ -270,7 +290,6 @@ test("salary update audit trail is preserved in schema, logged on changes, and v
   assert.match(peopleFile, /Immutable historical record of every salary and compensation change/);
   assert.match(peopleFile, /Updated by:/);
 });
-
 
 
 

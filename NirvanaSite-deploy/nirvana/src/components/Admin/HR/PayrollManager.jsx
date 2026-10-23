@@ -32,6 +32,7 @@ const lineTypes = [
 ];
 
 const isActive = (person) => person.private_profile?.employment_status !== "inactive";
+const isPayrollApplicable = (person) => !person.private_profile?.payroll_not_applicable;
 
 export default function PayrollManager() {
   const [role, setRole] = useState(null);
@@ -65,8 +66,12 @@ export default function PayrollManager() {
   const runStubs = useMemo(() => new Map(
     data.paystubs.filter((paystub) => paystub.payroll_run_id === runId).map((paystub) => [paystub.user_id, paystub])
   ), [data.paystubs, runId]);
-  const activePeople = useMemo(() => data.people.filter(isActive), [data.people]);
+  const activePeople = useMemo(() => data.people.filter((person) => isActive(person) && isPayrollApplicable(person)), [data.people]);
   const runPeople = useMemo(() => data.people.filter((person) => isActive(person) || runStubs.has(person.user_id)), [data.people, runStubs]);
+  const notApplicableCount = useMemo(
+    () => data.people.filter((person) => isActive(person) && !isPayrollApplicable(person)).length,
+    [data.people]
+  );
   const currentRunTotal = useMemo(() => {
     if (!run) return 0;
     const savedStubs = data.paystubs.filter((p) => p.payroll_run_id === run.id);
@@ -75,6 +80,7 @@ export default function PayrollManager() {
 
     let draftSum = 0;
     for (const person of runPeople) {
+      if (run.status === "draft" && !isPayrollApplicable(person)) continue;
       const items = itemsByEmployee[person.user_id] || [];
       if (items.length > 0) {
         try {
@@ -103,7 +109,7 @@ export default function PayrollManager() {
       const paystub = runStubs.get(person.user_id);
       if (paystub?.paystub_line_items?.length) {
         nextItems[person.user_id] = paystub.paystub_line_items.map((item) => ({ ...item }));
-      } else if (run?.status === "draft" && isActive(person) && person.compensation) {
+      } else if (run?.status === "draft" && isActive(person) && isPayrollApplicable(person) && person.compensation) {
         nextItems[person.user_id] = salaryLineItemsForPeriod(person.compensation, run.period_start, run.period_end);
       } else {
         nextItems[person.user_id] = [];
@@ -223,10 +229,13 @@ export default function PayrollManager() {
             <div className={styles.payrollRosterHeader}>
               <div>
                 <strong>
-                  {runPeople.length} employee(s)
+                  {activePeople.length} payroll-eligible employee(s)
                   {currentRunTotal > 0 && ` · Total payroll: ${formatSalaryAmount(currentRunTotal, run.currency)}`}
                 </strong>
-                <span>{run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}</span>
+                <span>
+                  {run.status === "draft" ? `${activeAddedCount} added · ${activePeople.length - activeAddedCount} not yet added` : `${runStubs.size} included in this run`}
+                  {notApplicableCount > 0 && ` · ${notApplicableCount} not applicable`}
+                </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 {["finalized", "paid"].includes(run.status) && (
@@ -262,8 +271,10 @@ export default function PayrollManager() {
                 const paystub = runStubs.get(person.user_id);
                 const employeeItems = itemsByEmployee[person.user_id] || [];
                 const hasSalary = Boolean(person.compensation);
+                const payrollApplicable = isPayrollApplicable(person);
+                const excludedFromRun = run.status === "draft" && !payrollApplicable;
                 const dirty = dirtyEmployees.has(person.user_id);
-                const status = !isActive(person) && !paystub ? "Inactive" : !hasSalary && !paystub ? "Missing salary" : dirty ? "Changes not saved" : paystub ? (run.status === "draft" ? "Added" : "Included") : run.status === "draft" ? "Ready to add" : "Not included";
+                const status = excludedFromRun ? "Not applicable" : !isActive(person) && !paystub ? "Inactive" : !hasSalary && !paystub ? "Missing salary" : dirty ? "Changes not saved" : paystub ? (run.status === "draft" ? "Added" : "Included") : run.status === "draft" ? "Ready to add" : "Not included";
                 let totals = null;
                 try { totals = employeeItems.length ? computePayrollTotals(employeeItems) : null; } catch { totals = null; }
 
@@ -280,7 +291,9 @@ export default function PayrollManager() {
                       <div className={styles.payrollEmployeeName}>
                         <strong>{person.first_name || "Profile"} {person.last_name || "incomplete"}</strong>
                         <span title={hasSalary ? `Annual fixed: ${formatSalaryAmount(comp.annual_salary, comp.currency)} · ${comp.pay_frequency} · Variable frequency: ${comp.variable_pay_frequency || "monthly"}` : undefined}>
-                          {hasSalary
+                          {excludedFromRun
+                            ? "Excluded from payroll and paystub generation"
+                            : hasSalary
                             ? `Monthly fixed: ${formatSalaryAmount(monthlyFixed, comp.currency)} · Monthly variable: ${formatSalaryAmount(monthlyVariable, comp.currency)}`
                             : "Salary not configured"}
                         </span>
@@ -288,7 +301,7 @@ export default function PayrollManager() {
                       <span className={`${styles.badge} ${["Missing salary", "Not included"].includes(status) ? styles.badgeDanger : ["Ready to add", "Changes not saved"].includes(status) ? styles.badgePending : ""}`}>{status}</span>
                     </summary>
                     <div className={styles.payrollEmployeeBody}>
-                      {!hasSalary && !paystub ? <div className={styles.empty}>Add this employee&apos;s salary in People before saving the payroll draft.</div> : <>
+                      {excludedFromRun ? <div className={styles.empty}>Payroll is marked not applicable for this employee. No paystub will be generated.</div> : !hasSalary && !paystub ? <div className={styles.empty}>Add this employee&apos;s salary in People before saving the payroll draft.</div> : <>
                         {hasSalary && (
                           <p className={styles.muted} style={{ margin: "0 0 10px 0", fontSize: 13 }}>
                             Base salary: <strong>{formatSalaryAmount(monthlyFixed, comp.currency)} / mo fixed</strong> · <strong>{formatSalaryAmount(monthlyVariable, comp.currency)} / mo variable</strong> <span style={{ opacity: 0.8 }}>(Annual fixed: {formatSalaryAmount(comp.annual_salary, comp.currency)} · {comp.pay_frequency})</span>

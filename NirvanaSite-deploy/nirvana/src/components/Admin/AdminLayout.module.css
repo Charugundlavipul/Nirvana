@@ -5,161 +5,210 @@
     --admin-primary-border: #B7DFBB;
     --admin-primary-ring: rgba(96, 189, 104, .18);
     display: flex;
+    width: 100%;
+    max-width: 100vw;
     height: 100vh;
-    width: 100vw;
-    background-color: #fafafa;
-    /* Slightly cleaner white-grey */
-    color: #171717;
+    height: 100dvh;
     overflow: hidden;
+    background: #f0f2f5;
+    color: #171717;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .mainContent {
-    flex: 1;
     display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
+    width: calc(100% - 260px);
+    min-width: 0;
     height: 100%;
     margin-left: 260px;
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background-color: #fafafa;
+    overflow: hidden;
+    background: #f0f2f5;
+    transition: width .3s ease, margin-left .3s ease;
 }
 
 .mainContent.expanded {
+    width: calc(100% - 80px);
     margin-left: 80px;
 }
 
 .topBar {
-    height: 96px;
-    /* Taller header for more breathing room */
-    background-color: #ffffff;
-    /* border-bottom: 1px solid #f0f0f0; Removed border for cleaner look, relying on subtle scroll separator if needed */
     display: flex;
+    flex: 0 0 80px;
+    min-width: 0;
     align-items: center;
     justify-content: space-between;
-    padding: 0 48px;
-    /* More horizontal padding */
+    gap: 20px;
+    padding: 0 clamp(20px, 3vw, 40px);
+    border-bottom: 1px solid #e0e0e0;
+    background: #fff;
     position: sticky;
     top: 0;
     z-index: 10;
 }
 
-.pageTitle {
-    font-size: 32px;
-    /* Larger, bolder title */
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: #171717;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.pageSubtitle {
-    font-size: 15px;
-    color: #666;
-    margin: 4px 0 0 0;
-    font-weight: 400;
-}
-
-.actions {
+.pageHeader {
     display: flex;
-    gap: 16px;
-}
-
-.signOutBtn {
-    padding: 10px 20px;
-    border: 1px solid #e5e5e5;
-    background-color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #444;
-    transition: all 0.2s ease;
-}
-
-.signOutBtn:hover {
-    background-color: #171717;
-    color: white;
-    border-color: #171717;
-}
-
-.contentScrollWrapper {
-    flex: 1;
-    overflow-y: auto;
-    padding: 48px;
-    /* Consistent wide padding */
-    max-width: 1600px;
-    /* Prevent stretching on ultra-wide screens */
-    width: 100%;
-    box-sizing: border-box;
-}
-
-
-.mainContent {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    margin-left: 260px;
-    /* Width of open sidebar */
-    transition: margin-left 0.3s ease;
-    background-color: #f0f2f5;
-}
-
-.mainContent.expanded {
-    margin-left: 80px;
-    /* Width of closed sidebar */
-}
-
-.topBar {
-    height: 80px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
+    min-width: 0;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 40px;
+}
+
+.pageHeader > div {
+    min-width: 0;
 }
 
 .pageTitle {
-    font-size: 24px;
-    font-weight: 700;
-    color: #171717;
     margin: 0;
+    color: #171717;
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
 }
 
 .pageSubtitle {
-    font-size: 14px;
+    margin: 4px 0 0;
     color: #666;
-    margin: 4px 0 0 0;
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .actions {
     display: flex;
-    gap: 16px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 12px;
 }
 
 .signOutBtn {
     padding: 8px 16px;
     border: 1px solid #e0e0e0;
-    background-color: transparent;
     border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
+    background: transparent;
     color: #666;
-    transition: all 0.2s;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .2s ease;
 }
 
 .signOutBtn:hover {
-    background-color: #fff0f0;
-    color: #d32f2f;
     border-color: #ffcccc;
+    background: #fff0f0;
+    color: #d32f2f;
 }
 
 .contentScrollWrapper {
-    flex: 1;
-    overflow-y: auto;
-    padding: 40px;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 1600px;
+    min-width: 0;
+    min-height: 0;
+    padding: clamp(16px, 3vw, 40px);
+    box-sizing: border-box;
+    overflow: auto;
+    overscroll-behavior: contain;
 }
-.mobileMenuBtn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 16px; color: #171717; }
-@media (max-width: 768px) { .mobileMenuBtn { display: block; } .mainContent, .mainContent.expanded { margin-left: 0; } .topBar { padding: 0 16px; } .contentScrollWrapper { padding: 16px; } .pageHeader { display: flex; align-items: center; } .pageTitle { font-size: 20px; } .pageSubtitle { font-size: 12px; } }
+
+.contentScrollWrapper,
+.contentScrollWrapper *,
+.contentScrollWrapper *::before,
+.contentScrollWrapper *::after {
+    box-sizing: border-box;
+}
+
+.contentScrollWrapper > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.contentScrollWrapper img,
+.contentScrollWrapper video,
+.contentScrollWrapper canvas,
+.contentScrollWrapper svg {
+    max-width: 100%;
+}
+
+.contentScrollWrapper input:not([type="checkbox"]):not([type="radio"]),
+.contentScrollWrapper select,
+.contentScrollWrapper textarea {
+    max-width: 100%;
+}
+
+.mobileMenuBtn {
+    display: none;
+    flex: 0 0 auto;
+    margin-right: 12px;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: #171717;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .mainContent,
+    .mainContent.expanded {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .mobileMenuBtn {
+        display: block;
+    }
+
+    .topBar {
+        min-height: 72px;
+        height: auto;
+        flex-basis: auto;
+        padding: 10px 16px;
+    }
+
+    .pageHeader {
+        flex: 1 1 auto;
+    }
+
+    .pageTitle {
+        font-size: 20px;
+    }
+
+    .pageSubtitle {
+        font-size: 12px;
+    }
+
+    .actions {
+        gap: 8px;
+    }
+
+    .signOutBtn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .contentScrollWrapper {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 420px) {
+    .topBar {
+        gap: 8px;
+        padding-inline: 10px;
+    }
+
+    .mobileMenuBtn {
+        margin-right: 6px;
+    }
+
+    .pageSubtitle {
+        display: none;
+    }
+
+    .contentScrollWrapper {
+        padding: 12px;
+    }
+}
